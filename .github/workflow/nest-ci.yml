@@ -2,9 +2,15 @@ name: Nest CI
 
 on:
   push:
-    branches: ['master']
+    branches:
+      - main
+      - develop
+      - feat/**
+      - fix/**
   pull_request:
-    branches: ['master']
+    branches:
+      - main
+      - develop
 
 jobs:
   ci:
