@@ -1,2 +1,3 @@
-# backend
-transcendence backend
+# 42 Pong
+
+42 Pong Backend Project
