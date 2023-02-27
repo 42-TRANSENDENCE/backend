@@ -11,10 +11,10 @@ export class User {
   @PrimaryColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   nickname: string;
 
-  @Column()
+  @Column({ default: '12345' })
   avatar: string;
 
   @Column({ default: false })
@@ -25,5 +25,11 @@ export class User {
     enum: UserStatus,
     default: UserStatus.OFFLINE,
   })
-  status: number;
+  status: UserStatus;
+
+  @Column()
+  refreshToken: string;
+
+  @Column({ nullable: true })
+  twoFactorSecret: string;
 }

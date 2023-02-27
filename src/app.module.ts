@@ -11,7 +11,8 @@ import { UsersModule } from './users/users.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: process.env.NODE_ENV == 'dev' ? '.env.dev' : '.env',
+      envFilePath:
+        process.env.NODE_ENV == 'dev' ? '../env/.env.dev' : '../env/.env',
     }),
     TypeOrmModule.forRootAsync({
       useClass: TypeOrmConfigService,
