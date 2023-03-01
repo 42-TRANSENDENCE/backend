@@ -19,9 +19,12 @@ export class ChannelsService {
     async getChannels(url:string, myId: number) {
         return this.channelsRepository.createQueryBuilder('channels').getMany()
     }
-    async createChannels(url:string, name: string, myId: number) {
+
+    async createChannels(url:string, title: string, max: number, password:string, myId: number) {
         const channel = new Channels();
-        channel.name = name;
+        channel.title = title;
+        channel.max = max;
+        channel.password = password;
         const channelReturned = await this.channelsRepository.save(channel);
         // const channelMember = new
     }
