@@ -17,10 +17,11 @@ async function bootstrap() {
     .setTitle('42 Pong API')
     .setDescription('42 Pong API description')
     .setVersion('1.0')
-    .addBearerAuth(customSecuritySchemeObject, 'access token')
-    .addBearerAuth(customSecuritySchemeObject, 'refresh token')
+    .addBearerAuth(customSecuritySchemeObject, 'JWT access token')
+    .addBearerAuth(customSecuritySchemeObject, 'JWT refresh token')
+    .addBearerAuth(customSecuritySchemeObject, '42 access token')
     .addTag('auth', '인증 API')
-    .addTag('user', '사용자 API')
+    .addTag('users', '사용자 API')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

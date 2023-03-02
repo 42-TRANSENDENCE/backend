@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../users/users.entity';
+import { User, UserStatus } from '../users/users.entity';
 import { Repository } from 'typeorm';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
@@ -64,7 +64,10 @@ export class AuthService {
       }
       const tokens = await this.getTokens(id);
       // save refresh token to database
-      this.userRepository.update({ id }, { refreshToken: tokens.refreshToken });
+      this.userRepository.update(
+        { id },
+        { refreshToken: tokens.refreshToken, status: UserStatus.ONLINE },
+      );
       // user exist issue JWT token (success)
       return tokens;
     }
@@ -90,7 +93,10 @@ export class AuthService {
     const { id } = user;
     const secret = speakeasy.generateSecret({ length: 20 });
     // TODO: secret hash?
-    this.userRepository.update({ id }, { twoFactorSecret: secret.base32 });
+    this.userRepository.update(
+      { id },
+      { twoFactorSecret: secret.base32, useAuth: true },
+    );
     return { qrcode: await QRCode.toDataURL(secret.otpauth_url) };
   }
 

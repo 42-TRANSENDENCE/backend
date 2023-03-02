@@ -22,7 +22,7 @@ export class AuthController {
   @Get('login')
   @ApiOperation({
     summary: 'login',
-    description: '42 Pong blogin',
+    description: '42 Pong login',
   })
   @ApiOkResponse({
     description: 'login success',
@@ -54,7 +54,7 @@ export class AuthController {
     description: 'unauthorized (user invalid refresh token)',
   })
   @ApiForbiddenResponse({ description: 'invalid user info or token' })
-  @ApiSecurity('refresh token')
+  @ApiSecurity('JWT refresh token')
   @UseGuards(JwtRefreshAuthGuard)
   refresh(@Req() req): Promise<JwtTokens> {
     return this.authService.refresh(req.user);
@@ -73,7 +73,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'unathurozied (invalid access token)',
   })
-  @ApiSecurity('access token')
+  @ApiSecurity('JWT access token')
   @UseGuards(JwtAuthGuard)
   createTwoFactorAuthQRCode(@Req() req): Promise<QRCodeUrl> {
     return this.authService.createTwoFactorAuthQRCode(req.user);
