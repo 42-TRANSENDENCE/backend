@@ -47,7 +47,7 @@ export class UsersController {
   })
   @ApiSecurity('42 access token')
   @UseGuards(FourtyTwoGuard)
-  signUp(@Body(new ValidationPipe()) createUserDto: CreateUserDto, @Req() req) {
+  signUp(@Body() createUserDto: CreateUserDto, @Req() req) {
     const { id, image } = req.user;
     const { link } = image;
     return this.userService.signUp(createUserDto, id, link);
