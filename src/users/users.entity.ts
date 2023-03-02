@@ -14,8 +14,11 @@ export class User {
   @Column({ unique: true })
   nickname: string;
 
-  @Column({ default: '12345' })
-  avatar: string;
+  @Column({
+    type: 'bytea',
+    nullable: false,
+  })
+  avatar: Uint8Array;
 
   @Column({ default: false })
   useAuth: boolean;
@@ -27,7 +30,7 @@ export class User {
   })
   status: UserStatus;
 
-  @Column()
+  @Column({ nullable: true })
   refreshToken: string;
 
   @Column({ nullable: true })

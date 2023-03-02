@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
@@ -17,10 +18,11 @@ async function bootstrap() {
     .setTitle('42 Pong API')
     .setDescription('42 Pong API description')
     .setVersion('1.0')
-    .addBearerAuth(customSecuritySchemeObject, 'access token')
-    .addBearerAuth(customSecuritySchemeObject, 'refresh token')
+    .addBearerAuth(customSecuritySchemeObject, 'JWT access token')
+    .addBearerAuth(customSecuritySchemeObject, 'JWT refresh token')
+    .addBearerAuth(customSecuritySchemeObject, '42 access token')
     .addTag('auth', '인증 API')
-    .addTag('user', '사용자 API')
+    .addTag('users', '사용자 API')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -32,6 +34,8 @@ async function bootstrap() {
     preflightContinue: false,
     optionsSuccessStatus: 204,
   });
+
+  app.useGlobalPipes(new ValidationPipe());
 
   await app.listen(3000);
 }
