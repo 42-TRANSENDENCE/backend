@@ -3,16 +3,22 @@ import { Entity,
     Column,
     CreateDateColumn,
     UpdateDateColumn,
+    OneToMany,
      } from "typeorm";
+import { ChannelMember } from "./ChannelMember";
 
-@Entity({ schema: 'j_test'})
+
+@Entity({name: 'channels'})
 export class Channels {
     @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
     id: number;
   
     @Column('varchar', { name: 'title', length: 30 })
     title: string;
-  
+    
+    @Column('int', {name: 'owner', default: 0})
+    owner: number;
+
     @Column('smallint', {
       name: 'private',
       nullable: true,
@@ -21,15 +27,15 @@ export class Channels {
     })
     private: boolean | null;
     
-    @Column('int', {name: 'max', default: 10})
-    max: number;
-
-    @Column('varchar', {name: 'password', length: 30})
+    @Column('varchar', {name: 'password', length: 100, default:""})
     password: string;
 
     @CreateDateColumn()
     createdAt: Date;
   
     @UpdateDateColumn()
-    updatedAt: Date;   
+    updatedAt: Date;
+
+    // @OneToMany(type => ChannelMember, channelmembers => channelmembers.channelmembers)
+    // channelmembers: ChannelMember[];
 }

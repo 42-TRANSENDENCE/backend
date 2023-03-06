@@ -19,10 +19,10 @@ export class CreateChannelDto {
   public password: string;
   
   @IsNotEmpty()
-  @IsNumber()
+  // @IsString()
   @ApiProperty({
-    example: 10,
-    description: '채팅방 최대 인원',
+    example: 'junyopar',
+    description: '채팅방 소유자',
   })
-  public max: number;
+  public owner: number;
 }

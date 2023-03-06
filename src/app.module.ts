@@ -8,6 +8,8 @@ import { TypeOrmConfigService } from './configs/typeorm.config';
 import { UsersModule } from './users/users.module';
 import { ChatsModule } from './chats/chats.module';
 import { ChannelsModule } from './channels/channels.module';
+import { ChannelsGateway } from './events/events.channels.gateway';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [

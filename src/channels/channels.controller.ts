@@ -14,18 +14,28 @@ export class ChannelsController {
     // 현재 user.id 를 그냥 1로 넣어주고 있음 ( 지금 로직에서도 안 쓰임 )
     @ApiOperation({ summary: '채팅방 모두 가져오기'})
     @Get('/')
-    async getChannels(@Param('url',) url, @Users() user: User) {
-        return this.channelsService.getChannels(url,1);
+    async getChannels() { //@Param('url',) url, @Users() user: User
+        return this.channelsService.getChannels();
     }
 
     @ApiOperation({ summary: '채팅방 만들기'})
     @Post('/room')
     async createChannels(
-        @Param('url') url,
+        // @Param('url') url,
         @Body() body: CreateChannelDto,
         @Users() user: User,
     ){
-        return this.channelsService.createChannels(url,body.title,body.max, body.password, 1);
+        // 처음 방을 만드는 유저의 아이디 에 해당 하는 닉네임을 보여줘야 한다.
+        // 마지막 인자 1 -> user.nickname 으로 나중에 
+        return this.channelsService.createChannels(body.title, body.password, 1);
+    }
+
+    @ApiOperation({ summary: '채팅방 멤버 가져오기'})
+    @Get('/:title/members')
+    async getChannelMembers(
+        @Param('title') title: string,
+    ){
+        return this.channelsService.getChannelMembers(title);
     }
 
 }
