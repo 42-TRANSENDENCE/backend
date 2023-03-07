@@ -30,7 +30,7 @@ import { DatabaseModule } from './database/database.module';
         JWT_REFRESH_TOKEN_EXPIRATION_TIME: Joi.string().required(),
       }),
       envFilePath:
-        process.env.NODE_ENV == 'dev' ? '../env/.env.dev' : '../env/.env',
+        process.env.NODE_ENV == 'dev' ? '.env.dev' : '.env',
     }),
     DatabaseModule,
     AuthModule,
