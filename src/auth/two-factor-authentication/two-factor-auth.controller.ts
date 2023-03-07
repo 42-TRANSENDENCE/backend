@@ -21,7 +21,7 @@ import { AuthService } from '../auth.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { JwtTwoFactorGuard } from '../guards/jwt-two-factor.guard';
 import { TwoFactorAuthService } from './two-factor-auth.service';
-import { TwoFactorToken } from './two-factor-token.dto';
+import { TwoFactorTokenDto } from './two-factor-token.dto';
 
 @ApiTags('2fa')
 @Controller('2fa')
@@ -49,13 +49,13 @@ export class TwoFactorAuthController {
   @Post('validate')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
-  @ApiBody({ type: TwoFactorToken })
+  @ApiBody({ type: TwoFactorTokenDto })
   @ApiOkResponse({ description: '2차 인증 성공' })
   @ApiUnauthorizedResponse({ description: '2차 인증 실패 (token invalid)' })
-  async validate(@Req() req, @Body('token') twoFactorToken: TwoFactorToken) {
+  async validate(@Req() req, @Body() twoFactorTokenDto: TwoFactorTokenDto) {
     await this.twoFactorAuthService.verifyTwoFactorAuth(
       req.user.id,
-      twoFactorToken.token,
+      twoFactorTokenDto.token,
     );
     const accessCookie = this.authService.getCookieWithJwtAccessToken(
       req.user.id,

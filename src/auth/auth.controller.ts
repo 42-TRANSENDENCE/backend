@@ -53,7 +53,7 @@ export class AuthController {
     if (!user.isTwoFactorAuthenticationEnabled) {
       return user;
     }
-    return user;
+    return;
   }
 
   @Get('refresh')
