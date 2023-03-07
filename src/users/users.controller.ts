@@ -1,5 +1,6 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   FileTypeValidator,
@@ -16,34 +17,43 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConflictResponse,
+  ApiConsumes,
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Response } from 'express';
 import { FourtyTwoGuard } from 'src/auth/guards/fourty-two.guard';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
 import { CreateUserDto } from './dto/users.dto';
+import { User } from './users.entity';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
 @Controller('users')
+@UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
   @Get()
-  @ApiSecurity('JWT access token')
   @UseGuards(JwtTwoFactorGuard)
   async getUserInfo(@Req() req) {
-    return req.user;
+    const user: User = req.user;
+    return user;
   }
 
   @Get('avatar')
-  @ApiOperation({ summary: 'get user avatar image byte array' })
+  @ApiOperation({ summary: '사용자 아바타 이미지 반환 (byte array)' })
   @UseGuards(JwtTwoFactorGuard)
   async getUserAvatar(@Req() req, @Res({ passthrough: true }) res: Response) {
     const avatar = await this.userService.getUserAvatar(req.user.id);
 
     res.set({
-      'Content-Type': 'image',
+      'Content-Type': 'image/*',
       'Content-Disposition': 'inline',
     });
 
@@ -51,12 +61,16 @@ export class UsersController {
   }
 
   @Post('signup')
-  @ApiOperation({
-    summary: 'sign up',
-    description: '42 Pong sign up 42 access token required',
-  })
-  @ApiSecurity('42 access token')
   @UseGuards(FourtyTwoGuard)
+  @ApiOperation({
+    summary: '회원가입',
+    description:
+      '회원 가입 기능. avatar는 기본으로 42 이미지를 기반으로 생성됨',
+  })
+  @ApiCreatedResponse({ description: '회원가입 성공' })
+  @ApiConflictResponse({ description: '이미 존재하는 닉네임입니다.' })
+  @ApiBody({ type: CreateUserDto })
+  @ApiSecurity('42 access token')
   signUp(@Body() createUserDto: CreateUserDto, @Req() req): any {
     const { id, image } = req.user;
     const { link } = image;
@@ -64,11 +78,19 @@ export class UsersController {
   }
 
   @Put('avatar')
-  @ApiOperation({
-    summary: 'change user avatar image (3MB Limit, jpeg, bmp, jpg, png) ',
-  })
   @UseInterceptors(FileInterceptor('file'))
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtTwoFactorGuard)
+  @ApiOperation({
+    summary: '사용자 아바타 변경 기능 (3MB Limit, jpeg, bmp, jpg, png) ',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'File upload',
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
   updateUserAvatar(
     @Req() req,
     @UploadedFile(
@@ -87,7 +109,6 @@ export class UsersController {
   }
 
   @Delete()
-  @ApiOperation({ summary: 'delete user' })
   @UseGuards(JwtTwoFactorGuard)
   deleteUser(@Req() req) {
     return this.userService.deleteUser(req.user.id);
