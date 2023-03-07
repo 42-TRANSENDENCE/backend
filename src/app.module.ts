@@ -11,6 +11,7 @@ import { ChannelsModule } from './channels/channels.module';
 import { ChannelsGateway } from './events/events.channels.gateway';
 import { EventsModule } from './events/events.module';
 import { DatabaseModule } from './database/database.module';
+import { GameModule } from './game/game.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { DatabaseModule } from './database/database.module';
     UsersModule,
     ChatsModule,
     ChannelsModule,
+    GameModule
   ],
   controllers: [AppController],
   providers: [
@@ -48,3 +50,4 @@ import { DatabaseModule } from './database/database.module';
   ],
 })
 export class AppModule {}
+
