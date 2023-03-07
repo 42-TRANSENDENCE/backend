@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Channels } from 'src/entities/Channels';
+import { Channels } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
-import { ChannelMember } from 'src/entities/ChannelMember';
+import { ChannelMember } from 'src/channels/channelcember.entity';
 import { ChannelsGateway } from 'src/events/events.channels.gateway';
 @Injectable()
 export class ChannelsService {
@@ -27,18 +27,25 @@ export class ChannelsService {
     }
 
     async createChannels(title: string, password:string, myId: number) {
-        const channel = new Channels();
-        channel.title = title;
-        channel.password = password;
-        channel.owner = myId;
+
+        // const channel = new Channels();
+        // channel.title = title;
+        // channel.password = password;
+        // channel.owner = myId;
+        const channel = this.channelsRepository.create({
+            title: title,
+            password: password,
+            owner: myId,
+        })
         // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
         const channelReturned = await this.channelsRepository.save(channel);
         // emit an event to the connected WebSocket clients
         console.log('channelReturned:', channelReturned);
         this.channelsGateway.server.emit('channelCreated', channelReturned);
-        const channelMember = new ChannelMember();
-        channelMember.UserId = myId;
-        channelMember.ChannelId = channelReturned.id;
+        const channelMember = this.channelMemberRepository.create({
+            UserId : myId,
+            ChannelId: channelReturned.id,
+        })
         await this.channelMemberRepository.save(channelMember);
     }
 

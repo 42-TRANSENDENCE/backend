@@ -5,29 +5,26 @@ import { Entity,
     UpdateDateColumn,
     OneToMany,
      } from "typeorm";
-import { ChannelMember } from "./ChannelMember";
 
-
-@Entity({name: 'channels'})
+@Entity()
 export class Channels {
-    @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
+    @PrimaryGeneratedColumn()
     id: number;
   
-    @Column('varchar', { name: 'title', length: 30 , default:"default"})
+    @Column('varchar', {length: 30 , default:"default"})
     title: string;
     
-    @Column('int', {name: 'owner', default: 0})
+    @Column({nullable:true, default: () => "'0'"})
     owner: number;
 
     @Column('smallint', {
-      name: 'private',
       nullable: true,
       width: 1,
       default: () => "'0'",
     })
     private: boolean | null;
     
-    @Column('varchar', {name: 'password', length: 100, default:""})
+    @Column('varchar', {length: 100, default:""})
     password: string;
 
     @CreateDateColumn()

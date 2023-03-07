@@ -3,7 +3,7 @@ import { ChatsService } from './chats.service';
 import { ChatsController } from './chats.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
-import { Chats } from 'src/entities/Chats';
+import { Chats } from 'src/chats/chats.entity';
 @Module({
   imports: [TypeOrmModule.forFeature([Chats, User])] , // EventsMoudle
   providers: [ChatsService],

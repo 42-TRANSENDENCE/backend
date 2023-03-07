@@ -18,7 +18,7 @@ export class CreateChannelDto {
   })
   public password: string;
   
-  @IsNotEmpty()
+  // @IsNotEmpty()
   // @IsString()
   @ApiProperty({
     example: 'junyopar',

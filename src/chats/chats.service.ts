@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Chats } from '../entities/Chats'
+import { Chats } from './chats.entity'
 import { User } from 'src/users/users.entity';
 function getKeyByValue(object, value) {
     return Object.keys(object).find((key) =>object[key] === value);
@@ -31,10 +31,15 @@ export class ChatsService {
         myId: number,
     ){
         // consts 
-        const chat = new Chats();
-        chat.SenderId = myId;
-        chat.ReceiverId = id;
-        chat.content = content;
+        // const chat = new Chats();
+        // chat.SenderId = myId;
+        // chat.ReceiverId = id;
+        // chat.content = content;
+        const chat = this.chatsRepository.create({
+            id: myId,
+            SenderId: id,
+            content: content
+        })
         const saveChat  = await this.chatsRepository.save(chat);
         const chatWithSender = await this.chatsRepository.findOne({
             where:{id: saveChat.id},

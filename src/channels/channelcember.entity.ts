@@ -8,11 +8,11 @@ import {
     PrimaryGeneratedColumn,
     JoinColumn,
 } from "typeorm";
-import { Channels } from './Channels'
+import { Channels } from './channels.entity'
 
-@Entity({name: 'channelmembers'})
+@Entity()
 export class ChannelMember {
-    @PrimaryGeneratedColumn({type:'int',name: "id"})
+    @PrimaryGeneratedColumn()
     id:number;
 
     @CreateDateColumn()
@@ -21,12 +21,17 @@ export class ChannelMember {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @Column('int', { primary: true, name: 'ChannelId' })
+    @Column({ primary: true })
     ChannelId: number;
   
-    @Column('int', { primary: true, name: 'UserId' })
+    @Column({ primary: true })
     UserId: number;
 
+    /**
+   * 1 : M 관계 설정
+   * @ManyToOne 
+   * 여기서 Many 는 채널 이고 One이 멤버 이다. 
+   */
     @ManyToOne(() => Channels)
     @JoinColumn({name: "ChannelId"})
     channelMember: ChannelMember;

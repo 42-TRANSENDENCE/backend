@@ -5,12 +5,12 @@ import { PrimaryGeneratedColumn,
     Entity,
  } from "typeorm";
 
-@Entity({ name: 'chats' })
+@Entity()
 export class Chats {
-    @PrimaryGeneratedColumn({type:'int', name: 'id'})
+    @PrimaryGeneratedColumn()
     id : number;
 
-    @Column('text', { name: 'content' })
+    @Column()
     content: string;
   
     @CreateDateColumn()
@@ -19,12 +19,12 @@ export class Chats {
     @UpdateDateColumn()
     updatedAt: Date;
   
-    @Column('int', { name: 'WorkspaceId', nullable: true })
-    WorkspaceId: number | null;
+    @Column({ nullable: true })
+    ChannelId: number | null;
   
-    @Column('int', { name: 'SenderId', nullable: true })
+    @Column({ nullable: true })
     SenderId: number | null;
   
-    @Column('int', { name: 'ReceiverId', nullable: true })
+    @Column({ nullable: true })
     ReceiverId: number | null;   
 }
