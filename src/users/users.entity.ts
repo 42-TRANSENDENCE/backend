@@ -34,6 +34,7 @@ export class User {
   hashedRefreshToken?: string;
 
   @Column({ nullable: true })
+  @Exclude()
   twoFactorSecret?: string;
 
   @Column({ default: false })
