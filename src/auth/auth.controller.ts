@@ -1,113 +1,83 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import {
-  ApiForbiddenResponse,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiCookieAuth,
   ApiNotFoundResponse,
   ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiSecurity,
   ApiTags,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthService, JwtTokens, QRCodeUrl } from './auth.service';
+import { UsersService } from 'src/users/users.service';
+import { AuthService } from './auth.service';
 import { FourtyTwoGuard } from './guards/fourty-two.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
+@UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
-  @Get('login')
-  @ApiOperation({
-    summary: 'login',
-    description: '42 Pong login',
-  })
-  @ApiOkResponse({
-    description: 'login success',
-    schema: { example: { accessToken: 'xxx', refreshToken: 'xxx' } },
-  })
-  @ApiNotFoundResponse({ description: 'user not found' })
-  @ApiUnauthorizedResponse({
-    description: 'two-factor authentication required',
-  })
+  @Post('login')
   @UseGuards(FourtyTwoGuard)
-  login(@Req() req): Promise<JwtTokens> {
+  @ApiOkResponse({
+    description:
+      '로그인 성공 cookie 설정 사용자 정보를 반환하지 않으면 2차인증 필요',
+  })
+  @ApiBearerAuth('42-token')
+  @ApiNotFoundResponse({ description: '회원가입 필요' })
+  @HttpCode(200)
+  async login(@Req() req) {
     const { id } = req.user;
-    return this.authService.login(id);
+    const user = await this.usersService.getById(id);
+
+    const accessCookie = this.authService.getCookieWithJwtAccessToken(id);
+    const { refreshToken, refreshCookie } =
+      this.authService.getCookieWithJwtRefreshToken(id);
+
+    this.usersService.setCurrentRefreshToken(refreshToken, id);
+
+    req.res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
+    if (!user.isTwoFactorAuthenticationEnabled) {
+      return user;
+    }
+    return;
   }
 
   @Get('refresh')
-  @ApiOperation({
-    summary: 'replace token',
-    description:
-      'access token이 만료되었을때 새로운 token을 발급하기 위한 API (refresh token 필요)',
-  })
-  @ApiOkResponse({
-    description: 'access token, refresh token 발급',
-    schema: {
-      example: { accessToken: 'xxxx', refreshToken: 'xxxx' },
-    },
-  })
-  @ApiUnauthorizedResponse({
-    description: 'unauthorized (user invalid refresh token)',
-  })
-  @ApiForbiddenResponse({ description: 'invalid user info or token' })
-  @ApiSecurity('JWT refresh token')
   @UseGuards(JwtRefreshAuthGuard)
-  refresh(@Req() req): Promise<JwtTokens> {
-    return this.authService.refresh(req.user);
-  }
-
-  @Get('two-factor')
-  @ApiOperation({
-    summary: 'two-factor auth QR code',
-    description:
-      '2차 인증을 사용하기로 할 때, 사용자가 Secret Key를 저장할 수 있도록 QR Code 주소 반환 (Access Token 필요)',
-  })
   @ApiOkResponse({
-    description: 'QRCode Image src',
-    schema: { example: { qrcode: 'url' } },
-  })
-  @ApiUnauthorizedResponse({
-    description: 'unathurozied (invalid access token)',
-  })
-  @ApiSecurity('JWT access token')
-  @UseGuards(JwtAuthGuard)
-  createTwoFactorAuthQRCode(@Req() req): Promise<QRCodeUrl> {
-    return this.authService.createTwoFactorAuthQRCode(req.user);
-  }
-
-  @Post('two-factor')
-  @ApiOperation({
-    summary: 'two-factor auth verification',
     description:
-      'Google Authenticator에서 생성한 6자리 코드를 받아와 검사 (42 api access token required)',
+      'refresh token을 기반으로 새로운 access token을 cookie에 저장 기존 token이 만료되었을때 사용',
   })
-  @ApiParam({
-    type: 'string',
-    name: 'token',
-    description: 'two-factor authentication token',
-    required: true,
-  })
-  @ApiOkResponse({
-    description: 'login success',
-    schema: {
-      example: {
-        accessToken: 'xxx',
-        refreshToken: 'xxx',
-      },
-    },
-  })
-  @ApiUnauthorizedResponse({ description: 'invalid token' })
-  @ApiForbiddenResponse({ description: 'invalid user' })
-  @UseGuards(FourtyTwoGuard)
-  verifyTwoFactorAuth(
-    @Req() req,
-    @Body('token') token: string,
-  ): Promise<JwtTokens> {
+  @ApiCookieAuth('Refresh')
+  refresh(@Req() req) {
     const { id } = req.user;
-    return this.authService.verifyTwoFactorAuth(id, token);
+    const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(id);
+    req.res.setHeader('Set-Cookie', accessTokenCookie);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(200)
+  @ApiOkResponse({ description: '로그아웃. cookie token 삭제' })
+  @ApiCookieAuth('Authentication')
+  async logOut(@Req() req) {
+    const { id } = req.user;
+    await this.usersService.removeRefreshToken(id);
+    const cookie = await this.authService.getCookieForLogOut();
+    req.res.setHeader('Set-Cookie', cookie);
   }
 }

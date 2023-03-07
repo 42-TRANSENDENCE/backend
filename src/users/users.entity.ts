@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 export enum UserStatus {
@@ -6,7 +7,7 @@ export enum UserStatus {
   INGAME = 'INGAME',
 }
 
-@Entity()
+@Entity({ name: 'user'})
 export class User {
   @PrimaryColumn()
   id: number;
@@ -18,10 +19,8 @@ export class User {
     type: 'bytea',
     nullable: false,
   })
+  @Exclude()
   avatar: Uint8Array;
-
-  @Column({ default: false })
-  useAuth: boolean;
 
   @Column({
     type: 'enum',
@@ -31,8 +30,14 @@ export class User {
   status: UserStatus;
 
   @Column({ nullable: true })
-  refreshToken: string;
+  @Exclude()
+  hashedRefreshToken?: string;
 
   @Column({ nullable: true })
-  twoFactorSecret: string;
+  @Exclude()
+  twoFactorSecret?: string;
+
+  @Column({ default: false })
+  isTwoFactorAuthenticationEnabled: boolean;
 }
+

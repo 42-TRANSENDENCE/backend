@@ -8,22 +8,27 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
 import { HttpModule } from '@nestjs/axios';
-import { UsersService } from 'src/users/users.service';
+import { UsersModule } from 'src/users/users.module';
+import { TwoFactorAuthController } from './two-factor-authentication/two-factor-auth.controller';
+import { TwoFactorAuthService } from './two-factor-authentication/two-factor-auth.service';
+import { JwtTwoFactorStrategy } from './strategies/jwt-two-factor.strategy';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     JwtModule.register({}),
     HttpModule,
+    UsersModule,
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, TwoFactorAuthController],
   providers: [
     FourtyTwoStrategy,
     JwtStrategy,
     JwtRefreshStrategy,
+    JwtTwoFactorStrategy,
     AuthService,
-    UsersService,
+    TwoFactorAuthService,
   ],
-  exports: [FourtyTwoStrategy, JwtStrategy, AuthService],
+  exports: [],
 })
 export class AuthModule {}

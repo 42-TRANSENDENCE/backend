@@ -1,20 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-http-bearer';
-import { UsersService } from 'src/users/users.service';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class FourtyTwoStrategy extends PassportStrategy(
   Strategy,
   'fourty-two',
 ) {
-  private readonly logger = new Logger('Strategy');
-
-  constructor(private userService: UsersService) {
+  constructor(private authService: AuthService) {
     super();
   }
 
   async validate(token: string) {
-    return await this.userService.getFourtyTwoUserInfo(token);
+    return this.authService.getFourtyTwoUserInfo(token);
   }
 }

@@ -3,26 +3,40 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { AppModule } from './app.module';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const customSecuritySchemeObject: SecuritySchemeObject = {
+  const fourtyTwoAccessToken: SecuritySchemeObject = {
     type: 'http',
     scheme: 'bearer',
-    name: 'JWT',
-    in: 'header',
+  };
+
+  const authenticationCookie: SecuritySchemeObject = {
+    type: 'apiKey',
+    description: '42 Pong JWT Access Token',
+    name: 'Authentication',
+    in: 'cookie',
+  };
+
+  const refreshCookie: SecuritySchemeObject = {
+    type: 'apiKey',
+    description: '42 Pong JWT Refresh Token',
+    name: 'Refresh',
+    in: 'cookie',
   };
 
   const config = new DocumentBuilder()
     .setTitle('42 Pong API')
     .setDescription('42 Pong API description')
     .setVersion('1.0')
-    .addBearerAuth(customSecuritySchemeObject, 'JWT access token')
-    .addBearerAuth(customSecuritySchemeObject, 'JWT refresh token')
-    .addBearerAuth(customSecuritySchemeObject, '42 access token')
+    .addBearerAuth(fourtyTwoAccessToken, '42-token')
+    .addCookieAuth('Authentication', authenticationCookie)
+    .addCookieAuth('Refresh', refreshCookie)
     .addTag('auth', '인증 API')
     .addTag('users', '사용자 API')
+    .addTag('2fa', '2차 인증 API')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -36,6 +50,7 @@ async function bootstrap() {
   });
 
   app.useGlobalPipes(new ValidationPipe());
+  app.use(cookieParser());
 
   await app.listen(3000);
 }
