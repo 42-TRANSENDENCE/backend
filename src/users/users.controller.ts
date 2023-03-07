@@ -19,6 +19,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBody,
+  ApiConflictResponse,
   ApiConsumes,
   ApiCreatedResponse,
   ApiOperation,
@@ -67,6 +68,7 @@ export class UsersController {
       '회원 가입 기능. avatar는 기본으로 42 이미지를 기반으로 생성됨',
   })
   @ApiCreatedResponse({ description: '회원가입 성공' })
+  @ApiConflictResponse({ description: '이미 존재하는 닉네임입니다.' })
   @ApiBody({ type: CreateUserDto })
   @ApiSecurity('42 access token')
   signUp(@Body() createUserDto: CreateUserDto, @Req() req): any {
