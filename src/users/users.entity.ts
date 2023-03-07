@@ -7,7 +7,7 @@ export enum UserStatus {
   INGAME = 'INGAME',
 }
 
-@Entity()
+@Entity({ name: 'user'})
 export class User {
   @PrimaryColumn()
   id: number;
@@ -40,3 +40,4 @@ export class User {
   @Column({ default: false })
   isTwoFactorAuthenticationEnabled: boolean;
 }
+
