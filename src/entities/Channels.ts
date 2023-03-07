@@ -36,6 +36,10 @@ export class Channels {
     @UpdateDateColumn()
     updatedAt: Date;
 
+    // @OneToMany(() => ChannelMember, (channelMembers) => channelMember.Channels, {
+    //   cascade: ['insert'],
+    // })
+    // ChannelMembers: ChannelMembers[];
     // @OneToMany(type => ChannelMember, channelmembers => channelmembers.channelmembers)
     // channelmembers: ChannelMember[];
 }
