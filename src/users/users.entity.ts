@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 export enum UserStatus {
@@ -11,20 +12,30 @@ export class User {
   @PrimaryColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   nickname: string;
 
-  @Column()
-  avatar: string;
-
-  @Column({ default: false })
-  useAuth: boolean;
+  @Column({
+    type: 'bytea',
+    nullable: false,
+  })
+  avatar: Uint8Array;
 
   @Column({
     type: 'enum',
     enum: UserStatus,
     default: UserStatus.OFFLINE,
   })
-  status: number;
+  status: UserStatus;
+
+  @Column({ nullable: true })
+  @Exclude()
+  hashedRefreshToken?: string;
+
+  @Column({ nullable: true })
+  twoFactorSecret?: string;
+
+  @Column({ default: false })
+  isTwoFactorAuthenticationEnabled: boolean;
 }
 
