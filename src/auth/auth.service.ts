@@ -15,8 +15,6 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     private readonly httpService: HttpService,
   ) {}
 
@@ -25,7 +23,6 @@ export class AuthService {
     isTwoFactorAuthenticationCompleted = false,
   ) {
     const payload: TokenPayload = { id, isTwoFactorAuthenticationCompleted };
-    console.log(payload);
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
       expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME'),

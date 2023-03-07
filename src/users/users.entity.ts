@@ -19,6 +19,7 @@ export class User {
     type: 'bytea',
     nullable: false,
   })
+  @Exclude()
   avatar: Uint8Array;
 
   @Column({
@@ -33,6 +34,7 @@ export class User {
   hashedRefreshToken?: string;
 
   @Column({ nullable: true })
+  @Exclude()
   twoFactorSecret?: string;
 
   @Column({ default: false })
