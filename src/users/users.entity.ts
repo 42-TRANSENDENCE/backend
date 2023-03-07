@@ -19,6 +19,7 @@ export class User {
     type: 'bytea',
     nullable: false,
   })
+  @Exclude()
   avatar: Uint8Array;
 
   @Column({
