@@ -7,7 +7,10 @@ import { UsersService } from 'src/users/users.service';
 import { TokenPayload } from '../token-payload.interface';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+export class JwtTwoFactorStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-2fa',
+) {
   constructor(
     private readonly configService: ConfigService,
     private readonly userService: UsersService,
@@ -19,12 +22,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         },
       ]),
       secretOrKey: configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
-      passReqToCallback: true,
     });
   }
 
   async validate(payload: TokenPayload) {
     const user = await this.userService.getById(payload.id);
-    return user;
+    if (!user.isTwoFactorAuthenticationEnabled) {
+      return user;
+    }
+    if (payload.isTwoFactorAuthenticationCompleted) {
+      return user;
+    }
   }
 }
