@@ -1,18 +1,11 @@
 import { HttpService } from '@nestjs/axios';
-import {
-  ConflictException,
-  Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosError } from 'axios';
 import { catchError, firstValueFrom } from 'rxjs';
-import { AuthService, JwtTokens } from 'src/auth/auth.service';
-import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/users.dto';
+import { Repository, UpdateResult } from 'typeorm';
 import { User } from './users.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -21,8 +14,30 @@ export class UsersService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly httpService: HttpService,
-    private readonly authService: AuthService,
   ) {}
+
+  async setTwoFactorAuthenticationSecret(id: number, secret: string) {
+    return await this.userRepository.update(
+      { id },
+      { twoFactorSecret: secret },
+    );
+  }
+
+  async setCurrentRefreshToken(refreshToken: string, id: number) {
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.userRepository.update({ id }, { hashedRefreshToken });
+  }
+
+  async getUserIfRefreshTokenValid(refreshToken: string, id: number) {
+    const user = await this.getById(id);
+    const isRefreshTokenMatch = bcrypt.compare(
+      refreshToken,
+      user.hashedRefreshToken,
+    );
+    if (isRefreshTokenMatch) {
+      return user;
+    }
+  }
 
   async getAvatarFromWeb(url: string): Promise<Buffer> {
     const { data } = await firstValueFrom(
@@ -36,64 +51,77 @@ export class UsersService {
     return data;
   }
 
-  async signUp(
-    createUserDto: CreateUserDto,
-    id: number,
-    avatarUrl: string,
-  ): Promise<JwtTokens> {
-    const isExist = await this.userRepository.findOneBy({
-      nickname: createUserDto.nickname,
-    });
-    if (isExist) {
-      throw new ConflictException('invalid nickname');
+  async removeRefreshToken(id: number): Promise<UpdateResult> {
+    return this.userRepository.update({ id }, { hashedRefreshToken: null });
+  }
+
+  //   async signUp(
+  //     createUserDto: CreateUserDto,
+  //     id: number,
+  //     avatarUrl: string,
+  //   ): Promise<JwtTokens> {
+  //     const isExist = await this.userRepository.findOneBy({
+  //       nickname: createUserDto.nickname,
+  //     });
+  //     if (isExist) {
+  //       throw new ConflictException('invalid nickname');
+  //     }
+
+  //     const avatar = await this.getAvatarFromWeb(avatarUrl);
+  //     const tokens = await this.authService.getTokens(id);
+
+  //     const user = this.userRepository.create({
+  //       id,
+  //       nickname: createUserDto.nickname,
+  //       avatar,
+  //       hashedRefreshToken: tokens.refreshToken,
+  //     });
+  //     this.userRepository.save(user);
+  //     console.log(user);
+  //     return tokens;
+  //   }
+
+  async turnOnTwoFactorAuthentication(id: number) {
+    return this.userRepository.update(
+      { id },
+      { isTwoFactorAuthenticationEnabled: true },
+    );
+  }
+
+  async turnOffTwoFactorAuthentication(id: number) {
+    return this.userRepository.update(
+      { id },
+      { isTwoFactorAuthenticationEnabled: false, twoFactorSecret: null },
+    );
+  }
+
+  async getById(id: number): Promise<User> {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      throw new NotFoundException(`user not found`);
     }
-
-    const avatar = await this.getAvatarFromWeb(avatarUrl);
-    const tokens = await this.authService.getTokens(id);
-
-    const user = this.userRepository.create({
-      id,
-      nickname: createUserDto.nickname,
-      avatar,
-      refreshToken: tokens.refreshToken,
-    });
-    this.userRepository.save(user);
-    console.log(user);
-    return tokens;
+    return user;
   }
 
   async getUserAvatar(id: number): Promise<Uint8Array> {
-    const user = await this.userRepository.findOneBy({ id });
+    const user = await this.getById(id);
     return user.avatar;
   }
 
-  async getUserInfo(id: number): Promise<User> {
-    return this.userRepository.findOneBy({ id });
-  }
-
-  async getFourtyTwoUserInfo(token: string) {
-    const { data } = await firstValueFrom(
-      this.httpService
-        .get('https://api.intra.42.fr/v2/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .pipe(
-          catchError((error: AxiosError) => {
-            this.logger.error(error);
-            throw new UnauthorizedException('invalid 42 token');
-          }),
-        ),
-    );
-    return data;
-  }
-
   async deleteUser(id: number) {
-    return this.userRepository.delete({ id });
+    const deleteResult = await this.userRepository.delete({ id });
+    if (!deleteResult) {
+      throw new NotFoundException();
+    }
   }
 
   async updateUserAvatar(id: number, data: Buffer) {
-    const user = await this.userRepository.findOneBy({ id });
-    user.avatar = data;
-    return this.userRepository.save(user);
+    const updateResult = await this.userRepository.update(
+      { id },
+      { avatar: data },
+    );
+    if (!updateResult.affected) {
+      throw new NotFoundException();
+    }
   }
 }
