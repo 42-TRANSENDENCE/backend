@@ -3,7 +3,7 @@ import { ApiOperation,ApiTags } from '@nestjs/swagger';
 import { ChannelsService } from './channels.service';
 import { User } from 'src/users/users.entity';
 import { Users } from 'src/common/decorators/user.decorator';
-import { CreateChannelDto } from './dto/create-chat.dto';
+import { CreateChannelDto } from './dto/create-channel.dto';
 
 @ApiTags('CHANNEL')
 @Controller('api/room_list')
@@ -31,7 +31,7 @@ export class ChannelsController {
     }
 
     @ApiOperation({ summary: '채팅방 멤버 가져오기'})
-    @Get('/:title/members')
+    @Get('/room/:title')
     async getChannelMembers(
         @Param('title') title: string,
     ){

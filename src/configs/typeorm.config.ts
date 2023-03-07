@@ -20,7 +20,6 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       Channels,
       ChannelMember],
       synchronize: true,
-      // schema: 'j_test',
     };
   }
 }

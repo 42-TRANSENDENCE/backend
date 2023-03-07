@@ -5,7 +5,7 @@ import { PrimaryGeneratedColumn,
     Entity,
  } from "typeorm";
 
-@Entity({ schema: 'j_test', name: 'chats' })
+@Entity({ name: 'chats' })
 export class Chats {
     @PrimaryGeneratedColumn({type:'int', name: 'id'})
     id : number;

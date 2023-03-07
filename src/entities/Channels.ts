@@ -13,7 +13,7 @@ export class Channels {
     @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
     id: number;
   
-    @Column('varchar', { name: 'title', length: 30 })
+    @Column('varchar', { name: 'title', length: 30 , default:"default"})
     title: string;
     
     @Column('int', {name: 'owner', default: 0})

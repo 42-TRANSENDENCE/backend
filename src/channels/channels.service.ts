@@ -12,6 +12,8 @@ export class ChannelsService {
         private channelsRepository: Repository<Channels>,
         @InjectRepository(User)
         private usersRepository: Repository<User>,
+        @InjectRepository(ChannelMember)
+        private channelMemberRepository: Repository<ChannelMember>,
         // private readonly eventsGateway: EventsGateway,
         private readonly channelsGateway: ChannelsGateway,
     ) {}
@@ -34,20 +36,20 @@ export class ChannelsService {
         // emit an event to the connected WebSocket clients
         console.log('channelReturned:', channelReturned);
         this.channelsGateway.server.emit('channelCreated', channelReturned);
-        // const channelMember = new ChannelMember();
-        // channelMember.UserId = myId;
-        // channelMember.ChannelId = channelReturned.id;
-        // await this.channelsRepository.save(channelMember);
+        const channelMember = new ChannelMember();
+        channelMember.UserId = myId;
+        channelMember.ChannelId = channelReturned.id;
+        await this.channelMemberRepository.save(channelMember);
     }
 
     // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
     async getChannelMembers(title: string)
     {
         return this.usersRepository
-        .createQueryBuilder('user')
-        // .innerJoin('user.Channels', 'channels', 'channels.title = :title', {
-        //     title,
-        //   })
+        .createQueryBuilder('channles')
+        .innerJoin('channels', 'channels', 'channels.title = :title', {
+            title,
+          })
         .getMany();
     }
 
