@@ -1,10 +1,12 @@
 import {
+  Body,
   Controller,
   Delete,
   FileTypeValidator,
   Get,
   MaxFileSizeValidator,
   ParseFilePipe,
+  Post,
   Put,
   Req,
   Res,
@@ -16,32 +18,16 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
+import { FourtyTwoGuard } from 'src/auth/guards/fourty-two.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
+import { CreateUserDto } from './dto/users.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
-
-  //   @Post('signup')
-  //   @ApiOperation({
-  //     summary: 'sign up',
-  //     description: '42 Pong sign up 42 access token required',
-  //   })
-  //   @ApiConflictResponse({ description: 'nickname exists' })
-  //   @ApiCreatedResponse({
-  //     description: 'sign up success',
-  //     schema: { example: { accessToken: 'xxx', refreshToken: 'xxx' } },
-  //   })
-  //   @ApiSecurity('42 access token')
-  //   @UseGuards(FourtyTwoGuard)
-  //   signUp(@Body() createUserDto: CreateUserDto, @Req() req) {
-  //     const { id, image } = req.user;
-  //     const { link } = image;
-  //     return this.userService.signUp(createUserDto, id, link);
-  //   }
 
   @Get()
   @ApiSecurity('JWT access token')
@@ -64,11 +50,17 @@ export class UsersController {
     return new StreamableFile(avatar);
   }
 
-  @Delete()
-  @ApiOperation({ summary: 'delete user' })
-  @UseGuards(JwtTwoFactorGuard)
-  deleteUser(@Req() req) {
-    return this.userService.deleteUser(req.user.id);
+  @Post('signup')
+  @ApiOperation({
+    summary: 'sign up',
+    description: '42 Pong sign up 42 access token required',
+  })
+  @ApiSecurity('42 access token')
+  @UseGuards(FourtyTwoGuard)
+  signUp(@Body() createUserDto: CreateUserDto, @Req() req): any {
+    const { id, image } = req.user;
+    const { link } = image;
+    this.userService.signUp(createUserDto, id, link);
   }
 
   @Put('avatar')
@@ -92,5 +84,12 @@ export class UsersController {
     file: Express.Multer.File,
   ) {
     this.userService.updateUserAvatar(req.user.id, file.buffer);
+  }
+
+  @Delete()
+  @ApiOperation({ summary: 'delete user' })
+  @UseGuards(JwtTwoFactorGuard)
+  deleteUser(@Req() req) {
+    return this.userService.deleteUser(req.user.id);
   }
 }
