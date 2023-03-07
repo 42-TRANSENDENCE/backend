@@ -1,11 +1,17 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosError } from 'axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { Repository, UpdateResult } from 'typeorm';
 import { User } from './users.entity';
 import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from './dto/users.dto';
 
 @Injectable()
 export class UsersService {
@@ -55,31 +61,22 @@ export class UsersService {
     return this.userRepository.update({ id }, { hashedRefreshToken: null });
   }
 
-  //   async signUp(
-  //     createUserDto: CreateUserDto,
-  //     id: number,
-  //     avatarUrl: string,
-  //   ): Promise<JwtTokens> {
-  //     const isExist = await this.userRepository.findOneBy({
-  //       nickname: createUserDto.nickname,
-  //     });
-  //     if (isExist) {
-  //       throw new ConflictException('invalid nickname');
-  //     }
+  async signUp(createUserDto: CreateUserDto, id: number, avatarUrl: string) {
+    const isExist = await this.userRepository.findOneBy({
+      nickname: createUserDto.nickname,
+    });
+    if (isExist) {
+      throw new ConflictException('invalid nickname');
+    }
 
-  //     const avatar = await this.getAvatarFromWeb(avatarUrl);
-  //     const tokens = await this.authService.getTokens(id);
-
-  //     const user = this.userRepository.create({
-  //       id,
-  //       nickname: createUserDto.nickname,
-  //       avatar,
-  //       hashedRefreshToken: tokens.refreshToken,
-  //     });
-  //     this.userRepository.save(user);
-  //     console.log(user);
-  //     return tokens;
-  //   }
+    const avatar = await this.getAvatarFromWeb(avatarUrl);
+    const user = this.userRepository.create({
+      id,
+      nickname: createUserDto.nickname,
+      avatar,
+    });
+    await this.userRepository.save(user);
+  }
 
   async turnOnTwoFactorAuthentication(id: number) {
     return this.userRepository.update(
