@@ -62,6 +62,7 @@ export class TwoFactorAuthController {
       true,
     );
     req.res.setHeader('Set-Cookie', [accessCookie]);
+    return;
   }
 
   @Post('turn-on')
@@ -69,7 +70,7 @@ export class TwoFactorAuthController {
   @UseGuards(JwtAuthGuard)
   @ApiOkResponse({ description: '2차 인증 활성화' })
   async turnOn(@Req() req) {
-    await this.usersService.turnOnTwoFactorAuthentication(req.user.id);
+    return await this.usersService.turnOnTwoFactorAuthentication(req.user.id);
   }
 
   @Post('turn-off')
@@ -77,6 +78,6 @@ export class TwoFactorAuthController {
   @UseGuards(JwtTwoFactorGuard)
   @ApiOkResponse({ description: '2차 인증 비활성화' })
   async turnOff(@Req() req) {
-    await this.usersService.turnOffTwoFactorAuthentication(req.user.id);
+    return await this.usersService.turnOffTwoFactorAuthentication(req.user.id);
   }
 }

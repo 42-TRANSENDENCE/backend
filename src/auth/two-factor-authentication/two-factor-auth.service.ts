@@ -33,5 +33,6 @@ export class TwoFactorAuthService {
     if (!isVerified) {
       throw new UnauthorizedException('two factor authentication fail');
     }
+    return;
   }
 }
