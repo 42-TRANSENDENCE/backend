@@ -18,12 +18,12 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiConflictResponse,
   ApiConsumes,
   ApiCreatedResponse,
   ApiOperation,
-  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -70,7 +70,7 @@ export class UsersController {
   @ApiCreatedResponse({ description: '회원가입 성공' })
   @ApiConflictResponse({ description: '이미 존재하는 닉네임입니다.' })
   @ApiBody({ type: CreateUserDto })
-  @ApiSecurity('42 access token')
+  @ApiBearerAuth('42-token')
   signUp(@Body() createUserDto: CreateUserDto, @Req() req): any {
     const { id, image } = req.user;
     const { link } = image;
