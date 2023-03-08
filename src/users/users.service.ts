@@ -81,14 +81,12 @@ export class UsersService {
   }
 
   async signUp(createUserDto: CreateUserDto, id: number, avatarUrl: string) {
-    const isInvalidNickname = await this.userRepository.findOneBy({
-      nickname: createUserDto.nickname,
+    const isInvalidRequest = await this.userRepository.find({
+      where: [{ id }, { nickname: createUserDto.nickname }],
     });
-    if (isInvalidNickname) {
+    if (isInvalidRequest.length) {
       throw new BadRequestException();
     }
-
-    await this.userRepository.findOneBy({ id });
 
     const avatar = await this.getAvatarFromWeb(avatarUrl);
     const user = this.userRepository.create({
