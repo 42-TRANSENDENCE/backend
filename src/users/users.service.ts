@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import {
-  ConflictException,
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -23,15 +23,26 @@ export class UsersService {
   ) {}
 
   async setTwoFactorAuthenticationSecret(id: number, secret: string) {
-    return await this.userRepository.update(
+    const updateResult = await this.userRepository.update(
       { id },
       { twoFactorSecret: secret },
     );
+    if (!updateResult.affected) {
+      throw new NotFoundException();
+    }
+    return;
   }
 
   async setCurrentRefreshToken(refreshToken: string, id: number) {
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-    await this.userRepository.update({ id }, { hashedRefreshToken });
+    const updateResult = await this.userRepository.update(
+      { id },
+      { hashedRefreshToken },
+    );
+    if (!updateResult.affected) {
+      throw new NotFoundException();
+    }
+    return;
   }
 
   async getUserIfRefreshTokenValid(refreshToken: string, id: number) {
@@ -43,6 +54,7 @@ export class UsersService {
     if (isRefreshTokenMatch) {
       return user;
     }
+    return;
   }
 
   async getAvatarFromWeb(url: string): Promise<Buffer> {
@@ -58,16 +70,25 @@ export class UsersService {
   }
 
   async removeRefreshToken(id: number): Promise<UpdateResult> {
-    return this.userRepository.update({ id }, { hashedRefreshToken: null });
+    const updateResult = await this.userRepository.update(
+      { id },
+      { hashedRefreshToken: null },
+    );
+    if (!updateResult.affected) {
+      throw new NotFoundException();
+    }
+    return;
   }
 
   async signUp(createUserDto: CreateUserDto, id: number, avatarUrl: string) {
-    const isExist = await this.userRepository.findOneBy({
+    const isInvalidNickname = await this.userRepository.findOneBy({
       nickname: createUserDto.nickname,
     });
-    if (isExist) {
-      throw new ConflictException('invalid nickname');
+    if (isInvalidNickname) {
+      throw new BadRequestException();
     }
+
+    await this.userRepository.findOneBy({ id });
 
     const avatar = await this.getAvatarFromWeb(avatarUrl);
     const user = this.userRepository.create({
@@ -75,27 +96,35 @@ export class UsersService {
       nickname: createUserDto.nickname,
       avatar,
     });
-    await this.userRepository.save(user);
+    return await this.userRepository.save(user);
   }
 
   async turnOnTwoFactorAuthentication(id: number) {
-    return this.userRepository.update(
+    const updateResult = await this.userRepository.update(
       { id },
       { isTwoFactorAuthenticationEnabled: true },
     );
+    if (!updateResult.affected) {
+      throw new NotFoundException();
+    }
+    return;
   }
 
   async turnOffTwoFactorAuthentication(id: number) {
-    return this.userRepository.update(
+    const updateResult = await this.userRepository.update(
       { id },
       { isTwoFactorAuthenticationEnabled: false, twoFactorSecret: null },
     );
+    if (!updateResult.affected) {
+      throw new NotFoundException();
+    }
+    return;
   }
 
   async getById(id: number): Promise<User> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
-      throw new NotFoundException(`user not found`);
+      throw new NotFoundException();
     }
     return user;
   }
@@ -107,9 +136,10 @@ export class UsersService {
 
   async deleteUser(id: number) {
     const deleteResult = await this.userRepository.delete({ id });
-    if (!deleteResult) {
+    if (!deleteResult.affected) {
       throw new NotFoundException();
     }
+    return;
   }
 
   async updateUserAvatar(id: number, data: Buffer) {
@@ -120,5 +150,6 @@ export class UsersService {
     if (!updateResult.affected) {
       throw new NotFoundException();
     }
+    return;
   }
 }

@@ -18,9 +18,9 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
-  ApiConflictResponse,
   ApiConsumes,
   ApiCreatedResponse,
   ApiOperation,
@@ -68,13 +68,13 @@ export class UsersController {
       '회원 가입 기능. avatar는 기본으로 42 이미지를 기반으로 생성됨',
   })
   @ApiCreatedResponse({ description: '회원가입 성공' })
-  @ApiConflictResponse({ description: '이미 존재하는 닉네임입니다.' })
+  @ApiBadRequestResponse({ description: '이미 존재하는 닉네임입니다.' })
   @ApiBody({ type: CreateUserDto })
   @ApiBearerAuth('42-token')
   signUp(@Body() createUserDto: CreateUserDto, @Req() req): any {
     const { id, image } = req.user;
     const { link } = image;
-    this.userService.signUp(createUserDto, id, link);
+    return this.userService.signUp(createUserDto, id, link);
   }
 
   @Put('avatar')
@@ -105,7 +105,7 @@ export class UsersController {
     )
     file: Express.Multer.File,
   ) {
-    this.userService.updateUserAvatar(req.user.id, file.buffer);
+    return this.userService.updateUserAvatar(req.user.id, file.buffer);
   }
 
   @Delete()
