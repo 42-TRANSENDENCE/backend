@@ -46,7 +46,7 @@ export class ChannelsController {
         @Body() body: CreateChannelDto,
         @Users() user : User,
     ) {
-        return this.channelsService.userEnterChannel(channelId,body.password,user)
+            return this.channelsService.userEnterChannel(channelId,body.password,user)
     }
 
 }
