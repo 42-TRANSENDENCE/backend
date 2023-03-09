@@ -37,6 +37,7 @@ import { DatabaseModule } from './database/database.module';
     UsersModule,
     ChatsModule,
     ChannelsModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [
