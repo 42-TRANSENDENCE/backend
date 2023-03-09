@@ -1,3 +1,4 @@
+import { InjectQueue } from '@nestjs/bull';
 import {
   ClassSerializerInterceptor,
   Controller,
@@ -15,6 +16,7 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Queue } from 'bull';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
 import { FourtyTwoGuard } from './guards/fourty-two.guard';
@@ -26,6 +28,8 @@ import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 @UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(
+    @InjectQueue('fourtyTwoLogin')
+    private loginQueue: Queue,
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
   ) {}

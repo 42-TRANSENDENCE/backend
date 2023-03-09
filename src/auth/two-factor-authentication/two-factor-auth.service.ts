@@ -1,4 +1,4 @@
-import { Injectable, Res, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, Res, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
@@ -9,6 +9,8 @@ export interface QRCodeUrl {
 
 @Injectable()
 export class TwoFactorAuthService {
+  private logger: Logger = new Logger(TwoFactorAuthService.name);
+
   constructor(private readonly usersService: UsersService) {}
 
   async generateTwoFactorAuthSecret(id: number) {
@@ -31,6 +33,7 @@ export class TwoFactorAuthService {
     });
 
     if (!isVerified) {
+      this.logger.error(`2FA Failed token: ${token}`);
       throw new UnauthorizedException('two factor authentication fail');
     }
     return;
