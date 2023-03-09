@@ -13,6 +13,8 @@ import { User } from './users.entity';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/users.dto';
 
+const notFoundErrorMessage = 'User Not Found';
+
 @Injectable()
 export class UsersService {
   private logger: Logger = new Logger('User Serivce');
@@ -28,7 +30,8 @@ export class UsersService {
       { twoFactorSecret: secret },
     );
     if (!updateResult.affected) {
-      throw new NotFoundException();
+      this.logger.error(`user update failed id : ${id} secret : ${secret}`);
+      throw new NotFoundException(notFoundErrorMessage);
     }
     return;
   }
@@ -40,7 +43,10 @@ export class UsersService {
       { hashedRefreshToken },
     );
     if (!updateResult.affected) {
-      throw new NotFoundException();
+      this.logger.error(
+        `user update failed refreshToken: ${refreshToken} id: ${id}`,
+      );
+      throw new NotFoundException(notFoundErrorMessage);
     }
     return;
   }
@@ -54,6 +60,7 @@ export class UsersService {
     if (isRefreshTokenMatch) {
       return user;
     }
+    this.logger.error(`Refresh Token is not valid. return nothing`);
     return;
   }
 
@@ -75,7 +82,8 @@ export class UsersService {
       { hashedRefreshToken: null },
     );
     if (!updateResult.affected) {
-      throw new NotFoundException();
+      this.logger.error(`user update failed id : ${id}`);
+      throw new NotFoundException(notFoundErrorMessage);
     }
     return;
   }
@@ -85,7 +93,10 @@ export class UsersService {
       where: [{ id }, { nickname: createUserDto.nickname }],
     });
     if (isInvalidRequest.length) {
-      throw new BadRequestException();
+      this.logger.error(
+        `id: ${id}, nickname: ${createUserDto.nickname} duplicated user signup request`,
+      );
+      throw new BadRequestException('invalid user nickname or id');
     }
 
     const avatar = await this.getAvatarFromWeb(avatarUrl);
@@ -103,7 +114,8 @@ export class UsersService {
       { isTwoFactorAuthenticationEnabled: true },
     );
     if (!updateResult.affected) {
-      throw new NotFoundException();
+      this.logger.error(`user : ${id} turn on 2FA failed`);
+      throw new NotFoundException(notFoundErrorMessage);
     }
     return;
   }
@@ -114,7 +126,8 @@ export class UsersService {
       { isTwoFactorAuthenticationEnabled: false, twoFactorSecret: null },
     );
     if (!updateResult.affected) {
-      throw new NotFoundException();
+      this.logger.error(`user : ${id} turn off 2FA failed`);
+      throw new NotFoundException(notFoundErrorMessage);
     }
     return;
   }
@@ -122,7 +135,8 @@ export class UsersService {
   async getById(id: number): Promise<User> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
-      throw new NotFoundException();
+      this.logger.error(`user: ${id} is not exist`);
+      throw new NotFoundException(notFoundErrorMessage);
     }
     return user;
   }
@@ -135,7 +149,8 @@ export class UsersService {
   async deleteUser(id: number) {
     const deleteResult = await this.userRepository.delete({ id });
     if (!deleteResult.affected) {
-      throw new NotFoundException();
+      this.logger.error(`user : ${id} delete user failed`);
+      throw new NotFoundException(notFoundErrorMessage);
     }
     return;
   }
@@ -146,7 +161,8 @@ export class UsersService {
       { avatar: data },
     );
     if (!updateResult.affected) {
-      throw new NotFoundException();
+      this.logger.error(`user : ${id} update avatar failed`);
+      throw new NotFoundException(notFoundErrorMessage);
     }
     return;
   }
