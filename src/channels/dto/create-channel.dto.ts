@@ -6,12 +6,12 @@ export class CreateChannelDto {
   @IsString()
   @ApiProperty({
     example: '수다방',
-    description: '채팅방명',
+    description: '채팅방 이름',
   })
   public title: string;
 
-  @IsString()
-  @IsNotEmpty()
+  // @IsString()
+  // @IsNotEmpty()
   @ApiProperty({
     example: '1q2w3e4r',
     description: '비밀번호',
@@ -22,7 +22,7 @@ export class CreateChannelDto {
   // @IsString()
   @ApiProperty({
     example: 'junyopar',
-    description: '채팅방 소유자',
+    description: '채팅방 소유자, 처음 생성자',
   })
   public owner: number;
 }
