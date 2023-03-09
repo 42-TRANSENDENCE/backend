@@ -31,15 +31,20 @@ export class ChannelsService {
 
     async createChannels(title: string, password:string, myId: number) {
         const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password.toString(), saltRounds);
         const channel = this.channelsRepository.create({
             title: title,
-            password: hashedPassword,
+            password: password,
             owner: myId,
         })
+        if(password) {
+            const hashedPassword = await bcrypt.hash(password.toString(), saltRounds);
+            // channel.private = true;
+            channel.private = true;
+            channel.password = hashedPassword;
+        }
         // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
         const channelReturned = await this.channelsRepository.save(channel);
-        console.log('channelReturned:', channelReturned.title);
+        this.logger.log('channelReturned:', channelReturned.title);
         // this.channelsGateway.nsp.server.emit('create-room', {message:`${channelReturned.title}`});
         const channelMember = this.channelMemberRepository.create({
             UserId : myId,
@@ -67,14 +72,22 @@ export class ChannelsService {
         // const curChannel = await this.channelsRepository.createQueryBuilder()
         // .where('id = :channel_id', {channel_id})
         // .getOne();
-        const inputPasswordMatches = await bcrypt.compare(password, (await curChannel).password);
-        console.log(inputPasswordMatches)
-        if (!inputPasswordMatches) {
-          throw new UnauthorizedException('Invalid password');
+        if(password) {
+            const inputPasswordMatches = await bcrypt.compare(password, (await curChannel).password);
+            this.logger.log(inputPasswordMatches)
+            if (!inputPasswordMatches) {
+            throw new UnauthorizedException('Invalid password');
+            }
+            else {
+                // 맞으면 소켓 연결하고 디비에 추가 채널멤버에 .
+                this.logger.log("suceccses")
+            }
         }
-        else {
-            // 맞으면 소켓 연결하고 디비에 추가 채널멤버에 .
-            console.log("suceccses")
+        else {// password 없으면 그냥 소켓 연결 하기 전에 비밀 번호가 있는곳에 접근 하면 Cut  해야함.
+            if(curChannel.private) // private 로 판단 ? 
+                throw new UnauthorizedException('Invalid password');
+            else
+                this.logger.log("suc")
         }
       
         // const inputhashPassword = await bcrypt.compare(password.toString(), (await curChannel).password);
