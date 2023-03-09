@@ -5,6 +5,7 @@ import { Entity,
     UpdateDateColumn,
     OneToMany,
      } from "typeorm";
+import { ChannelMember } from "./channelcember.entity";
 
 @Entity()
 export class Channels {
@@ -17,14 +18,15 @@ export class Channels {
     @Column({nullable:true, default: () => "'0'"})
     owner: number;
 
-    @Column('smallint', {
+    @Column({
       nullable: true,
-      width: 1,
       default: () => "'0'",
     })
     private: boolean | null;
     
-    @Column('varchar', {length: 100, default:""})
+    //TODO:
+    // 이부분 default 로 하면 몇으로 할당 하는지 체크해서 최적화
+    @Column('varchar',{length:1000,default:""}) 
     password: string;
 
     @CreateDateColumn()
@@ -33,10 +35,8 @@ export class Channels {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    // @OneToMany(() => ChannelMember, (channelMembers) => channelMember.Channels, {
+    // @OneToMany(() => ChannelMember, (ChannelMember) => ChannelMember.Channel, {
     //   cascade: ['insert'],
     // })
-    // ChannelMembers: ChannelMembers[];
-    // @OneToMany(type => ChannelMember, channelmembers => channelmembers.channelmembers)
-    // channelmembers: ChannelMember[];
+    // ChannelMember: ChannelMember[];
 }

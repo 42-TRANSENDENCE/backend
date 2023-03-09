@@ -40,6 +40,7 @@ import { BullModule } from '@nestjs/bull';
     UsersModule,
     ChatsModule,
     ChannelsModule,
+    EventsModule,
     GameModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
