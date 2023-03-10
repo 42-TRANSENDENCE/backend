@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { FourtyTwoStrategy } from './strategies/fourty-two.strategy';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
@@ -28,7 +27,6 @@ import { LoginConsumer } from './login.consumer';
   ],
   controllers: [AuthController, TwoFactorAuthController],
   providers: [
-    FourtyTwoStrategy,
     JwtStrategy,
     JwtRefreshStrategy,
     JwtTwoFactorStrategy,

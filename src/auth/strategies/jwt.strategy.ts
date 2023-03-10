@@ -1,13 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from 'src/users/users.service';
-import { TokenPayload } from '../token-payload.interface';
+import { TokenPayload } from '../interface/token-payload.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+  private logger: Logger = new Logger(JwtStrategy.name);
+
   constructor(
     private readonly configService: ConfigService,
     private readonly userService: UsersService,
@@ -19,12 +21,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         },
       ]),
       secretOrKey: configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
-      passReqToCallback: true,
     });
   }
 
   async validate(payload: TokenPayload) {
-    const user = await this.userService.getById(payload.id);
-    return user;
+    this.logger.debug(
+      `id: ${payload.id} 2FA Completed: ${payload.isTwoFactorAuthenticationCompleted}`,
+    );
+    return await this.userService.getById(payload.id);
   }
 }

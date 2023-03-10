@@ -1,13 +1,16 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import { HttpService } from '@nestjs/axios';
-import { TokenPayload } from './token-payload.interface';
+import { TokenPayload } from './interface/token-payload.interface';
+import { FOURTY_TWO_TOKEN_URI, FOURTY_TWO_USER_INFO } from './auth.constants';
 
 @Injectable()
 export class AuthService {
+  private logger: Logger = new Logger(AuthService.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -53,14 +56,35 @@ export class AuthService {
   async getFourtyTwoUserInfo(token: string) {
     const { data } = await firstValueFrom(
       this.httpService
-        .get('https://api.intra.42.fr/v2/me', {
+        .get(FOURTY_TWO_USER_INFO, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .pipe(
           catchError((error: AxiosError) => {
+            this.logger.error(error);
             throw new UnauthorizedException('invalid 42 token');
           }),
         ),
+    );
+    return data;
+  }
+
+  async getFourtyTwoToken(code: string) {
+    const config = {
+      grant_type: 'authorization_code',
+      client_id: this.configService.get<string>('CLIENT_ID'),
+      client_secret: this.configService.get<string>('CLIENT_SECRET'),
+      code,
+      redirect_uri: this.configService.get<string>('REDIRECT_URI'),
+    };
+
+    const { data } = await firstValueFrom(
+      this.httpService.post(FOURTY_TWO_TOKEN_URI, config).pipe(
+        catchError((error: AxiosError) => {
+          this.logger.error(error);
+          throw new UnauthorizedException('invalid 42 token');
+        }),
+      ),
     );
     return data;
   }
