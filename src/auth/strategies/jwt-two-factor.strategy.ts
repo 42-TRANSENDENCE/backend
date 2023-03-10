@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from 'src/users/users.service';
-import { TokenPayload } from '../token-payload.interface';
+import { TokenPayload } from '../interface/token-payload.interface';
 
 @Injectable()
 export class JwtTwoFactorStrategy extends PassportStrategy(

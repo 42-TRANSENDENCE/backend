@@ -4,6 +4,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
+import * as session from 'express-session';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -42,14 +44,24 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
+  const configService = app.get(ConfigService);
+
   app.enableCors({
-    origin: '*',
+    origin: configService.get<string>('FRONTEND_URL'),
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204,
   });
 
   app.useGlobalPipes(new ValidationPipe());
+  app.use(
+    session({
+      secret: configService.get<string>('SESSION_SECRET'),
+      resave: false,
+      saveUninitialized: false,
+    }),
+  );
   app.use(cookieParser());
 
   await app.listen(3000);

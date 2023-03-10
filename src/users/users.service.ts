@@ -105,7 +105,8 @@ export class UsersService {
       nickname: createUserDto.nickname,
       avatar,
     });
-    return await this.userRepository.save(user);
+    await this.userRepository.save(user);
+    return user;
   }
 
   async turnOnTwoFactorAuthentication(id: number) {
