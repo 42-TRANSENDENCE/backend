@@ -4,14 +4,19 @@ import { JwtService } from '@nestjs/jwt';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import { HttpService } from '@nestjs/axios';
-import { TokenPayload } from './interface/token-payload.interface';
 import { FOURTY_TWO_TOKEN_URI, FOURTY_TWO_USER_INFO } from './auth.constants';
+import { JwtTokenPayload } from './interface/jwt-token-payload.interface';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
+import { FourtyTwoToken } from './interface/fourty-two-token.interface';
 
 @Injectable()
 export class AuthService {
   private logger: Logger = new Logger(AuthService.name);
 
   constructor(
+    @InjectQueue('fourtyTwoLogin')
+    private readonly loginQueue: Queue,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
@@ -21,7 +26,7 @@ export class AuthService {
     id: number,
     isTwoFactorAuthenticationCompleted = false,
   ) {
-    const payload: TokenPayload = { id, isTwoFactorAuthenticationCompleted };
+    const payload: JwtTokenPayload = { id, isTwoFactorAuthenticationCompleted };
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
       expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME'),
@@ -32,7 +37,7 @@ export class AuthService {
   }
 
   getCookieWithJwtRefreshToken(id: number) {
-    const payload: TokenPayload = { id };
+    const payload: JwtTokenPayload = { id };
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_REFRESH_TOKEN_SECRET'),
       expiresIn: this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME'),
@@ -53,6 +58,16 @@ export class AuthService {
     ];
   }
 
+  async getFourtyTwoUserInfoResultFromQueue(token: FourtyTwoToken) {
+    const job = await this.loginQueue.add('userInfo', { token });
+    try {
+      return await job.finished();
+    } catch (err) {
+      this.logger.error('42 Authorization failed');
+      throw new UnauthorizedException('42 Authorization failed');
+    }
+  }
+
   async getFourtyTwoUserInfo(token: string) {
     const { data } = await firstValueFrom(
       this.httpService
@@ -62,7 +77,9 @@ export class AuthService {
         .pipe(
           catchError((error: AxiosError) => {
             this.logger.error(error);
-            throw new UnauthorizedException('invalid 42 token');
+            throw new UnauthorizedException(
+              'invalid 42 token or server is busy',
+            );
           }),
         ),
     );
@@ -82,7 +99,7 @@ export class AuthService {
       this.httpService.post(FOURTY_TWO_TOKEN_URI, config).pipe(
         catchError((error: AxiosError) => {
           this.logger.error(error);
-          throw new UnauthorizedException('invalid 42 token');
+          throw new UnauthorizedException('invalid 42 token or server is busy');
         }),
       ),
     );

@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from 'src/users/users.service';
-import { TokenPayload } from '../interface/token-payload.interface';
+import { JwtTokenPayload } from '../interface/jwt-token-payload.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: TokenPayload) {
+  async validate(payload: JwtTokenPayload) {
     this.logger.debug(
       `id: ${payload.id} 2FA Completed: ${payload.isTwoFactorAuthenticationCompleted}`,
     );
