@@ -85,7 +85,7 @@ import { TypeOrmModule } from &#x27;@nestjs/typeorm&#x27;;
         type: &#x27;postgres&#x27;,
         host: configService.get(&#x27;DB_HOST&#x27;),
         port: configService.get(&#x27;DB_PORT&#x27;),
-        username: configService.get(&#x27;DB_USER_NAME&#x27;),
+        username: configService.get(&#x27;DB_USERNAME&#x27;),
         password: configService.get(&#x27;DB_PASSWORD&#x27;),
         database: configService.get(&#x27;DB_DATABASE&#x27;),
         entities: [__dirname + &#x27;/../**/*.entity.{js,ts}&#x27;],

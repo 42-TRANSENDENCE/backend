@@ -137,13 +137,13 @@
                         <b>Decorators : </b>
                         <br />
                         <code>
-                            @Column({type: &#x27;bytea&#x27;, nullable: false})<br />
+                            @Column({type: &#x27;bytea&#x27;, nullable: false})<br />@Exclude()<br />
                         </code>
                     </td>
                 </tr>
                     <tr>
                         <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="22" class="link-to-prism">src/users/users.entity.ts:22</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="23" class="link-to-prism">src/users/users.entity.ts:23</a></div>
                         </td>
                     </tr>
 
@@ -179,7 +179,7 @@
                 </tr>
                     <tr>
                         <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="33" class="link-to-prism">src/users/users.entity.ts:33</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="34" class="link-to-prism">src/users/users.entity.ts:34</a></div>
                         </td>
                     </tr>
 
@@ -249,7 +249,7 @@
                 </tr>
                     <tr>
                         <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="39" class="link-to-prism">src/users/users.entity.ts:39</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="41" class="link-to-prism">src/users/users.entity.ts:41</a></div>
                         </td>
                     </tr>
 
@@ -319,7 +319,7 @@
                 </tr>
                     <tr>
                         <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="29" class="link-to-prism">src/users/users.entity.ts:29</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="30" class="link-to-prism">src/users/users.entity.ts:30</a></div>
                         </td>
                     </tr>
 
@@ -349,13 +349,13 @@
                         <b>Decorators : </b>
                         <br />
                         <code>
-                            @Column({nullable: true})<br />
+                            @Column({nullable: true})<br />@Exclude()<br />
                         </code>
                     </td>
                 </tr>
                     <tr>
                         <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="36" class="link-to-prism">src/users/users.entity.ts:36</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="38" class="link-to-prism">src/users/users.entity.ts:38</a></div>
                         </td>
                     </tr>
 
@@ -376,7 +376,7 @@ export enum UserStatus {
   INGAME &#x3D; &#x27;INGAME&#x27;,
 }
 
-@Entity()
+@Entity({ name: &#x27;user&#x27;})
 export class User {
   @PrimaryColumn()
   id: number;
@@ -388,6 +388,7 @@ export class User {
     type: &#x27;bytea&#x27;,
     nullable: false,
   })
+  @Exclude()
   avatar: Uint8Array;
 
   @Column({
@@ -402,11 +403,13 @@ export class User {
   hashedRefreshToken?: string;
 
   @Column({ nullable: true })
+  @Exclude()
   twoFactorSecret?: string;
 
   @Column({ default: false })
   isTwoFactorAuthenticationEnabled: boolean;
 }
+
 </code></pre>
     </div>
 </div>

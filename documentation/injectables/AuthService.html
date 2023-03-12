@@ -69,6 +69,21 @@
     <h3 id="index">Index</h3>
     <table class="table table-sm table-bordered index-table">
         <tbody>
+                <tr>
+                    <td class="col-md-4">
+                        <h6><b>Properties</b></h6>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <ul class="index-list">
+                            <li>
+                                    <span class="modifier">Private</span>
+                                <a href="#logger" >logger</a>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
 
                 <tr>
                     <td class="col-md-4">
@@ -89,7 +104,15 @@
                             </li>
                             <li>
                                     <span class="modifier">Async</span>
+                                <a href="#getFourtyTwoToken" >getFourtyTwoToken</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Async</span>
                                 <a href="#getFourtyTwoUserInfo" >getFourtyTwoUserInfo</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Async</span>
+                                <a href="#getFourtyTwoUserInfoResultFromQueue" >getFourtyTwoUserInfoResultFromQueue</a>
                             </li>
                         </ul>
                     </td>
@@ -109,12 +132,12 @@
             <tbody>
                 <tr>
                     <td class="col-md-4">
-<code>constructor(jwtService: JwtService, configService: ConfigService, userRepository: <a href="../entitys/User.html" target="_self">Repository&lt;User&gt;</a>, httpService: HttpService)</code>
+<code>constructor(loginQueue: Queue, jwtService: JwtService, configService: ConfigService, httpService: HttpService)</code>
                     </td>
                 </tr>
                         <tr>
                             <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="14" class="link-to-prism">src/auth/auth.service.ts:14</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="15" class="link-to-prism">src/auth/auth.service.ts:15</a></div>
                             </td>
                         </tr>
 
@@ -132,6 +155,18 @@
                                         </thead>
                                         <tbody>
                                                 <tr>
+                                                        <td>loginQueue</td>
+                                                  
+                                                        <td>
+                                                                    <code>Queue</code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
                                                         <td>jwtService</td>
                                                   
                                                         <td>
@@ -148,18 +183,6 @@
                                                   
                                                         <td>
                                                                     <code>ConfigService</code>
-                                                        </td>
-                                                  
-                                                    <td>
-                                                            No
-                                                    </td>
-                                                    
-                                                </tr>
-                                                <tr>
-                                                        <td>userRepository</td>
-                                                  
-                                                        <td>
-                                                                        <code><a href="../entitys/User.html" target="_self" >Repository&lt;User&gt;</a></code>
                                                         </td>
                                                   
                                                     <td>
@@ -213,8 +236,8 @@
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="53"
-                            class="link-to-prism">src/auth/auth.service.ts:53</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="54"
+                            class="link-to-prism">src/auth/auth.service.ts:54</a></div>
                 </td>
             </tr>
 
@@ -250,8 +273,8 @@
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="23"
-                            class="link-to-prism">src/auth/auth.service.ts:23</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="25"
+                            class="link-to-prism">src/auth/auth.service.ts:25</a></div>
                 </td>
             </tr>
 
@@ -336,8 +359,8 @@
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="38"
-                            class="link-to-prism">src/auth/auth.service.ts:38</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="39"
+                            class="link-to-prism">src/auth/auth.service.ts:39</a></div>
                 </td>
             </tr>
 
@@ -375,7 +398,78 @@
                     <div>
                     </div>
                     <div class="io-description">
-                        <b>Returns : </b>    <code>{ refreshCookie: string; refreshToken: any; }</code>
+                        <b>Returns : </b>        <code><a href="../miscellaneous/variables.html#Token" target="_self" >{ refreshCookie: string; refreshToken: any; }</a></code>
+
+                    </div>
+                    <div class="io-description">
+                        
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="getFourtyTwoToken"></a>
+                    <span class="name">
+                        <span class="modifier">Async</span>
+                        <span ><b>getFourtyTwoToken</b></span>
+                        <a href="#getFourtyTwoToken"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                    <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>getFourtyTwoToken(code: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>)</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="89"
+                            class="link-to-prism">src/auth/auth.service.ts:89</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                    <div class="io-description">
+                        <b>Parameters :</b>
+                        
+                        <table class="params">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Optional</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>code</td>
+                                    <td>
+                                                <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                    </div>
+                    <div class="io-description">
+                        <b>Returns : </b>    <code>unknown</code>
 
                     </div>
                     <div class="io-description">
@@ -407,8 +501,8 @@
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="60"
-                            class="link-to-prism">src/auth/auth.service.ts:60</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="71"
+                            class="link-to-prism">src/auth/auth.service.ts:71</a></div>
                 </td>
             </tr>
 
@@ -456,31 +550,142 @@
             </tr>
         </tbody>
     </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="getFourtyTwoUserInfoResultFromQueue"></a>
+                    <span class="name">
+                        <span class="modifier">Async</span>
+                        <span ><b>getFourtyTwoUserInfoResultFromQueue</b></span>
+                        <a href="#getFourtyTwoUserInfoResultFromQueue"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                    <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>getFourtyTwoUserInfoResultFromQueue(token: <a href="../interfaces/FourtyTwoToken.html" target="_self">FourtyTwoToken</a>)</code>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                    <div class="io-line">Defined in <a href="" data-line="61"
+                            class="link-to-prism">src/auth/auth.service.ts:61</a></div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                    <div class="io-description">
+                        <b>Parameters :</b>
+                        
+                        <table class="params">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Optional</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>token</td>
+                                    <td>
+                                                <code><a href="../interfaces/FourtyTwoToken.html" target="_self" >FourtyTwoToken</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                    </div>
+                    <div class="io-description">
+                        <b>Returns : </b>    <code>unknown</code>
+
+                    </div>
+                    <div class="io-description">
+                        
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+            <section>
+    
+    <h3 id="inputs">
+        Properties
+    </h3>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="logger"></a>
+                    <span class="name">
+                            <span class="modifier">Private</span>
+                        <span ><b>logger</b></span>
+                        <a href="#logger"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <i>Type : </i>    <code>Logger</code>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <i>Default value : </i><code>new Logger(AuthService.name)</code>
+                    </td>
+                </tr>
+                    <tr>
+                        <td class="col-md-4">
+                                <div class="io-line">Defined in <a href="" data-line="15" class="link-to-prism">src/auth/auth.service.ts:15</a></div>
+                        </td>
+                    </tr>
+
+
+        </tbody>
+    </table>
 </section>
 
     </div>
 
 
     <div class="tab-pane fade  tab-source-code" id="c-source">
-        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Injectable, UnauthorizedException } from &#x27;@nestjs/common&#x27;;
+        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Injectable, Logger, UnauthorizedException } from &#x27;@nestjs/common&#x27;;
 import { ConfigService } from &#x27;@nestjs/config&#x27;;
 import { JwtService } from &#x27;@nestjs/jwt&#x27;;
-import { InjectRepository } from &#x27;@nestjs/typeorm&#x27;;
-import { User } from &#x27;../users/users.entity&#x27;;
-import { Repository } from &#x27;typeorm&#x27;;
-
 import { catchError, firstValueFrom } from &#x27;rxjs&#x27;;
 import { AxiosError } from &#x27;axios&#x27;;
 import { HttpService } from &#x27;@nestjs/axios&#x27;;
-import { TokenPayload } from &#x27;./token-payload.interface&#x27;;
+import { FOURTY_TWO_TOKEN_URI, FOURTY_TWO_USER_INFO } from &#x27;./auth.constants&#x27;;
+import { JwtTokenPayload } from &#x27;./interface/jwt-token-payload.interface&#x27;;
+import { InjectQueue } from &#x27;@nestjs/bull&#x27;;
+import { Queue } from &#x27;bull&#x27;;
+import { FourtyTwoToken } from &#x27;./interface/fourty-two-token.interface&#x27;;
 
 @Injectable()
 export class AuthService {
+  private logger: Logger &#x3D; new Logger(AuthService.name);
+
   constructor(
+    @InjectQueue(&#x27;fourtyTwoLogin&#x27;)
+    private readonly loginQueue: Queue,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository&lt;User&gt;,
     private readonly httpService: HttpService,
   ) {}
 
@@ -488,8 +693,7 @@ export class AuthService {
     id: number,
     isTwoFactorAuthenticationCompleted &#x3D; false,
   ) {
-    const payload: TokenPayload &#x3D; { id, isTwoFactorAuthenticationCompleted };
-    console.log(payload);
+    const payload: JwtTokenPayload &#x3D; { id, isTwoFactorAuthenticationCompleted };
     const token &#x3D; this.jwtService.sign(payload, {
       secret: this.configService.get(&#x27;JWT_ACCESS_TOKEN_SECRET&#x27;),
       expiresIn: this.configService.get(&#x27;JWT_ACCESS_TOKEN_EXPIRATION_TIME&#x27;),
@@ -500,7 +704,7 @@ export class AuthService {
   }
 
   getCookieWithJwtRefreshToken(id: number) {
-    const payload: TokenPayload &#x3D; { id };
+    const payload: JwtTokenPayload &#x3D; { id };
     const refreshToken &#x3D; this.jwtService.sign(payload, {
       secret: this.configService.get(&#x27;JWT_REFRESH_TOKEN_SECRET&#x27;),
       expiresIn: this.configService.get(&#x27;JWT_REFRESH_TOKEN_EXPIRATION_TIME&#x27;),
@@ -521,17 +725,50 @@ export class AuthService {
     ];
   }
 
+  async getFourtyTwoUserInfoResultFromQueue(token: FourtyTwoToken) {
+    const job &#x3D; await this.loginQueue.add(&#x27;userInfo&#x27;, { token });
+    try {
+      return await job.finished();
+    } catch (err) {
+      this.logger.error(&#x27;42 Authorization failed&#x27;);
+      throw new UnauthorizedException(&#x27;42 Authorization failed&#x27;);
+    }
+  }
+
   async getFourtyTwoUserInfo(token: string) {
     const { data } &#x3D; await firstValueFrom(
       this.httpService
-        .get(&#x27;https://api.intra.42.fr/v2/me&#x27;, {
+        .get(FOURTY_TWO_USER_INFO, {
           headers: { Authorization: &#x60;Bearer ${token}&#x60; },
         })
         .pipe(
           catchError((error: AxiosError) &#x3D;&gt; {
-            throw new UnauthorizedException(&#x27;invalid 42 token&#x27;);
+            this.logger.error(error);
+            throw new UnauthorizedException(
+              &#x27;invalid 42 token or server is busy&#x27;,
+            );
           }),
         ),
+    );
+    return data;
+  }
+
+  async getFourtyTwoToken(code: string) {
+    const config &#x3D; {
+      grant_type: &#x27;authorization_code&#x27;,
+      client_id: this.configService.get&lt;string&gt;(&#x27;CLIENT_ID&#x27;),
+      client_secret: this.configService.get&lt;string&gt;(&#x27;CLIENT_SECRET&#x27;),
+      code,
+      redirect_uri: this.configService.get&lt;string&gt;(&#x27;REDIRECT_URI&#x27;),
+    };
+
+    const { data } &#x3D; await firstValueFrom(
+      this.httpService.post(FOURTY_TWO_TOKEN_URI, config).pipe(
+        catchError((error: AxiosError) &#x3D;&gt; {
+          this.logger.error(error);
+          throw new UnauthorizedException(&#x27;invalid 42 token or server is busy&#x27;);
+        }),
+      ),
     );
     return data;
   }
