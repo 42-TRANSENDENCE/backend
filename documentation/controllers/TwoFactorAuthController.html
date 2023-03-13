@@ -139,14 +139,14 @@
                 <td class="col-md-4">
                     <b>Decorators : </b>
                     <br />
-                    <code>@Get(&#x27;generate&#x27;)<br />@UseGuards(JwtAuthGuard)<br /></code>
+                    <code>@Get(&#x27;generate&#x27;)<br />@UseGuards(JwtAuthGuard)<br />@ApiOkResponse({description: &#x27;Google Authenticator에 등록할 QR Code 반환&#x27;})<br /></code>
                 </td>
             </tr>
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="33"
-                            class="link-to-prism">src/auth/two-factor-authentication/two-factor-auth.controller.ts:33</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="42"
+                            class="link-to-prism">src/auth/two-factor-authentication/two-factor-auth.controller.ts:42</a></div>
                 </td>
             </tr>
 
@@ -214,7 +214,7 @@
             <tr>
                 <td class="col-md-4">
                     <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>turnOff(req)</code>
+                    <code>turnOff(user)</code>
                 </td>
             </tr>
 
@@ -222,14 +222,14 @@
                 <td class="col-md-4">
                     <b>Decorators : </b>
                     <br />
-                    <code>@Post(&#x27;turn-off&#x27;)<br />@HttpCode(200)<br />@UseGuards(JwtTwoFactorGuard)<br /></code>
+                    <code>@Post(&#x27;turn-off&#x27;)<br />@HttpCode(200)<br />@UseGuards(JwtTwoFactorGuard)<br />@ApiOkResponse({description: &#x27;2차 인증 비활성화&#x27;})<br /></code>
                 </td>
             </tr>
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="66"
-                            class="link-to-prism">src/auth/two-factor-authentication/two-factor-auth.controller.ts:66</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="85"
+                            class="link-to-prism">src/auth/two-factor-authentication/two-factor-auth.controller.ts:85</a></div>
                 </td>
             </tr>
 
@@ -249,7 +249,7 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>req</td>
+                                    <td>user</td>
 
                                     <td>
                                         No
@@ -263,7 +263,7 @@
                     <div>
                     </div>
                     <div class="io-description">
-                        <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >any</a></code>
+                        <b>Returns : </b>    <code>unknown</code>
 
                     </div>
                     <div class="io-description">
@@ -288,7 +288,7 @@
             <tr>
                 <td class="col-md-4">
                     <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>turnOn(req)</code>
+                    <code>turnOn(user)</code>
                 </td>
             </tr>
 
@@ -296,14 +296,14 @@
                 <td class="col-md-4">
                     <b>Decorators : </b>
                     <br />
-                    <code>@Post(&#x27;turn-on&#x27;)<br />@HttpCode(200)<br />@UseGuards(JwtAuthGuard)<br /></code>
+                    <code>@Post(&#x27;turn-on&#x27;)<br />@HttpCode(200)<br />@UseGuards(JwtAuthGuard)<br />@ApiOkResponse({description: &#x27;2차 인증 활성화&#x27;})<br /></code>
                 </td>
             </tr>
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="59"
-                            class="link-to-prism">src/auth/two-factor-authentication/two-factor-auth.controller.ts:59</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="77"
+                            class="link-to-prism">src/auth/two-factor-authentication/two-factor-auth.controller.ts:77</a></div>
                 </td>
             </tr>
 
@@ -323,7 +323,7 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>req</td>
+                                    <td>user</td>
 
                                     <td>
                                         No
@@ -337,7 +337,7 @@
                     <div>
                     </div>
                     <div class="io-description">
-                        <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >any</a></code>
+                        <b>Returns : </b>    <code>unknown</code>
 
                     </div>
                     <div class="io-description">
@@ -362,7 +362,7 @@
             <tr>
                 <td class="col-md-4">
                     <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>validate(req, twoFactorToken: <a href="../interfaces/twoFactorToken.html" target="_self">twoFactorToken</a>)</code>
+                    <code>validate(req, twoFactorTokenDto: <a href="../classes/TwoFactorTokenDto.html" target="_self">TwoFactorTokenDto</a>, user)</code>
                 </td>
             </tr>
 
@@ -370,14 +370,14 @@
                 <td class="col-md-4">
                     <b>Decorators : </b>
                     <br />
-                    <code>@Post(&#x27;validate&#x27;)<br />@HttpCode(200)<br />@UseGuards(JwtAuthGuard)<br /></code>
+                    <code>@Post(&#x27;validate&#x27;)<br />@HttpCode(200)<br />@UseGuards(JwtAuthGuard)<br />@ApiBody({type: TwoFactorTokenDto})<br />@ApiOkResponse({description: &#x27;2차 인증 성공&#x27;})<br />@ApiUnauthorizedResponse({description: &#x27;2차 인증 실패 (token invalid)&#x27;})<br /></code>
                 </td>
             </tr>
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="43"
-                            class="link-to-prism">src/auth/two-factor-authentication/two-factor-auth.controller.ts:43</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="56"
+                            class="link-to-prism">src/auth/two-factor-authentication/two-factor-auth.controller.ts:56</a></div>
                 </td>
             </tr>
 
@@ -409,9 +409,20 @@
 
                                 </tr>
                                 <tr>
-                                    <td>twoFactorToken</td>
+                                    <td>twoFactorTokenDto</td>
                                     <td>
-                                                <code><a href="../interfaces/twoFactorToken.html" target="_self" >twoFactorToken</a></code>
+                                                <code><a href="../classes/TwoFactorTokenDto.html" target="_self" >TwoFactorTokenDto</a></code>
+                                    </td>
+
+                                    <td>
+                                        No
+                                    </td>
+
+
+                                </tr>
+                                <tr>
+                                    <td>user</td>
+                                    <td>
                                     </td>
 
                                     <td>
@@ -452,13 +463,19 @@
   UseGuards,
   UseInterceptors,
 } from &#x27;@nestjs/common&#x27;;
-import { ApiTags } from &#x27;@nestjs/swagger&#x27;;
+import {
+  ApiBody,
+  ApiOkResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from &#x27;@nestjs/swagger&#x27;;
 import { UsersService } from &#x27;src/users/users.service&#x27;;
 import { AuthService } from &#x27;../auth.service&#x27;;
+import { User } from &#x27;../decorator/user.decorator&#x27;;
 import { JwtAuthGuard } from &#x27;../guards/jwt-auth.guard&#x27;;
 import { JwtTwoFactorGuard } from &#x27;../guards/jwt-two-factor.guard&#x27;;
 import { TwoFactorAuthService } from &#x27;./two-factor-auth.service&#x27;;
-import { twoFactorToken } from &#x27;./two-factor-token.interface&#x27;;
+import { TwoFactorTokenDto } from &#x27;./two-factor-token.dto&#x27;;
 
 @ApiTags(&#x27;2fa&#x27;)
 @Controller(&#x27;2fa&#x27;)
@@ -472,41 +489,54 @@ export class TwoFactorAuthController {
 
   @Get(&#x27;generate&#x27;)
   @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({
+    description: &#x27;Google Authenticator에 등록할 QR Code 반환&#x27;,
+  })
   async register(@Req() req, @Res() res) {
     const otpUrl &#x3D; await this.twoFactorAuthService.generateTwoFactorAuthSecret(
       req.user.id,
     );
+    req.res.setHeader(&#x27;Content-Type&#x27;, &#x27;image/png&#x27;);
     return this.twoFactorAuthService.pipeQRCodeStream(res, otpUrl);
   }
 
   @Post(&#x27;validate&#x27;)
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
-  async validate(@Req() req, @Body(&#x27;token&#x27;) twoFactorToken: twoFactorToken) {
+  @ApiBody({ type: TwoFactorTokenDto })
+  @ApiOkResponse({ description: &#x27;2차 인증 성공&#x27; })
+  @ApiUnauthorizedResponse({ description: &#x27;2차 인증 실패 (token invalid)&#x27; })
+  async validate(
+    @Req() req,
+    @Body() twoFactorTokenDto: TwoFactorTokenDto,
+    @User() user,
+  ) {
     await this.twoFactorAuthService.verifyTwoFactorAuth(
-      req.user.id,
-      twoFactorToken.token,
+      user.id,
+      twoFactorTokenDto.token,
     );
     const accessCookie &#x3D; this.authService.getCookieWithJwtAccessToken(
-      req.user.id,
+      user.id,
       true,
     );
-    console.log(accessCookie);
     req.res.setHeader(&#x27;Set-Cookie&#x27;, [accessCookie]);
+    return;
   }
 
   @Post(&#x27;turn-on&#x27;)
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
-  async turnOn(@Req() req) {
-    await this.usersService.turnOnTwoFactorAuthentication(req.user.id);
+  @ApiOkResponse({ description: &#x27;2차 인증 활성화&#x27; })
+  async turnOn(@User() user) {
+    return await this.usersService.turnOnTwoFactorAuthentication(user.id);
   }
 
   @Post(&#x27;turn-off&#x27;)
   @HttpCode(200)
   @UseGuards(JwtTwoFactorGuard)
-  async turnOff(@Req() req) {
-    await this.usersService.turnOffTwoFactorAuthentication(req.user.id);
+  @ApiOkResponse({ description: &#x27;2차 인증 비활성화&#x27; })
+  async turnOff(@User() user) {
+    return await this.usersService.turnOffTwoFactorAuthentication(user.id);
   }
 }
 </code></pre>

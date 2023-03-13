@@ -138,13 +138,10 @@
 
 
     <div class="tab-pane fade  tab-source-code" id="c-source">
-        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Injectable, Res, UnauthorizedException } from &#x27;@nestjs/common&#x27;;
-import { ConfigService } from &#x27;@nestjs/config&#x27;;
+        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Injectable, Logger, Res, UnauthorizedException } from &#x27;@nestjs/common&#x27;;
 import { UsersService } from &#x27;src/users/users.service&#x27;;
 import * as speakeasy from &#x27;speakeasy&#x27;;
 import * as QRCode from &#x27;qrcode&#x27;;
-import { AuthService } from &#x27;../auth.service&#x27;;
-import { twoFactorToken } from &#x27;./two-factor-token.interface&#x27;;
 
 export interface QRCodeUrl {
   qrcode: string;
@@ -152,6 +149,8 @@ export interface QRCodeUrl {
 
 @Injectable()
 export class TwoFactorAuthService {
+  private logger: Logger &#x3D; new Logger(TwoFactorAuthService.name);
+
   constructor(private readonly usersService: UsersService) {}
 
   async generateTwoFactorAuthSecret(id: number) {
@@ -174,8 +173,10 @@ export class TwoFactorAuthService {
     });
 
     if (!isVerified) {
+      this.logger.error(&#x60;2FA Failed token: ${token}&#x60;);
       throw new UnauthorizedException(&#x27;two factor authentication fail&#x27;);
     }
+    return;
   }
 }
 </code></pre>

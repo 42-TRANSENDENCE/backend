@@ -126,7 +126,7 @@
                         <b>Decorators : </b>
                         <br />
                         <code>
-                            @ApiProperty()<br />@Matches([a-z0-9_.&#x27;-]+)<br />@Matches(.{0, 1})<br />@Length(2, 12)<br />
+                            @ApiProperty()<br />@Matches([a-z0-9_.&#x27;-]+)<br />@Length(2, 12)<br />
                         </code>
                     </td>
                 </tr>
@@ -157,7 +157,7 @@ import { Length, Matches } from &#x27;class-validator&#x27;;
 export class CreateUserDto {
   @ApiProperty()
   @Matches(&#x60;[a-z0-9_\.&#x27;\-]+&#x60;)
-  @Matches(&#x60;\.{0, 1}&#x60;)
+  //   @Matches(&#x60;\.{0, 1}&#x60;)
   @Length(2, 12)
   nickname: string;
 }

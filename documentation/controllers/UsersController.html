@@ -135,14 +135,14 @@
                 <td class="col-md-4">
                     <b>Decorators : </b>
                     <br />
-                    <code>@Delete()<br />@ApiOperation({summary: &#x27;delete user&#x27;})<br />@UseGuards(JwtTwoFactorGuard)<br /></code>
+                    <code>@Delete()<br />@UseGuards(JwtTwoFactorGuard)<br /></code>
                 </td>
             </tr>
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="70"
-                            class="link-to-prism">src/users/users.controller.ts:70</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="96"
+                            class="link-to-prism">src/users/users.controller.ts:96</a></div>
                 </td>
             </tr>
 
@@ -209,14 +209,14 @@
                 <td class="col-md-4">
                     <b>Decorators : </b>
                     <br />
-                    <code>@Get(&#x27;avatar&#x27;)<br />@ApiOperation({summary: &#x27;get user avatar image byte array&#x27;})<br />@UseGuards(JwtTwoFactorGuard)<br /></code>
+                    <code>@Get(&#x27;avatar&#x27;)<br />@ApiOperation({summary: &#x27;사용자 아바타 이미지 반환 (byte array)&#x27;})<br />@UseGuards(JwtTwoFactorGuard)<br /></code>
                 </td>
             </tr>
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="56"
-                            class="link-to-prism">src/users/users.controller.ts:56</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="52"
+                            class="link-to-prism">src/users/users.controller.ts:52</a></div>
                 </td>
             </tr>
 
@@ -298,14 +298,14 @@
                 <td class="col-md-4">
                     <b>Decorators : </b>
                     <br />
-                    <code>@Get()<br />@ApiSecurity(&#x27;JWT access token&#x27;)<br />@UseGuards(JwtTwoFactorGuard)<br /></code>
+                    <code>@Get()<br />@UseGuards(JwtTwoFactorGuard)<br /></code>
                 </td>
             </tr>
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="49"
-                            class="link-to-prism">src/users/users.controller.ts:49</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="44"
+                            class="link-to-prism">src/users/users.controller.ts:44</a></div>
                 </td>
             </tr>
 
@@ -370,14 +370,14 @@
                 <td class="col-md-4">
                     <b>Decorators : </b>
                     <br />
-                    <code>@Put(&#x27;avatar&#x27;)<br />@ApiOperation({summary: &#x27;change user avatar image (3MB Limit, jpeg, bmp, jpg, png) &#x27;})<br />@UseInterceptors(undefined)<br />@UseGuards(JwtAuthGuard)<br /></code>
+                    <code>@Put(&#x27;avatar&#x27;)<br />@UseInterceptors(undefined)<br />@UseGuards(JwtTwoFactorGuard)<br />@ApiOperation({summary: &#x27;사용자 아바타 변경 기능 (3MB Limit, jpeg, bmp, jpg, png) &#x27;})<br />@ApiConsumes(&#x27;multipart/form-data&#x27;)<br />@ApiBody({description: &#x27;File upload&#x27;, schema: undefined})<br /></code>
                 </td>
             </tr>
 
             <tr>
                 <td class="col-md-4">
-                    <div class="io-line">Defined in <a href="" data-line="80"
-                            class="link-to-prism">src/users/users.controller.ts:80</a></div>
+                    <div class="io-line">Defined in <a href="" data-line="77"
+                            class="link-to-prism">src/users/users.controller.ts:77</a></div>
                 </td>
             </tr>
 
@@ -426,7 +426,7 @@
                     <div>
                     </div>
                     <div class="io-description">
-                        <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >void</a></code>
+                        <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >any</a></code>
 
                     </div>
                     <div class="io-description">
@@ -441,12 +441,15 @@
 
     <div class="tab-pane fade  tab-source-code" id="c-source">
         <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import {
+  Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   FileTypeValidator,
   Get,
   MaxFileSizeValidator,
   ParseFilePipe,
+  Post,
   Put,
   Req,
   Res,
@@ -456,69 +459,63 @@
   UseInterceptors,
 } from &#x27;@nestjs/common&#x27;;
 import { FileInterceptor } from &#x27;@nestjs/platform-express&#x27;;
-import { ApiOperation, ApiSecurity, ApiTags } from &#x27;@nestjs/swagger&#x27;;
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiTags,
+} from &#x27;@nestjs/swagger&#x27;;
 import { Response } from &#x27;express&#x27;;
-import { JwtAuthGuard } from &#x27;src/auth/guards/jwt-auth.guard&#x27;;
+import { FourtyTwoGuard } from &#x27;src/auth/guards/fourty-two.guard&#x27;;
 import { JwtTwoFactorGuard } from &#x27;src/auth/guards/jwt-two-factor.guard&#x27;;
+import { CreateUserDto } from &#x27;./dto/users.dto&#x27;;
+import { User } from &#x27;./users.entity&#x27;;
 import { UsersService } from &#x27;./users.service&#x27;;
 
 @ApiTags(&#x27;users&#x27;)
 @Controller(&#x27;users&#x27;)
+@UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
-  //   @Post(&#x27;signup&#x27;)
-  //   @ApiOperation({
-  //     summary: &#x27;sign up&#x27;,
-  //     description: &#x27;42 Pong sign up 42 access token required&#x27;,
-  //   })
-  //   @ApiConflictResponse({ description: &#x27;nickname exists&#x27; })
-  //   @ApiCreatedResponse({
-  //     description: &#x27;sign up success&#x27;,
-  //     schema: { example: { accessToken: &#x27;xxx&#x27;, refreshToken: &#x27;xxx&#x27; } },
-  //   })
-  //   @ApiSecurity(&#x27;42 access token&#x27;)
-  //   @UseGuards(FourtyTwoGuard)
-  //   signUp(@Body() createUserDto: CreateUserDto, @Req() req) {
-  //     const { id, image } &#x3D; req.user;
-  //     const { link } &#x3D; image;
-  //     return this.userService.signUp(createUserDto, id, link);
-  //   }
-
   @Get()
-  @ApiSecurity(&#x27;JWT access token&#x27;)
   @UseGuards(JwtTwoFactorGuard)
   async getUserInfo(@Req() req) {
-    return req.user;
+    const user: User &#x3D; req.user;
+    return user;
   }
 
   @Get(&#x27;avatar&#x27;)
-  @ApiOperation({ summary: &#x27;get user avatar image byte array&#x27; })
+  @ApiOperation({ summary: &#x27;사용자 아바타 이미지 반환 (byte array)&#x27; })
   @UseGuards(JwtTwoFactorGuard)
   async getUserAvatar(@Req() req, @Res({ passthrough: true }) res: Response) {
     const avatar &#x3D; await this.userService.getUserAvatar(req.user.id);
 
     res.set({
-      &#x27;Content-Type&#x27;: &#x27;image&#x27;,
+      &#x27;Content-Type&#x27;: &#x27;image/*&#x27;,
       &#x27;Content-Disposition&#x27;: &#x27;inline&#x27;,
     });
 
     return new StreamableFile(avatar);
   }
 
-  @Delete()
-  @ApiOperation({ summary: &#x27;delete user&#x27; })
-  @UseGuards(JwtTwoFactorGuard)
-  deleteUser(@Req() req) {
-    return this.userService.deleteUser(req.user.id);
-  }
-
   @Put(&#x27;avatar&#x27;)
-  @ApiOperation({
-    summary: &#x27;change user avatar image (3MB Limit, jpeg, bmp, jpg, png) &#x27;,
-  })
   @UseInterceptors(FileInterceptor(&#x27;file&#x27;))
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtTwoFactorGuard)
+  @ApiOperation({
+    summary: &#x27;사용자 아바타 변경 기능 (3MB Limit, jpeg, bmp, jpg, png) &#x27;,
+  })
+  @ApiConsumes(&#x27;multipart/form-data&#x27;)
+  @ApiBody({
+    description: &#x27;File upload&#x27;,
+    schema: {
+      type: &#x27;object&#x27;,
+      properties: { file: { type: &#x27;string&#x27;, format: &#x27;binary&#x27; } },
+    },
+  })
   updateUserAvatar(
     @Req() req,
     @UploadedFile(
@@ -533,7 +530,13 @@ export class UsersController {
     )
     file: Express.Multer.File,
   ) {
-    this.userService.updateUserAvatar(req.user.id, file.buffer);
+    return this.userService.updateUserAvatar(req.user.id, file.buffer);
+  }
+
+  @Delete()
+  @UseGuards(JwtTwoFactorGuard)
+  deleteUser(@Req() req) {
+    return this.userService.deleteUser(req.user.id);
   }
 }
 </code></pre>
