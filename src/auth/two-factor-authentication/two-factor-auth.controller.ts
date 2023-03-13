@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Header,
   HttpCode,
   Post,
   Req,
@@ -23,7 +24,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { JwtTwoFactorGuard } from '../guards/jwt-two-factor.guard';
 import { TwoFactorAuthService } from './two-factor-auth.service';
 import { TwoFactorTokenDto } from './two-factor-token.dto';
-
+import * as QRCode from 'qrcode';
 @ApiTags('2fa')
 @Controller('2fa')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -39,12 +40,10 @@ export class TwoFactorAuthController {
   @ApiOkResponse({
     description: 'Google Authenticator에 등록할 QR Code 반환',
   })
-  async register(@Req() req, @Res() res) {
-    const otpUrl = await this.twoFactorAuthService.generateTwoFactorAuthSecret(
-      req.user.id,
-    );
-    req.res.setHeader('Content-Type', 'image/png');
-    return this.twoFactorAuthService.pipeQRCodeStream(res, otpUrl);
+  @Header('Content-Type', 'image/png')
+  async register(@Req() req, @Res() res, @User() user) {
+    const secret = await this.twoFactorAuthService.register(user.id);
+    return QRCode.toFileStream(res, secret.otpauth_url);
   }
 
   @Post('validate')
