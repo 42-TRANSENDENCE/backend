@@ -81,7 +81,7 @@ export class ChannelsService {
                 throw new UnauthorizedException('Invalid password');
             }
             else {
-                // 맞으면 소켓 연결하고 디비에 추가 채널멤버에 .
+                // 맞으면 소켓 연결하고 디비에 추가 채널멤버에(채널멤버 엔티티에 inset 하는거 뭐 추가 해야함 배열에 ) .
                 // this.on('')
                 // this.channelsGateway.nsp.emit('join', );
                 this.logger.log("suceccses")
