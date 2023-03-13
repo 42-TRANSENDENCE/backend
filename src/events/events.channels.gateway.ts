@@ -7,10 +7,13 @@ import {
   WebSocketGateway,
   WebSocketServer,
   MessageBody,
+  OnGatewayInit,
 } from '@nestjs/websockets';
 // import { ChannelsGateway } from './events.channels.gateway';
 import { Server, Socket, Namespace } from 'socket.io';
+import { Channels } from 'src/channels/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
+
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
@@ -18,9 +21,12 @@ import { ChannelsService } from 'src/channels/channels.service';
 let createdRooms: string[] = [];
 
 @WebSocketGateway({
-  namespace:'channel'
+  namespace:'channelchat',
+  cors: {
+    origin: ['http://localhost:3000/api/room_list/room'],
+  },
 })
-export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   // constructor(private readonly ChannelsService: ChannelsService) { }
   private logger = new Logger('ChannelsGateway')
 
@@ -28,7 +34,7 @@ export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect
   server: Server;
 
   afterInit() {
-    this.nsp.adapter.on('create-room', (room) => {
+    this.nsp.adapter.on('newRoom', (room) => {
       this.logger.log(`"Room:${room}"이 생성되었습니다.`);
     });
 
@@ -48,14 +54,14 @@ export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
-    console.log("TEST ---------------- get connection")
+    this.logger.log("TEST ---------------- get connection")
     this.logger.log(`${socket.id} 소켓 연결`);
+    socket.broadcast.emit('message', {
+      message: `${socket.id}가 들어왔습니다.`,
+    });
     // if (!onlineMap[socket.nsp.name]) {
     //   onlineMap[socket.nsp.name] = {};
     // }
-    // socket.broadcast.emit('message', {
-    //   message: `${socket.id}가 들어왔습니다.`,
-    // });
   }
 
 
@@ -76,29 +82,41 @@ export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect
   //   }
   //   socket.emit('hello', socket.nsp.name);
   // }
-  @SubscribeMessage('create-room')
-  handleCreateRoom(
+  @SubscribeMessage('message')
+  handleMessage(
+    @ConnectedSocket() socket : Socket,
+    @MessageBody() message: string,
+  ) {
+    socket.broadcast.emit('message', { username: socket.id, message})
+    return { username:socket.id, message};
+  }
+  
+  
+  @SubscribeMessage('newRoom')
+  async handleCreateRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() roomName: string,
+    @MessageBody() Channel: Channels,
   ) {
     console.log("TEST ---------- get in-----------")
-    const exists = createdRooms.find((createdRoom) => createdRoom === roomName);
-    if (exists) {
-      return { success: false, payload: `${roomName} 방이 이미 존재합니다.` };
-    }
-    socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
-    createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
-    this.logger.log(createdRooms)
-    this.nsp.emit('create-room', roomName); // 대기실 방 생성
-    return { success: true, payload: roomName };
+    // this.nsp.emit('create-room', roomName); // 대기실 방 생성
+    // try {
+    //   const createdChannel = await this.channelsService.create(Channel);
+    //   this.nsp.emit('create-room', createdChannel);
+    //   this.logger.log(`"Channel:${createdChannel.name}"이 생성되었습니다.`);
+    //   return { success: true, payload: createdChannel };
+    // } catch (error) {
+    //   this.logger.error(`Error creating channel: ${error.message}`);
+    //   return { success: false, error: error.message };
+    return { Channel };
   }
+}
     // socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
     // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
     // this.nsp.emit('create-room', roomName); // 대기실 방 생성
 
 
     // return { success: true, payload: roomName };
-  }
+  
   // handleConnection(@ConnectedSocket() socket: Socket) {
   //   this.logger.log(`${socket.id} 소켓 연결`);
   //   if (!onlineMap[socket.nsp.name]) {
@@ -115,4 +133,4 @@ export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect
   //   newNamespace.emit('onlineList', Object.values(onlineMap[socket.nsp.name]));
   // }
 // }
-
+// }

@@ -7,6 +7,7 @@ import { ChannelMember } from 'src/channels/channelcember.entity';
 import { ChannelsGateway } from 'src/events/events.channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
+
 @Injectable()
 export class ChannelsService {
     constructor(
@@ -44,8 +45,9 @@ export class ChannelsService {
         }
         // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
         const channelReturned = await this.channelsRepository.save(channel);
-        this.logger.log('channelReturned:', channelReturned.title);
-        // this.channelsGateway.nsp.server.emit('create-room', {message:`${channelReturned.title}`});
+        // this.logger.log('channelReturned:', channelReturned.title);
+        this.channelsGateway.nsp.emit('newRoom', channelReturned);
+        // this.nsp.emit('create-room', createdChannel);
         const channelMember = this.channelMemberRepository.create({
             UserId : myId,
             ChannelId: channelReturned.id,
@@ -80,6 +82,8 @@ export class ChannelsService {
             }
             else {
                 // 맞으면 소켓 연결하고 디비에 추가 채널멤버에 .
+                // this.on('')
+                // this.channelsGateway.nsp.emit('join', );
                 this.logger.log("suceccses")
             }
         }
