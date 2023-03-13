@@ -2,7 +2,7 @@ import { Process, Processor } from '@nestjs/bull';
 import { BadRequestException, Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { AuthService } from './auth.service';
-import { fourtyTwoToken } from './interface/fourty-two-token.interface';
+import { FourtyTwoToken } from './interface/fourty-two-token.interface';
 
 @Processor('fourtyTwoLogin')
 export class LoginConsumer {
@@ -11,7 +11,7 @@ export class LoginConsumer {
   constructor(private readonly authService: AuthService) {}
 
   @Process('token')
-  async getToken(job: Job<any>): Promise<fourtyTwoToken> {
+  async getToken(job: Job<any>): Promise<FourtyTwoToken> {
     this.logger.debug(`login queue is processing token job : ${job.id}`);
 
     const { code } = job.data;

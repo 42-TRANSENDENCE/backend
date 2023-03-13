@@ -8,6 +8,7 @@ import {
   Post,
   Redirect,
   Req,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -28,9 +29,13 @@ import { FourtyTwoGuard } from './guards/fourty-two.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { AuthSessionGuard } from './guards/auth-session.guard';
-import { RequestWithSession } from './interface/request-with-session.interface';
 import { SessionPayload } from './interface/session-payload.interface';
 import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
+import { FourtyTwoToken } from './interface/fourty-two-token.interface';
+import { User } from './decorator/user.decorator';
+import { SessionInfo } from './decorator/session-info.decorator';
+import { Token } from './decorator/token.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -52,12 +57,14 @@ export class AuthController {
       '로그인 성공시 home, 2차 인증 필요시 twofactor, 회원가입 필요시 signup으로 redirect',
   })
   @Redirect('')
-  async login(@Req() req) {
-    const { id } = req.user;
-
-    const accessCookie = this.authService.getCookieWithJwtAccessToken(id);
+  async login(@Req() req, @Token() token: FourtyTwoToken) {
+    const fourtyTwoUser =
+      await this.authService.getFourtyTwoUserInfoResultFromQueue(token);
+    const accessCookie = this.authService.getCookieWithJwtAccessToken(
+      fourtyTwoUser.id,
+    );
     const { refreshToken, refreshCookie } =
-      this.authService.getCookieWithJwtRefreshToken(id);
+      this.authService.getCookieWithJwtRefreshToken(fourtyTwoUser.id);
 
     this.logger.log(
       `accessCookie: ${accessCookie} / refreshCookie: ${refreshCookie}`,
@@ -65,15 +72,17 @@ export class AuthController {
     const redirect_url = this.configService.get<string>('FRONTEND_URL');
 
     try {
-      const user = await this.usersService.getById(id);
-      this.usersService.setCurrentRefreshToken(refreshToken, id);
+      const user = await this.usersService.getById(fourtyTwoUser.id);
+      this.usersService.setCurrentRefreshToken(refreshToken, user.id);
       req.res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
       if (!user.isTwoFactorAuthenticationEnabled) {
+        this.logger.log(`user: ${user.id} logged in`);
         return { url: `${redirect_url}/home` };
       }
+      this.logger.log(`user: ${user.id} 2FA Required`);
       return { url: `${redirect_url}/twofactor` };
     } catch (err) {
-      const { id, image } = req.user;
+      const { id, image } = fourtyTwoUser;
       const { link } = image;
       req.session.info = { id, link }; // session
       return { url: `${redirect_url}/signup` };
@@ -93,26 +102,27 @@ export class AuthController {
   })
   @ApiBody({ type: CreateUserDto })
   async signUp(
-    @Req() req: RequestWithSession,
+    @Req() req,
+    @Res({ passthrough: true }) res: Response,
     @Body() createUserDto: CreateUserDto,
+    @SessionInfo() sessionInfo: SessionPayload,
   ) {
-    console.log(req.info);
-    const payload: SessionPayload = req.info;
-
-    const user = await this.usersService.signUp(
-      createUserDto,
-      payload.id,
-      payload.link,
+    const user = await this.usersService.create(
+      sessionInfo.id,
+      createUserDto.nickname,
+      sessionInfo.link,
     );
 
-    req.session.destroy(() =>
-      this.logger.debug(`user id : ${user.id} sign up. session destroyed`),
-    );
     const accessCookie = this.authService.getCookieWithJwtAccessToken(user.id);
     const { refreshToken, refreshCookie } =
       this.authService.getCookieWithJwtRefreshToken(user.id);
     this.usersService.setCurrentRefreshToken(refreshToken, user.id);
-    req.res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
+    res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
+
+    req.session.destroy(() =>
+      this.logger.debug(`user id : ${user.id} session destroyed`),
+    );
+    this.logger.debug(`user id : ${user.id} signed up`);
     return user;
   }
 
@@ -123,10 +133,12 @@ export class AuthController {
       'refresh token을 기반으로 새로운 access token을 cookie에 저장 기존 token이 만료되었을때 사용',
   })
   @ApiCookieAuth('Refresh')
-  refresh(@Req() req) {
-    const { id } = req.user;
-    const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(id);
+  refresh(@Req() req, @User() user) {
+    const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(
+      user.id,
+    );
     req.res.setHeader('Set-Cookie', accessTokenCookie);
+    return;
   }
 
   @Post('logout')
@@ -134,11 +146,11 @@ export class AuthController {
   @HttpCode(200)
   @ApiOkResponse({ description: '로그아웃. cookie token 삭제' })
   @ApiCookieAuth('Authentication')
-  async logOut(@Req() req) {
-    const { id } = req.user;
-    this.logger.log(`user ${id} logged out`);
-    await this.usersService.removeRefreshToken(id);
+  async logOut(@Req() req, @User() user) {
+    await this.usersService.removeRefreshToken(user.id);
     const cookie = await this.authService.getCookieForLogOut();
     req.res.setHeader('Set-Cookie', cookie);
+    this.logger.log(`user ${user.id} logged out`);
+    return;
   }
 }

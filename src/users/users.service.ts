@@ -11,7 +11,6 @@ import { catchError, firstValueFrom } from 'rxjs';
 import { Repository, UpdateResult } from 'typeorm';
 import { User } from './users.entity';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from './dto/users.dto';
 
 const notFoundErrorMessage = 'User Not Found';
 
@@ -88,13 +87,13 @@ export class UsersService {
     return;
   }
 
-  async signUp(createUserDto: CreateUserDto, id: number, avatarUrl: string) {
+  async create(id: number, nickname: string, avatarUrl: string) {
     const isInvalidRequest = await this.userRepository.find({
-      where: [{ id }, { nickname: createUserDto.nickname }],
+      where: [{ id }, { nickname }],
     });
     if (isInvalidRequest.length) {
       this.logger.error(
-        `id: ${id}, nickname: ${createUserDto.nickname} duplicated user signup request`,
+        `id: ${id}, nickname: ${nickname} duplicated user signup request`,
       );
       throw new BadRequestException('invalid user nickname or id');
     }
@@ -102,7 +101,7 @@ export class UsersService {
     const avatar = await this.getAvatarFromWeb(avatarUrl);
     const user = this.userRepository.create({
       id,
-      nickname: createUserDto.nickname,
+      nickname,
       avatar,
     });
     await this.userRepository.save(user);
