@@ -8,7 +8,6 @@ import {
   Post,
   Redirect,
   Req,
-  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -31,7 +30,6 @@ import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { AuthSessionGuard } from './guards/auth-session.guard';
 import { SessionPayload } from './interface/session-payload.interface';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
 import { FourtyTwoToken } from './interface/fourty-two-token.interface';
 import { User } from './decorator/user.decorator';
 import { SessionInfo } from './decorator/session-info.decorator';
@@ -58,17 +56,13 @@ export class AuthController {
   })
   @Redirect('')
   async login(@Req() req, @Token() token: FourtyTwoToken) {
-    const fourtyTwoUser =
-      await this.authService.getFourtyTwoUserInfoResultFromQueue(token);
+    const fourtyTwoUser = await this.authService.getFourtyTwoUser(token);
     const accessCookie = this.authService.getCookieWithJwtAccessToken(
       fourtyTwoUser.id,
     );
     const { refreshToken, refreshCookie } =
       this.authService.getCookieWithJwtRefreshToken(fourtyTwoUser.id);
 
-    this.logger.log(
-      `accessCookie: ${accessCookie} / refreshCookie: ${refreshCookie}`,
-    );
     const redirect_url = this.configService.get<string>('FRONTEND_URL');
 
     try {
@@ -103,7 +97,6 @@ export class AuthController {
   @ApiBody({ type: CreateUserDto })
   async signUp(
     @Req() req,
-    @Res({ passthrough: true }) res: Response,
     @Body() createUserDto: CreateUserDto,
     @SessionInfo() sessionInfo: SessionPayload,
   ) {
@@ -117,12 +110,12 @@ export class AuthController {
     const { refreshToken, refreshCookie } =
       this.authService.getCookieWithJwtRefreshToken(user.id);
     this.usersService.setCurrentRefreshToken(refreshToken, user.id);
-    res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
+    req.res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
 
     req.session.destroy(() =>
       this.logger.debug(`user id : ${user.id} session destroyed`),
     );
-    this.logger.debug(`user id : ${user.id} signed up`);
+    this.logger.log(`user id : ${user.id} signed up`);
     return user;
   }
 

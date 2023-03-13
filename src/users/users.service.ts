@@ -23,7 +23,10 @@ export class UsersService {
     private readonly httpService: HttpService,
   ) {}
 
-  async setTwoFactorAuthenticationSecret(id: number, secret: string) {
+  async setTwoFactorAuthenticationSecret(
+    id: number,
+    secret: string,
+  ): Promise<void> {
     const updateResult = await this.userRepository.update(
       { id },
       { twoFactorSecret: secret },
