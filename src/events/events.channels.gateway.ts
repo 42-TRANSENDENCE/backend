@@ -33,11 +33,8 @@ export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   @WebSocketServer() nsp: Namespace
   server: Server;
 
+  // 클라이언트, 프론트가 나한테 보내는 이벤트 .
   afterInit() {
-    this.nsp.adapter.on('newRoom', (room) => {
-      this.logger.log(`"Room:${room}"이 생성되었습니다.`);
-    });
-
     this.nsp.adapter.on('join-room', (room, id) => {
       this.logger.log(`"Socket:${id}"이 "Room:${room}"에 참여하였습니다.`);
     });
@@ -59,29 +56,13 @@ export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     socket.broadcast.emit('message', {
       message: `${socket.id}가 들어왔습니다.`,
     });
-    // if (!onlineMap[socket.nsp.name]) {
-    //   onlineMap[socket.nsp.name] = {};
-    // }
   }
 
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
-    // const newNamespace = socket.nsp;
-    //   delete onlineMap[socket.nsp.name][socket.id];
-    //   newNamespace.emit('onlineList', Object.values(onlineMap[socket.nsp.name]));
   }
 
-  // @SubscribeMessage('create-room')
-  // handleCreateRoom(
-  //   @ConnectedSocket() socket: Socket,
-  //   @MessageBody() roomName: string,
-  // ) {
-  //   if (!onlineMap[socket.nsp.name]) {
-  //     onlineMap[socket.nsp.name] = {};
-  //   }
-  //   socket.emit('hello', socket.nsp.name);
-  // }
   @SubscribeMessage('message')
   handleMessage(
     @ConnectedSocket() socket : Socket,
@@ -97,40 +78,12 @@ export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     @ConnectedSocket() socket: Socket,
     @MessageBody() Channel: Channels,
   ) {
-    console.log("TEST ---------- get in-----------")
-    // this.nsp.emit('create-room', roomName); // 대기실 방 생성
-    // try {
-    //   const createdChannel = await this.channelsService.create(Channel);
-    //   this.nsp.emit('create-room', createdChannel);
-    //   this.logger.log(`"Channel:${createdChannel.name}"이 생성되었습니다.`);
-    //   return { success: true, payload: createdChannel };
-    // } catch (error) {
-    //   this.logger.error(`Error creating channel: ${error.message}`);
-    //   return { success: false, error: error.message };
+    this.logger.log("---------------newRoom self event")
     return { Channel };
   }
 }
     // socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
     // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
     // this.nsp.emit('create-room', roomName); // 대기실 방 생성
-
-
     // return { success: true, payload: roomName };
   
-  // handleConnection(@ConnectedSocket() socket: Socket) {
-  //   this.logger.log(`${socket.id} 소켓 연결`);
-  //   if (!onlineMap[socket.nsp.name]) {
-  //     onlineMap[socket.nsp.name] = {};
-  //   }
-    // broadcast to all clients in the given sub-namespace
-  //   socket.emit('hello', socket.nsp.name);
-  // }
-
-  // handleDisconnect(@ConnectedSocket() socket: Socket) {
-  //   this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
-  //   const newNamespace = socket.nsp;
-  //   delete onlineMap[socket.nsp.name][socket.id];
-  //   newNamespace.emit('onlineList', Object.values(onlineMap[socket.nsp.name]));
-  // }
-// }
-// }
