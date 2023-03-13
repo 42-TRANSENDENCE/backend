@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { Queue } from 'bull';
 import { Request } from 'express';
-import { AuthService } from '../auth.service';
 import { FourtyTwoToken } from '../interface/fourty-two-token.interface';
 
 @Injectable()
@@ -16,7 +15,6 @@ export class FourtyTwoGuard implements CanActivate {
   private logger: Logger = new Logger(FourtyTwoGuard.name);
 
   constructor(
-    private authService: AuthService,
     @InjectQueue('fourtyTwoLogin') private readonly loginQueue: Queue,
   ) {}
 
@@ -36,7 +34,6 @@ export class FourtyTwoGuard implements CanActivate {
     const job = await this.loginQueue.add('token', {
       code,
     });
-
     try {
       const token = await job.finished();
       return token;
