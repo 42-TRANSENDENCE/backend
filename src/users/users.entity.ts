@@ -1,5 +1,6 @@
 import { Exclude } from 'class-transformer';
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Friendship } from 'src/friends/friend.entity';
+import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
 
 export enum UserStatus {
   ONLINE = 'ONLINE',
@@ -7,7 +8,7 @@ export enum UserStatus {
   INGAME = 'INGAME',
 }
 
-@Entity({ name: 'user'})
+@Entity({ name: 'user' })
 export class User {
   @PrimaryColumn()
   id: number;
@@ -39,5 +40,7 @@ export class User {
 
   @Column({ default: false })
   isTwoFactorAuthenticationEnabled: boolean;
-}
 
+  @OneToMany(() => Friendship, (friends) => friends.user)
+  friends: Friendship[];
+}
