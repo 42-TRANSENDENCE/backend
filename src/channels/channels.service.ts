@@ -59,13 +59,18 @@ export class ChannelsService {
     }
 
     // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
+    // 방이 없을때 예외 처리 
     async getChannelInfo(channel_id : number)
     {
-        const channelMembers =  await this.getChannelMembers(channel_id)
-        const channelprivate =  await this.findById(channel_id)
-        // const channelBanMember = this.getChannelBanMembers(channel_id)
-        const result = [channelMembers, channelprivate.private]
-        return result
+        const channel =  await this.findById(channel_id)
+        if(channel)
+        {
+            const channelMembers =  await this.getChannelMembers(channel_id)
+            const result = [channelMembers,channel.private]
+            return result
+        }
+        else
+            throw new UnauthorizedException('Check the channel_id if there is exist'); 
     }
 
     // 멤버 뽑아 오는거 + 밴 리스트 뽑아오는것도 

@@ -40,7 +40,6 @@ export class ChannelsController {
     ){
             const result = await this.channelsService.getChannelInfo(channelId)
             // banMember 도 추가 
-            // private 인지 알러면 채팅방 에 쿼리로 접근해서 알아와야 하는데. 
             return result
     }
 
