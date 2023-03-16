@@ -8,6 +8,7 @@ import { ChannelsGateway } from 'src/events/events.channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { response } from 'express';
+import { channel } from 'diagnostics_channel';
 
 
 @Injectable()
@@ -58,6 +59,16 @@ export class ChannelsService {
     }
 
     // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
+    async getChannelInfo(channel_id : number)
+    {
+        const channelMembers =  await this.getChannelMembers(channel_id)
+        const channelprivate =  await this.findById(channel_id)
+        // const channelBanMember = this.getChannelBanMembers(channel_id)
+        const result = [channelMembers, channelprivate.private]
+        return result
+    }
+
+    // 멤버 뽑아 오는거 + 밴 리스트 뽑아오는것도 
     async getChannelMembers(channel_id: number)
     {
         return this.channelMemberRepository
@@ -113,12 +124,12 @@ export class ChannelsService {
         // 공개방은 무조건 소켓 연결 근데 + 밴 리스트 !! 는 나중에 
         // this.channelsGateway.nsp.emit('join-room');
         const isInUser = await this.channelMemberRepository.createQueryBuilder('channel_member')
-        .where('channel_member.UserId = :userId', { userId: 1 }) // 1 -> user.id
+        .where('channel_member.UserId = :userId', { userId: 2 }) // 1 -> user.id
         .getOne()
         // console.log(isInUser)
         if(!isInUser){
             const cm = this.channelMemberRepository.create({
-                UserId:1, // user.id
+                UserId:2, // user.id
                 ChannelId:channel_id
             })
             this.channelMemberRepository.save(cm);
