@@ -7,7 +7,7 @@ import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
 
 @ApiTags('CHANNEL')
-@Controller('api/room_list')
+@Controller('/')
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
 
