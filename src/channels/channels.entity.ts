@@ -5,8 +5,8 @@ import { Entity,
     UpdateDateColumn,
     OneToMany,
      } from "typeorm";
-import { ChannelMember } from "./channelcember.entity";
-
+import { ChannelMember } from "./channelmember.entity";
+import { Chats } from "src/chats/chats.entity";
 @Entity()
 export class Channels {
     @PrimaryGeneratedColumn()
@@ -39,4 +39,12 @@ export class Channels {
     //   cascade: ['insert'],
     // })
     // ChannelMember: ChannelMember[];
+    
+    // 이거 나중에 해야해.
+//     @OneToMany(() => Chats, (channelchats) => channelchats.Channel)
+//     ChannelChats: Chats[];
+    // @ManyToOne(() => User, (user) => user.photos)
+    // user: User
+    @OneToMany(() => ChannelMember, (ChannelMember) => ChannelMember.Channel)
+    ChannelMembers: ChannelMember[]
 }
