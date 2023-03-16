@@ -1,5 +1,6 @@
 import { Exclude } from 'class-transformer';
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { ChannelMember } from 'src/channels/channelmember.entity';
+import { Column, Entity, PrimaryColumn, ManyToOne } from 'typeorm';
 
 export enum UserStatus {
   ONLINE = 'ONLINE',
@@ -39,5 +40,8 @@ export class User {
 
   @Column({ default: false })
   isTwoFactorAuthenticationEnabled: boolean;
+
+  @ManyToOne(() => ChannelMember, (channelmember) => channelmember.users)
+  channelMember: User
 }
 
