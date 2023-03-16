@@ -51,7 +51,6 @@ export class ChannelsService {
     // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
     const channelReturned = await this.channelsRepository.save(channel);
     this.channelsGateway.EmitChannelInfo(channelReturned);
-    // this.channelsGateway.nsp.emit('newRoom', channelReturned);
     const channelMember = this.channelMemberRepository.create({
       UserId: myId,
       ChannelId: channelReturned.id,
@@ -59,13 +58,16 @@ export class ChannelsService {
     await this.channelMemberRepository.save(channelMember);
   }
 
+  // 방이 없을때 예외 처리
   async getChannelInfo(channelId: number) {
-    const channelMembers = await this.getChannelMembers(channelId);
-    // const channelBanMember = this.getChannelBanMembers(channelId)
-    const channelprivate = await this.findById(channelId);
-    const result = [channelMembers, channelprivate.private];
-    return result;
+    const channel = await this.findById(channelId);
+    if (channel) {
+      const channelMembers = await this.getChannelMembers(channelId);
+      const result = [channelMembers, channel.private];
+      return result;
+    } else throw new NotFoundException('Check the channelId if there is exist');
   }
+
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
   async getChannelMembers(channelId: number) {
     return this.channelMemberRepository.find({
@@ -74,15 +76,12 @@ export class ChannelsService {
   }
 
   async userEnterPrivateChannel(
-    channel_id: number,
+    channelId: number,
     password: string,
     user: User,
     curChannel: Channels,
   ): Promise<returnStatusMessage> {
     // 맞으면 채팅방 멤버에추가 해줘야한다. -> channel member entitiy 에 insert 하는거 추가 해야함.
-    // const curChannel = await this.channelsRepository.createQueryBuilder()
-    // .where('id = :channel_id', {channel_id})
-    // .getOne();
     if (password) {
       this.logger.log(`channel password : ${curChannel.password}`);
       const inputPasswordMatches = await bcrypt.compare(
@@ -105,7 +104,7 @@ export class ChannelsService {
         if (!isInUser) {
           const cm = this.channelMemberRepository.create({
             UserId: 1, // user.id
-            ChannelId: channel_id,
+            ChannelId: channelId,
           });
           this.channelMemberRepository.save(cm);
         }
