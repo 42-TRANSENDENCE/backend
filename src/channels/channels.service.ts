@@ -28,9 +28,9 @@ export class ChannelsService {
   ) {}
   private logger = new Logger(ChannelsService.name);
 
-  // async findById(id: number) {
-  //     return this.channelsRepository.findOne({ where: { id } });
-  // }
+  async findById(id: number) {
+    return this.channelsRepository.findOne({ where: { id } });
+  }
 
   async getChannels() {
     return this.channelsRepository.createQueryBuilder('channels').getMany();
@@ -59,12 +59,18 @@ export class ChannelsService {
     await this.channelMemberRepository.save(channelMember);
   }
 
+  async getChannelInfo(channelId: number) {
+    const channelMembers = await this.getChannelMembers(channelId);
+    // const channelBanMember = this.getChannelBanMembers(channelId)
+    const channelprivate = await this.findById(channelId);
+    const result = [channelMembers, channelprivate.private];
+    return result;
+  }
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
-  async getChannelMembers(channel_id: number) {
-    return this.channelMemberRepository
-      .createQueryBuilder('channel_member')
-      .where('channel_member.ChannelId = :channel_id', { channel_id })
-      .getMany();
+  async getChannelMembers(channelId: number) {
+    return this.channelMemberRepository.find({
+      where: { ChannelId: channelId },
+    });
   }
 
   async userEnterPrivateChannel(
@@ -83,12 +89,12 @@ export class ChannelsService {
         password,
         curChannel.password,
       );
-      this.logger.log(inputPasswordMatches);
+      // this.logger.log(inputPasswordMatches);
       if (!inputPasswordMatches) {
         throw new UnauthorizedException('Invalid password');
       } else {
         // 맞으면 소켓 연결하고 디비에 추가 채널멤버에(채널멤버 엔티티에 insert 하는거 뭐 추가 해야함 배열에 ) .
-        this.logger.log(' debug : Check only Server suceccses');
+        // this.logger.log(' debug : Check only Server suceccses');
         //db의 채널 멤버에 나 , user 추가
         //이미 채널id에 해당하는 멤버가 있으면 추가 ㄴㄴ!
         const isInUser = await this.channelMemberRepository
@@ -103,11 +109,11 @@ export class ChannelsService {
           });
           this.channelMemberRepository.save(cm);
         }
+        return { message: 'Enter Channel in successfully', status: 200 };
         // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
         // socket random 으로 만들어서
         // this.logger.log('channelReturned:', channelReturned.title);
         // this.nsp.emit('create-room', createdChannel);
-        return { message: 'Enter Channel in successfully', status: 200 };
         // res.status(200).send({ message: 'Enter Channel in successfully' });
         // Q.위의 명령어가 Controller 에서만 돼서 Promise 로 받아서 Controller로 전달해서 해결
         // 근데 왜 그렇지 ??? 어차피 똑같은 얘를 인자로 계속 가져와서 쓰는데
@@ -117,7 +123,6 @@ export class ChannelsService {
       throw new UnauthorizedException('Invalid password');
     }
   }
-
   async userEnterPublicChannel(
     channelId: number,
     password: string,
@@ -142,21 +147,21 @@ export class ChannelsService {
   }
 
   async userEnterChannel(
-    channel_id: number,
+    channelId: number,
     password: string,
     user: User,
   ): Promise<{ message: string; status: number }> {
-    const curChannel = await this.channelsRepository.findOne({
-      where: { id: channel_id },
+    const curChannel = await this.channelsRepository.findOneBy({
+      id: channelId,
     });
     if (!curChannel) throw new NotFoundException('Plz Enter Exist Room');
     if (curChannel.private)
       return this.userEnterPrivateChannel(
-        channel_id,
+        channelId,
         password,
         user,
         curChannel,
       );
-    return this.userEnterPublicChannel(channel_id, password, user, curChannel);
+    return this.userEnterPublicChannel(channelId, password, user, curChannel);
   }
 }

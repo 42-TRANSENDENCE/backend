@@ -33,10 +33,15 @@ export class ChannelsController {
     return this.channelsService.createChannels(body.title, body.password, 2);
   }
 
-  @ApiOperation({ summary: '채팅방 정보 가져오기: [멤버, 밴리스트, private]' })
+  @ApiOperation({
+    summary: '채팅방 정보 가져오기: [{ 멤버 }, { 밴리스트 }, private]',
+  })
   @Get(':channelId')
-  async getChannelMembers(@Param('channelId') channelId: number) {
-    return this.channelsService.getChannelMembers(channelId);
+  async getChannelInfo(@Param('channelId') channelId: number) {
+    const result = await this.channelsService.getChannelInfo(channelId);
+    // banMember 도 추가
+    // private 인지 알러면 채팅방 에 쿼리로 접근해서 알아와야 하는데.
+    return result;
   }
 
   @ApiOperation({ summary: '채팅방 입장' })
