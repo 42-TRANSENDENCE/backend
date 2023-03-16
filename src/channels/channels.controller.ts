@@ -1,11 +1,11 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChannelsService } from './channels.service';
 import { User } from 'src/users/users.entity';
 import { Users } from 'src/common/decorators/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
-
+import { Response } from 'express';
 @ApiTags('CHANNEL')
 @Controller('/')
 export class ChannelsController {
@@ -14,14 +14,14 @@ export class ChannelsController {
   // 일단 인자에 Users와 Param 은 필요 없음 (추후 확인후 첨삭 해야함)
   // 현재 user.id 를 그냥 1로 넣어주고 있음 ( 지금 로직에서도 안 쓰임 )
   @ApiOperation({ summary: '채팅방 모두 가져오기' })
-  @Get('/')
+  @Get('rooms')
   async getChannels() {
     // @Users() user: User
     return this.channelsService.getChannels();
   }
 
   @ApiOperation({ summary: '채팅방 만들기' })
-  @Post('/room')
+  @Post('rooms')
   async createChannels(
     @Body() body: CreateChannelDto,
     // @Users() user: User,
@@ -32,22 +32,26 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: '채팅방 정보 가져오기: [멤버, 밴리스트, private]' })
-  @Get('/room/:channelId')
+  @Get('room/:channelId')
   async getChannelMembers(@Param('channelId') channelId: number) {
     return this.channelsService.getChannelMembers(channelId);
   }
 
   @ApiOperation({ summary: '채팅방 입장' })
-  @Post('/room/:channelId')
+  @Post('room/:channelId')
   async userEnterChannel(
     @Param('channelId') channelId: number,
     @Body() enterDto: EnterChannelDto,
     @Users() user: User,
+    @Res() res: Response,
   ) {
-    return this.channelsService.userEnterChannel(
+    const result = await this.channelsService.userEnterChannel(
       channelId,
       enterDto.password,
       user,
     );
+    return res
+      .status(result.status)
+      .send({ statusCode: result.status, message: result.message });
   }
 }

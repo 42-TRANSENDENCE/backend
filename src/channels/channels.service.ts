@@ -2,12 +2,13 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  Res,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
-import { ChannelMember } from 'src/channels/channelcember.entity';
+import { ChannelMember } from './channelcember.entity';
 import { ChannelsGateway } from 'src/events/events.channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
@@ -67,15 +68,13 @@ export class ChannelsService {
     password: string,
     user: User,
     curChannel: Channels,
-  ) {
-    //private 일때 패스워드 hash compare해서 맞는지 만 체크
-    // 소켓 연결은 나중에
+  ): Promise<{ message: string; status: number }> {
     // 맞으면 채팅방 멤버에추가 해줘야한다. -> channel member entitiy 에 insert 하는거 추가 해야함.
     // const curChannel = await this.channelsRepository.createQueryBuilder()
     // .where('id = :channel_id', {channel_id})
     // .getOne();
     if (password) {
-      this.logger.log(`channel password: ${curChannel.password}`);
+      console.log(curChannel.password);
       const inputPasswordMatches = await bcrypt.compare(
         password,
         curChannel.password,
@@ -83,14 +82,32 @@ export class ChannelsService {
       this.logger.log(inputPasswordMatches);
       if (!inputPasswordMatches) {
         throw new UnauthorizedException('Invalid password');
+      } else {
+        // 맞으면 소켓 연결하고 디비에 추가 채널멤버에(채널멤버 엔티티에 insert 하는거 뭐 추가 해야함 배열에 ) .
+        this.logger.log(' debug : Check only Server suceccses');
+        //db의 채널 멤버에 나 , user 추가
+        //이미 채널id에 해당하는 멤버가 있으면 추가 ㄴㄴ!
+        const isInUser = await this.channelMemberRepository
+          .createQueryBuilder('channel_member')
+          .where('channel_member.UserId = :userId', { userId: 1 })
+          .getOne();
+        // console.log(isInUser)
+        if (!isInUser) {
+          const cm = this.channelMemberRepository.create({
+            UserId: 1, // user.id
+            ChannelId: channel_id,
+          });
+          this.channelMemberRepository.save(cm);
+        }
+        return { message: 'Enter Channel in successfully', status: 200 };
+        // res.status(200).send({ message: 'Enter Channel in successfully' });
+        // Q.위의 명령어가 Controller 에서만 돼서 Promise 로 받아서 Controller로 전달해서 해결
+        // 근데 왜 그렇지 ??? 어차피 똑같은 얘를 인자로 계속 가져와서 쓰는데
       }
-      // 맞으면 소켓 연결하고 디비에 추가 채널멤버에 .
-      this.logger.log('Enter room : success');
     } else {
       // 비번방인데 비밀번호 입력 안 했을때
       throw new UnauthorizedException('Invalid password');
     }
-    return curChannel;
   }
 
   async userEnterPublicChannel(
@@ -98,27 +115,40 @@ export class ChannelsService {
     password: string,
     user: User,
     curChannel: Channels,
-  ) {
+  ): Promise<{ message: string; status: number }> {
     // 공개방은 무조건 소켓 연결 근데 + 밴 리스트 !! 는 나중에
-    return curChannel;
-  }
-  async userEnterChannel(channel_id: number, password: string, user: User) {
-    const curChannel = await this.channelsRepository.findOneBy({
-      id: channel_id,
-    });
-
-    if (!curChannel) {
-      throw new NotFoundException('Plz Enter Exist Room');
+    // this.channelsGateway.nsp.emit('join-room');
+    const isInUser = await this.channelMemberRepository
+      .createQueryBuilder('channel_member')
+      .where('channel_member.UserId = :userId', { userId: 1 }) // 1 -> user.id
+      .getOne();
+    // console.log(isInUser)
+    if (!isInUser) {
+      const cm = this.channelMemberRepository.create({
+        UserId: 1, // user.id
+        ChannelId: channel_id,
+      });
+      this.channelMemberRepository.save(cm);
     }
+    return { message: 'Enter Channel in successfully', status: 200 };
+  }
 
-    if (curChannel.private) {
+  async userEnterChannel(
+    channel_id: number,
+    password: string,
+    user: User,
+  ): Promise<{ message: string; status: number }> {
+    const curChannel = await this.channelsRepository.findOne({
+      where: { id: channel_id },
+    });
+    if (!curChannel) throw new NotFoundException('Plz Enter Exist Room');
+    if (curChannel.private)
       return this.userEnterPrivateChannel(
         channel_id,
         password,
         user,
         curChannel,
       );
-    }
     return this.userEnterPublicChannel(channel_id, password, user, curChannel);
   }
 }
