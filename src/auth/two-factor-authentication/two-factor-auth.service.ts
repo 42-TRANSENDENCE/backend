@@ -19,6 +19,8 @@ export class TwoFactorAuthService {
   }
 
   verifyTwoFactorAuth(secret: string, token: string) {
+    this.logger.log(`two factor token: ${token}`);
+
     const isVerified = speakeasy.totp.verify({
       secret,
       encoding: 'ascii',

@@ -58,7 +58,7 @@ export class TwoFactorAuthController {
     @User() user,
   ) {
     await this.twoFactorAuthService.verifyTwoFactorAuth(
-      user.id,
+      user.twoFactorSecret,
       twoFactorTokenDto.token,
     );
     const accessCookie = this.authService.getCookieWithJwtAccessToken(
