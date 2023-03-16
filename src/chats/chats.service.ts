@@ -21,8 +21,7 @@ export class ChatsService {
   ) {}
 
   async getChats(channelId: number, myId: number) {
-    return this.chatsRepository.findOneBy({ ChannelId: channelId });
-    // const curchanelchats = this.chatsRepository.find({ where: {ChannelId : channelId } });
+    return this.chatsRepository.find({ where: { ChannelId: channelId } });
   }
 
   async createChats(content: string, id: number, myId: number) {
@@ -48,12 +47,11 @@ export class ChatsService {
   }
   async sendChatToChannel(id: number, chat: string, user: User) {
     const chats = this.chatsRepository.create({
-      id: id,
-      SenderId: user.id,
+      SenderId: 2, // user.id
       ChannelId: id,
       content: chat,
     });
     const saveChat = await this.chatsRepository.save(chats);
-    return this.channelsGateway.sendEmitMessage(saveChat);
+    this.channelsGateway.sendEmitMessage(saveChat);
   }
 }

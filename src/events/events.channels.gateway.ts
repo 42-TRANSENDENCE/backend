@@ -10,6 +10,7 @@ import {
   OnGatewayInit,
 } from '@nestjs/websockets';
 import { Server, Socket, Namespace } from 'socket.io';
+import { Chats } from 'src/chats/chats.entity';
 
 // interface MessagePayload {
 //   roomName: string;
@@ -70,7 +71,10 @@ export class ChannelsGateway
     socket.broadcast.emit('message', { username: socket.id, message });
     return { username: socket.id, message };
   }
-
+  async sendEmitMessage(sendChat: Chats) {
+    // 이부분 해당 방에 해당하는 broadcast로 하는걸로 수정하자 테스트 하면서
+    return this.nsp.emit('meesage', sendChat);
+  }
   async EmitChannelInfo(channelReturned) {
     return this.nsp.emit('newRoom', channelReturned);
   }
