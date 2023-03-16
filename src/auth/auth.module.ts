@@ -18,7 +18,7 @@ import { TwoFactorAuthService } from './two-factor-authentication/two-factor-aut
   imports: [
     BullModule.registerQueue({
       name: 'fourtyTwoLogin',
-      limiter: { max: 1, duration: 1000, bounceBack: true },
+      limiter: { max: 1, duration: 1000 },
     }),
     TypeOrmModule.forFeature([User]),
     JwtModule.register({}),
