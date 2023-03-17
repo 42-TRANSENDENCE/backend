@@ -61,4 +61,24 @@ export class ChannelsController {
       .status(result.status)
       .send({ statusCode: result.status, message: result.message });
   }
+
+  // @ApiOperation({ summary : '채팅방 나감'})
+  // async userExitChannel(
+  //     @Param('channelId') channelId : number,
+  //     @Body() body: CreateChannelDto,
+  //     @Users() user : User,
+  //     @Res() res: Response,
+  // ) {
+
+  // }
+
+  @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌' })
+  @Post(':roomid/admin/:userid') // body 엔 아무것도 안 옴
+  async ownerGiveAdmin(
+    @Param('roomid') channelId: number,
+    @Param('userid') toUserid: number,
+    @Users() user: User,
+  ) {
+    return this.channelsService.ownerGiveAdmin(channelId, toUserid, user);
+  }
 }

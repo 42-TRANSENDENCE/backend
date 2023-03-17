@@ -18,6 +18,11 @@ export class Channels {
   @Column('varchar', { length: 30, default: 'default' })
   title: string;
 
+  @Column({
+    nullable: true,
+  })
+  admin: number;
+
   @Column({ nullable: true })
   owner?: number;
 
