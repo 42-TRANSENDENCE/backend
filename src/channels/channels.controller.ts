@@ -6,6 +6,7 @@ import { Users } from 'src/common/decorators/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { Socket} from 'socket.io';
 import { Response } from 'express';
+// import { ConnectedSocket, MessageBody } from '@nestjs/websockets';
 
 @ApiTags('CHANNEL')
 @Controller('/')
@@ -47,22 +48,21 @@ export class ChannelsController {
     @Post('/room/:channelId')
     async userEnterChannel(
         @Param('channelId') channelId : number,
-        @Body() body: CreateChannelDto, // 이걸 수정해야 하구나
+        @Body('password') password: string, 
         @Users() user : User,
         @Res() res: Response,
     )  {
-            const result = await this.channelsService.userEnterChannel(channelId,body.password,user)
+            const result = await this.channelsService.userEnterChannel(channelId,password,user)
             return res.status(result.status).send({ statusCode : result.status, message: result.message });       
     }
 
     @ApiOperation({ summary : '채팅방 나감'})
     async userExitChannel(
-        @Param('channelId') channelId : number,
-        @Body() body: CreateChannelDto,
-        @Users() user : User,
-        @Res() res: Response,
+        // @ConnectedSocket() socket : Socket,
+        // @MessageBody() roomId: string,
     ) {
-
+        // leave-room 이벤트를 받으면 이 함수가 실행된다.
+        
     }
 
     @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌'})
