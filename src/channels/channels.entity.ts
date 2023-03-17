@@ -15,9 +15,18 @@ export class Channels {
     @Column('varchar', {length: 30 , default:"default"})
     title: string;
     
-    @Column({nullable:true, default: () => "'0'"})
+    @Column({
+        nullable : true, 
+        default: () => "'0'"
+    })
     owner: number;
 
+    @Column({
+        nullable: true, 
+        // default: () => "'0'"
+    })
+    admin: number;
+    
     @Column({
       nullable: true,
       default: () => "'0'",

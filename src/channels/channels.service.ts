@@ -41,16 +41,12 @@ export class ChannelsService {
         })
         if(password) {
             const hashedPassword = await bcrypt.hash(password.toString(), saltRounds);
-            // channel.private = true;
             channel.private = true;
             channel.password = hashedPassword;
         }
         // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
-        // socket random 으로 만들어서 
         const channelReturned = await this.channelsRepository.save(channel);
-        // this.logger.log('channelReturned:', channelReturned.title);
         this.channelsGateway.nsp.emit('newRoom', channelReturned);
-        // this.nsp.emit('create-room', createdChannel);
         const channelMember = this.channelMemberRepository.create({
             UserId : myId,
             ChannelId: channelReturned.id,
@@ -155,4 +151,20 @@ export class ChannelsService {
         else  
             throw new UnauthorizedException('Plz Enter Exist Room');
     }
+
+    // // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
+    // async userExitChannel() {}
+    
+    // 내가 이 채팅방에 owner 권한이 있는지 
+    // 없으면  cut 있으면  admin 권한을  toUserid 에게 준다.
+    async ownerGiveAdmin(channelId:number, toUserid:number, user:User) {
+        const curChannel =  await this.findById(channelId)        
+        // 채팅방의 Owner가 현재 명령한  userid와 일치 할때  근데 지금은  user가 연동이 안 되어 있닌까 
+        // if(user.id == curChannel.owner) 
+        {
+            curChannel.admin = toUserid;
+            this.channelsRepository.save(curChannel)
+        }
+    }
+
 }
