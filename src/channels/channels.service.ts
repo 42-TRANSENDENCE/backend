@@ -1,8 +1,11 @@
 import {
+  HttpCode,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
+  NotFoundException,
   Res,
+  Inject,
+  forwardRef,
   MethodNotAllowedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,7 +18,7 @@ import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { response } from 'express';
 import { returnStatusMessage } from './channel.interface';
-
+import { Socket } from 'socket.io';
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -25,6 +28,7 @@ export class ChannelsService {
     private usersRepository: Repository<User>,
     @InjectRepository(ChannelMember)
     private channelMemberRepository: Repository<ChannelMember>,
+    @Inject(forwardRef(() => ChannelsGateway))
     private readonly channelsGateway: ChannelsGateway,
   ) {}
   private logger = new Logger(ChannelsService.name);
@@ -111,9 +115,6 @@ export class ChannelsService {
         return { message: 'Enter Channel in successfully', status: 200 };
         // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
         // socket random 으로 만들어서
-        // this.logger.log('channelReturned:', channelReturned.title);
-        // this.nsp.emit('create-room', createdChannel);
-        // res.status(200).send({ message: 'Enter Channel in successfully' });
         // Q.위의 명령어가 Controller 에서만 돼서 Promise 로 받아서 Controller로 전달해서 해결
         // 근데 왜 그렇지 ??? 어차피 똑같은 얘를 인자로 계속 가져와서 쓰는데
       }
@@ -163,8 +164,6 @@ export class ChannelsService {
       );
     return this.userEnterPublicChannel(channelId, password, user, curChannel);
   }
-  // // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
-  // async userExitChannel() {}
 
   // 내가 이 채팅방에 owner 권한이 있는지
   // 없으면  cut 있으면  admin 권한을  toUserid 에게 준다.
@@ -185,5 +184,13 @@ export class ChannelsService {
       curChannel.admin = toUserId;
       this.channelsRepository.save(curChannel);
     }
+  }
+
+  // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
+  async userExitChannel(socket: Socket, roomId: string): Promise<void> {
+    // 이러면 내가 무슨 user 인지 알수 있나 .. ?
+    // roomId  가 채널의 id 이겠지 ?
+    // 채팅방 오너가 나가면 채팅방 삭제.
+    console.log('Solvnig Check circular dependency');
   }
 }

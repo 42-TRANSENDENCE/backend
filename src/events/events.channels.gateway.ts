@@ -1,4 +1,5 @@
-import { Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import {
   ConnectedSocket,
   OnGatewayConnection,
@@ -9,8 +10,13 @@ import {
   MessageBody,
   OnGatewayInit,
 } from '@nestjs/websockets';
-import { Server, Socket, Namespace } from 'socket.io';
+
 import { Chats } from 'src/chats/chats.entity';
+import { Server, Socket, Namespace } from 'socket.io';
+import { Channels } from 'src/channels/channels.entity';
+import { ChannelsService } from 'src/channels/channels.service';
+import { Repository } from 'typeorm';
+// import { ChannelsGateway } from './events.channels.gateway';
 
 // interface MessagePayload {
 //   roomName: string;
@@ -26,9 +32,12 @@ const originUrl = process.env.FRONTEND_URL;
   },
 })
 export class ChannelsGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  // constructor(private readonly ChannelsService: ChannelsService) { }
+  constructor(
+    @Inject(forwardRef(() => ChannelsService))
+    private readonly ChannelsService: ChannelsService,
+  ) {}
   private logger = new Logger(ChannelsGateway.name);
 
   @WebSocketServer() nsp: Namespace;
@@ -52,11 +61,10 @@ export class ChannelsGateway
   }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
-    this.logger.log('TEST ---------------- get connection');
     this.logger.log(`${socket.id} 소켓 연결`);
-    socket.broadcast.emit('message', {
-      message: `${socket.id}가 들어왔습니다.`,
-    });
+    // socket.broadcast.emit('message', {
+    //   message: `${socket.id}가 들어왔습니다.`,
+    // });
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -86,8 +94,15 @@ export class ChannelsGateway
   //   // this.logger.log(`TEST : ${socket.id} : `);
   //   return { Channel };
   // }
+  // socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
+  // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
+  // this.nsp.emit('create-room', roomName); // 대기실 방 생성
+  // return { success: true, payload: roomName };
+  @SubscribeMessage('leave-room')
+  handleLeaveRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() roomId: string,
+  ) {
+    this.ChannelsService.userExitChannel(socket, roomId);
+  }
 }
-// socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
-// createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
-// this.nsp.emit('create-room', roomName); // 대기실 방 생성
-// return { success: true, payload: roomName };

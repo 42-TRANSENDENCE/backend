@@ -7,6 +7,7 @@ import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
 import { Socket } from 'socket.io';
 import { Response } from 'express';
+import { ConnectedSocket, MessageBody } from '@nestjs/websockets';
 
 @ApiTags('CHANNEL')
 @Controller('/room')
@@ -62,13 +63,13 @@ export class ChannelsController {
       .send({ statusCode: result.status, message: result.message });
   }
 
-  // @ApiOperation({ summary : '채팅방 나감'})
-  // async userExitChannel(
-  //     @Param('channelId') channelId : number,
-  //     @Body() body: CreateChannelDto,
-  //     @Users() user : User,
-  //     @Res() res: Response,
-  // ) {
+  @ApiOperation({ summary: '채팅방 나감' })
+  async userExitChannel(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() roomId: string,
+  ) {
+    // leave-room 이벤트를 받으면 이 함수가 실행된다.
+  }
 
   // }
 
