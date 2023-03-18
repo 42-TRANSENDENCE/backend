@@ -1,4 +1,4 @@
-import { HttpCode, Injectable,UnauthorizedException, Res } from '@nestjs/common';
+import { HttpCode, Injectable,UnauthorizedException, Res, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
@@ -8,7 +8,7 @@ import { ChannelsGateway } from 'src/events/events.channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { response } from 'express';
-import { channel } from 'diagnostics_channel';
+import { Socket } from 'socket.io';
 
 
 @Injectable()
@@ -20,6 +20,7 @@ export class ChannelsService {
         private usersRepository: Repository<User>,
         @InjectRepository(ChannelMember)
         private channelMemberRepository: Repository<ChannelMember>,
+        @Inject(forwardRef(()=>ChannelsGateway))
         private readonly channelsGateway: ChannelsGateway,
     ) {}
     private logger = new Logger('channelService')
@@ -152,8 +153,13 @@ export class ChannelsService {
             throw new UnauthorizedException('Plz Enter Exist Room');
     }
 
-    // // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
-    // async userExitChannel() {}
+    // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
+    async userExitChannel(socket : Socket, roomId : string):Promise<void>  {
+        // 이러면 내가 무슨 user 인지 알수 있나 .. ? 
+        // roomId  가 채널의 id 이겠지 ? 
+        // 채팅방 오너가 나가면 채팅방 삭제.
+        console.log("Solvnig Check circular dependency")
+    }
     
     // 내가 이 채팅방에 owner 권한이 있는지 
     // 없으면  cut 있으면  admin 권한을  toUserid 에게 준다.

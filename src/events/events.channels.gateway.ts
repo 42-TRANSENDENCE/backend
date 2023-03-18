@@ -1,4 +1,5 @@
-import { Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import {
   ConnectedSocket,
   OnGatewayConnection,
@@ -9,26 +10,30 @@ import {
   MessageBody,
   OnGatewayInit,
 } from '@nestjs/websockets';
-import { join } from 'path';
+
 // import { ChannelsGateway } from './events.channels.gateway';
 import { Server, Socket, Namespace } from 'socket.io';
 import { Channels } from 'src/channels/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
+import { Repository } from 'typeorm';
 
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
 // }
-let createdRooms: string[] = [];
 
+// 이부분 뭐지? 수정해라..
 @WebSocketGateway({
   namespace:'channelchat',
   cors: {
     origin: ['http://localhost:3000'],
   },
 })
+
 export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-  // constructor(private readonly ChannelsService: ChannelsService) { }
+ 
+  constructor(
+  @Inject(forwardRef(()=>ChannelsService)) private readonly ChannelsService: ChannelsService ){}
   private logger = new Logger('ChannelsGateway')
 
   @WebSocketServer() nsp: Namespace
@@ -55,10 +60,6 @@ export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     this.logger.log("TEST ---------------- get connection")
     this.logger.log('connected', socket.nsp.name);
     this.logger.log(`${socket.id} 소켓 연결`);
-    // socket.join(socket.id);
-    // socket.broadcast.emit('message', {
-    //   message: `${socket.id}가 들어왔습니다.`,
-    // });
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -91,24 +92,7 @@ export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() roomId: string,
-  ){
-    
+  ) {
+      this.ChannelsService.userExitChannel(socket,roomId)
   }
-
-  
-  // @SubscribeMessage('newRoom')
-  // async handleCreateRoom(
-  //   @ConnectedSocket() socket: Socket,
-  //   @MessageBody() Channel: Channels,
-  // ) {
-  //   // 얘 두개는 어디에 찍히는거지 ?? 
-  //   this.logger.log("---------------newRoom self event")
-  //   console.log("---------------newRoom self event")
-  //   return { Channel };
-  // }
 }
-    // socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
-    // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
-    // this.nsp.emit('create-room', roomName); // 대기실 방 생성
-    // return { success: true, payload: roomName };
-  
