@@ -60,6 +60,7 @@ export class ChannelsController {
     async userExitChannel(
         @ConnectedSocket() socket : Socket,
         @MessageBody() roomId: string,
+        @MessageBody() userId: number,
     ) {
         // leave-room 이벤트를 받으면 이 함수가 실행된다.
         

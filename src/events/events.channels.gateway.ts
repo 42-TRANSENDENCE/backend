@@ -69,7 +69,7 @@ export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   @SubscribeMessage('join-room')
   handleJoinRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() roomId: string,
+    @MessageBody('roomId') roomId: string,
   ){
     socket.join(roomId);
     console.log(`${socket.id} 가 ${roomId} 에 들어왔다 Fucnking shit`)
@@ -91,8 +91,11 @@ export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   @SubscribeMessage('leave-room')
   handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() roomId: string,
+    // TODO : DTO 로 바꾸기
+    @MessageBody('roomId') roomId: string,
+    @MessageBody('userId') userId: number 
   ) {
-      this.ChannelsService.userExitChannel(socket,roomId)
+      //소켓 연결 끊기 ** 
+      this.ChannelsService.userExitChannel(socket,roomId,userId)
   }
 }

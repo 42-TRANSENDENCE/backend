@@ -28,7 +28,9 @@ export class ChannelsService {
     async findById(id:number) {
         return this.channelsRepository.findOne({ where: {id}});
     }
-
+    async findByIdMember(id:number) {
+        return this.channelMemberRepository.findOne({ where: {id}});
+    }
     async getChannels() {
         return this.channelsRepository.createQueryBuilder('channels').getMany()
     }
@@ -100,12 +102,12 @@ export class ChannelsService {
                 //db의 채널 멤버에 나 , user 추가 
                 //이미 채널id에 해당하는 멤버가 있으면 추가 ㄴㄴ!
                 const isInUser = await this.channelMemberRepository.createQueryBuilder('channel_member')
-                .where('channel_member.UserId = :userId', { userId: 1 })
+                .where('channel_member.UserId = :userId', { userId: 5 })
                 .getOne()
                 // console.log(isInUser)
                 if(!isInUser){
                     const cm = this.channelMemberRepository.create({
-                        UserId:1, // user.id
+                        UserId:2, // user.id
                         ChannelId:channel_id
                     })
                     this.channelMemberRepository.save(cm);
@@ -126,7 +128,7 @@ export class ChannelsService {
         // 공개방은 무조건 소켓 연결 근데 + 밴 리스트 !! 는 나중에 
         // this.channelsGateway.nsp.emit('join-room');
         const isInUser = await this.channelMemberRepository.createQueryBuilder('channel_member')
-        .where('channel_member.UserId = :userId', { userId: 2 }) // 1 -> user.id
+        .where('channel_member.UserId = :userId', { userId: 5 }) // 1 -> user.id
         .getOne()
         // console.log(isInUser)
         if(!isInUser){
@@ -154,11 +156,27 @@ export class ChannelsService {
     }
 
     // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
-    async userExitChannel(socket : Socket, roomId : string):Promise<void>  {
+    async userExitChannel(socket : Socket, roomId : string, userId:number):Promise<void>  {
         // 이러면 내가 무슨 user 인지 알수 있나 .. ? 
         // roomId  가 채널의 id 이겠지 ? 
         // 채팅방 오너가 나가면 채팅방 삭제.
-        console.log("Solvnig Check circular dependency")
+        const curChannel = await this.findById(+roomId)
+        // 근데 만약 그 채널에 없는 사람이 leave-room 이벤트 보내는 경우도 생각.
+        if (curChannel.owner === userId )
+        {
+            // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
+            console.log("is this herererererer")
+            this.channelMemberRepository.delete({ChannelId: +roomId})
+            this.channelsRepository.delete({id:+roomId})
+        }
+        else
+        {
+            // 멤버에서만 delete
+            // const curChannelMembers = await this.findByIdMember(+roomId)
+            this.channelMemberRepository.delete({UserId: userId ,ChannelId:+roomId})
+        }
+        
+        console.log("here what it is -------")
     }
     
     // 내가 이 채팅방에 owner 권한이 있는지 
