@@ -71,6 +71,25 @@ export class ChannelsGateway
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 
+  @SubscribeMessage('join-room')
+  handleJoinRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody('roomId') roomId: string,
+  ) {
+    socket.join(roomId);
+    this.logger.log(`${socket.id} 가 ${roomId} 에 들어왔다 Well Done ! `);
+    // socket.emit('message',{message: `${socket.id} 가 들어왔다 Well Done ! `})
+
+    // 잘 보내지나 확인용
+    this.nsp.to(roomId).emit('message', {
+      message: `${socket.id} 가 ${roomId} 에 들어왔다 Well Done ! `,
+    });
+    //
+    socket.broadcast
+      .to(roomId)
+      .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
+  }
+
   @SubscribeMessage('message')
   handleMessage(
     @ConnectedSocket() socket: Socket,
@@ -101,8 +120,11 @@ export class ChannelsGateway
   @SubscribeMessage('leave-room')
   handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() roomId: string,
+    // TODO : DTO 로 바꾸기
+    @MessageBody('roomId') roomId: string,
+    @MessageBody('userId') userId: number,
   ) {
-    this.ChannelsService.userExitChannel(socket, roomId);
+    //소켓 연결 끊기 **
+    this.ChannelsService.userExitChannel(socket, roomId, userId);
   }
 }
