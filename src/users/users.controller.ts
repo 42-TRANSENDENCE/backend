@@ -27,7 +27,6 @@ import {
 } from '@nestjs/swagger';
 import { User } from 'src/auth/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
-import { FriendsService } from 'src/users/friends/friends.service';
 import { userAvatarApiBody } from './users.constants';
 import { UsersService } from './users.service';
 
@@ -35,16 +34,20 @@ import { UsersService } from './users.service';
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
-  constructor(
-    private readonly userService: UsersService,
-    private readonly friendsService: FriendsService,
-  ) {}
+  constructor(private readonly userService: UsersService) {}
 
   @Get()
   @UseGuards(JwtTwoFactorGuard)
   @ApiOperation({ summary: '로그인한 user 정보 반환' })
   async getUserInfo(@User() user) {
     return user;
+  }
+
+  @Get(':nickname')
+  @UseGuards(JwtTwoFactorGuard)
+  @ApiOperation({ summary: '닉네임으로 유저 정보 검색' })
+  getUserByNickname(@Param('nickname') nickname: string) {
+    return this.userService.getByNickname(nickname);
   }
 
   // TODO: avatar type 저장

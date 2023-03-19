@@ -140,7 +140,16 @@ export class UsersService {
   async getById(id: number): Promise<User> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
-      this.logger.error(`user: ${id} is not exist`);
+      this.logger.error(`user: ${id} not exists`);
+      throw new NotFoundException(notFoundErrorMessage);
+    }
+    return user;
+  }
+
+  async getByNickname(nickname: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ nickname });
+    if (!user) {
+      this.logger.error(`user: ${nickname} not exists`);
       throw new NotFoundException(notFoundErrorMessage);
     }
     return user;
