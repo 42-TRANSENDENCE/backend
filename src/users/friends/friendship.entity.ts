@@ -2,10 +2,8 @@ import { User } from 'src/users/users.entity';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 export enum FriendStatus {
-  SENT,
-  RECEIVED,
+  PENDING,
   APPROVED,
-  BLOCKED,
 }
 
 @Entity()
@@ -16,11 +14,13 @@ export class Friendship {
   @PrimaryColumn()
   otherUserId: number;
 
-  @ManyToOne(() => User, (user) => user.friends)
+  @ManyToOne(() => User, (user) => user.friends, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => User, (otherUser) => otherUser.friends)
+  @ManyToOne(() => User, (otherUser) => otherUser.friends, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'otherUserId' })
   otherUser: User;
 
