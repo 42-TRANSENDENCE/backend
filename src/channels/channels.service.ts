@@ -191,31 +191,47 @@ export class ChannelsService {
   }
 
   // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
-  // 이거 내가 try catch로 예외처리 해놓음
-  async userExitChannel(
-    socket: Socket,
-    roomId: string,
-    userId: number,
-  ): Promise<void> {
+  async userExitChannel(socket: Socket, roomId: string, userId: number) {
     // 이러면 내가 무슨 user 인지 알수 있나 .. ?
     // roomId  가 채널의 id 이겠지 ?
     // 채팅방 오너가 나가면 채팅방 삭제.
-    const curChannel = await this.findById(+roomId);
-    // 근데 만약 그 채널에 없는 사람이 leave-room 이벤트 보내는 경우도 생각.
-    if (!curChannel) throw new WsException('Check the room number');
-    if (curChannel.owner === userId) {
-      // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
-      // this.logger.log('is this herererererer');
-      this.channelMemberRepository.delete({ ChannelId: +roomId });
-      this.channelsRepository.delete({ id: +roomId });
-    } else {
-      // 멤버에서만 delete
-      // const curChannelMembers = await this.findByIdMember(+roomId)
-      this.channelMemberRepository.delete({
-        UserId: userId,
-        ChannelId: +roomId,
-      });
+    try {
+      const curChannel = await this.findById(+roomId);
+      // 근데 만약 그 채널에 없는 사람이 leave-room 이벤트 보내는 경우도 생각.
+      this.logger.log(`curChannel : ${curChannel}`);
+      if (!curChannel) {
+        throw new NotFoundException('The channel does not exist');
+      }
+
+      if (curChannel.owner === userId) {
+        // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
+        this.channelMemberRepository.delete({ ChannelId: +roomId });
+        this.channelsRepository.delete({ id: +roomId });
+      } else {
+        // 멤버에서만 delete
+        //TODO:채널 안의 멤버 가 존재 하는지 안 하는지 쿼리
+        // const curChannelMembers = this.channelMemberRepository.findOne({ChannelId: })
+        const curChannelMembers = await this.channelMemberRepository
+          .createQueryBuilder('channel_member')
+          .where('channel_member.UserId = :userId', { userId: userId }) // 1 -> user.id
+          .getOne();
+        // const curChannelMembers = await this.findById(+roomId)
+        if (!curChannelMembers)
+          throw new NotFoundException('Member in this Channel does not exist!');
+        else
+          this.channelMemberRepository.delete({
+            UserId: userId,
+            ChannelId: +roomId,
+          });
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        // handle the case where the channel does not exist
+        this.logger.log(error.message);
+      } else {
+        // handle other errors
+        this.logger.log('userExitChannel: Unexpected error:', error);
+      }
     }
-    // this.logger.log('here what it is -------');
   }
 }

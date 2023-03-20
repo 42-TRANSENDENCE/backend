@@ -80,6 +80,16 @@ export class ChannelsGateway
     // socket.disconnect();
   }
 
+  getClientsInRoom(roomName: string) {
+    // const room = this.server.sockets.adapter.rooms.get(roomName);
+    const room = this.nsp.adapter.rooms.get(roomName)
+    if (room) {
+      return room.size;
+    } else {
+      return 0;
+    }
+  }
+
   @SubscribeMessage('join-room')
   handleJoinRoom(
     @ConnectedSocket() socket: Socket,
@@ -90,6 +100,7 @@ export class ChannelsGateway
     // socket.emit('message',{message: `${socket.id} 가 들어왔다 Well Done ! `})
 
     // 잘 보내지나 확인용
+    this.logger.log(`소켓에 연결된 사람수 : ${this.getClientsInRoom(roomId)}`)
     this.nsp.to(roomId).emit('message', {
       message: `${socket.id} 가 ${roomId} 에 들어왔다 Well Done ! `,
     });
