@@ -68,6 +68,16 @@ export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     // socket.disconnect();
   }
 
+  getClientsInRoom(roomName: string) {
+    // const room = this.server.sockets.adapter.rooms.get(roomName);
+    const room = this.nsp.adapter.rooms.get(roomName)
+    if (room) {
+      return room.size;
+    } else {
+      return 0;
+    }
+  }
+
   @SubscribeMessage('join-room')
   handleJoinRoom(
     @ConnectedSocket() socket: Socket,
@@ -78,6 +88,7 @@ export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     // socket.emit('message',{message: `${socket.id} 가 들어왔다 Fucnking shit `})
     
     // 잘 보내지나 확인용 
+    console.log(this.getClientsInRoom(roomId))
     this.nsp.to(roomId).emit('message',{message: `${socket.id} 가 ${roomId} 에 들어왔다 Fucnking shit `})
     socket.broadcast.to(roomId).emit('message',{message: `${socket.id} 가 들어왔다 Fucnking shit `})
   }
@@ -99,6 +110,7 @@ export class ChannelsGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   ) {
       //소켓 연결 끊기 ** 
       socket.leave(roomId);
+      console.log(this.getClientsInRoom(roomId))
       console.log(`Client ${socket.id} left room ${roomId}`);
       this.ChannelsService.userExitChannel(socket,roomId,userId)
   }
