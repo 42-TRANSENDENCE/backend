@@ -56,16 +56,6 @@ export class ChannelsController {
             return res.status(result.status).send({ statusCode : result.status, message: result.message });       
     }
 
-    @ApiOperation({ summary : '채팅방 나감'})
-    async userExitChannel(
-        @ConnectedSocket() socket : Socket,
-        @MessageBody() roomId: string,
-        @MessageBody() userId: number,
-    ) {
-        // leave-room 이벤트를 받으면 이 함수가 실행된다.
-        
-    }
-
     @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌'})
     @Post('/room/:roomid/admin/:userid') // body 엔 아무것도 안 옴
     async ownerGiveAdmin(
