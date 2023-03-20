@@ -69,6 +69,7 @@ export class ChannelsGateway
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
+    // socket.disconnect();
   }
 
   @SubscribeMessage('join-room')
@@ -125,6 +126,8 @@ export class ChannelsGateway
     @MessageBody('userId') userId: number,
   ) {
     //소켓 연결 끊기 **
+    socket.leave(roomId);
+    console.log(`Client ${socket.id} left room ${roomId}`);
     this.ChannelsService.userExitChannel(socket, roomId, userId);
   }
 }

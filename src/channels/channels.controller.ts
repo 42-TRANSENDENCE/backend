@@ -65,9 +65,9 @@ export class ChannelsController {
   @Post(':roomid/admin/:userid') // body 엔 아무것도 안 옴
   async ownerGiveAdmin(
     @Param('roomid') channelId: number,
-    @Param('userid') toUserid: number,
+    @Param('userid') toUserId: number,
     @Users() user: User,
   ) {
-    return this.channelsService.ownerGiveAdmin(channelId, toUserid, user);
+    return this.channelsService.ownerGiveAdmin(channelId, toUserId, user);
   }
 }
