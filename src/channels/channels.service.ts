@@ -15,7 +15,7 @@ import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
-import { ChannelsGateway } from './chats.gateway';
+import { ChannelsGateway } from './events.chats.gateway';
 import { ChannelBanMember } from './channelbanmember.entity';
 import { ChannelMuteMember } from './channelmutemember.entity';
 
