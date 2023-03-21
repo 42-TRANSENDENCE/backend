@@ -65,4 +65,35 @@ export class ChannelsController {
     ){
        return this.channelsService.ownerGiveAdmin(channelId,toUserid,user)
     }
+
+    //TODO: 권한 설정으로 깔끔하게 처리 해야함. 
+    @ApiOperation({ summary : 'Ban 요청'})
+    @Post('/room/:roomId/ban/:userId')
+    async postBanInChannel(
+        @Param('roomId') channelId : number,
+        @Param('userId') userId: number,
+        @Users() user : User
+    ) {
+        return this.channelsService.postBanInChannel(channelId, userId, user)
+    }
+
+    @ApiOperation({ summary : 'Kick 요청'})
+    @Post('/room/:roomId/kick/:userId')
+    async postKickInChannel(
+        @Param('roomId') channelId : number,
+        @Param('userId') userId: number,
+        @Users() user : User
+    ) {
+        return this.channelsService.postKickInChannel(channelId, userId, user)
+    }
+
+    @ApiOperation({ summary : 'mute 요청'})
+    @Post('/room/:roomId/mute/:userId')
+    async postMuteInChannel(
+        @Param('roomId') channelId : number,
+        @Param('userId') userId: number,
+        @Users() user : User
+    ) {
+        return this.channelsService.postMuteInChannel(channelId, userId, user)
+    }
 }
