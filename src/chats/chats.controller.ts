@@ -20,6 +20,7 @@ export class ChatsController {
     @ApiOperation({ summary: "해당 채팅방에 채팅 전송" })
     @Post(':channelId/chat')
     async sendChatToChannel(
+        // 이거  DTO만들어서 예외처리 
         @Param('channelId') id:number, // ParseIntPipe 
         @Body('chat') chat:string,
         @Users() user:User,
