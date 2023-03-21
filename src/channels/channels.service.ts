@@ -15,7 +15,10 @@ import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
-import { ChannelsGateway } from './channels.gateway';
+import { ChannelsGateway } from './chats.gateway';
+import { ChannelBanMember } from './channelbanmember.entity';
+import { ChannelMuteMember } from './channelmutemember.entity';
+
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -23,6 +26,11 @@ export class ChannelsService {
     private channelsRepository: Repository<Channels>,
     @InjectRepository(ChannelMember)
     private channelMemberRepository: Repository<ChannelMember>,
+    @InjectRepository(ChannelBanMember)
+    private channelBanMemberRepository: Repository<ChannelBanMember>,
+    @InjectRepository(ChannelMuteMember)
+    private channelMuteMemberRepository: Repository<ChannelMuteMember>,
+
     @Inject(forwardRef(() => ChannelsGateway))
     private readonly channelsGateway: ChannelsGateway,
   ) {}
@@ -149,6 +157,9 @@ export class ChannelsService {
     const curChannel = await this.channelsRepository.findOneBy({
       id: channelId,
     });
+    this.logger.log(await this.isBanned(channelId, 100)); // user.id 와 연결해야함
+    if (await this.isBanned(channelId, 4))
+      throw new UnauthorizedException('YOU ARE BANNED');
     if (!curChannel) throw new NotFoundException('Plz Enter Exist Room');
     if (curChannel.private)
       return this.userEnterPrivateChannel(
@@ -223,6 +234,81 @@ export class ChannelsService {
         // handle other errors
         this.logger.log('userExitChannel: Unexpected error:', error);
       }
+    }
+  }
+
+  // TODO: 권한 설정해서 Owner, admin이 이거 요청할시에 컷 해야함 if 문말고 깔끔하게 !
+  // Ban Post요청
+  async postBanInChannel(channelId: number, userId: number, user: User) {
+    const isInUser = await this.channelBanMemberRepository
+      .createQueryBuilder('channel_ban_member')
+      .where('channel_ban_member.UserId = :userId', { userId: userId }) // 1 -> user.id
+      .getOne();
+    console.log(isInUser);
+    if (!isInUser) {
+      const cm = this.channelBanMemberRepository.create({
+        UserId: userId, // user.id
+        ChannelId: channelId,
+        expiresAt: new Date('9999-12-31T23:59:59.999Z'),
+      });
+      this.channelBanMemberRepository.save(cm);
+    }
+    // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
+    // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
+  }
+
+  // Kick Post 요청 : 일단 얘는 10 초 kick  이다 . Banlist에 10 초로 넣어 놓자
+  async postKickInChannel(channelId: number, userId: number, user: User) {
+    const isInUser = await this.channelBanMemberRepository
+      .createQueryBuilder('channel_ban_member')
+      .where('channel_ban_member.UserId = :userId', { userId: userId })
+      .getOne();
+    console.log(isInUser);
+    if (!isInUser) {
+      const cm = this.channelBanMemberRepository.create({
+        UserId: userId, // user.id
+        ChannelId: channelId,
+        expiresAt: new Date(Date.now() + 10 * 1000),
+      });
+      this.channelBanMemberRepository.save(cm);
+    }
+    // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
+    // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
+  }
+
+  async isBanned(channelId: number, userId: number): Promise<boolean> {
+    const ban = await this.channelBanMemberRepository.findOne({
+      where: { ChannelId: channelId, UserId: userId },
+    });
+    // console.log(ban.ChannelId)
+    if (ban) {
+      console.log(Number(ban.expiresAt) - Number(new Date(Date.now())));
+      if (Number(ban.expiresAt) - Number(new Date(Date.now())) > 0) return true;
+      else {
+        this.channelBanMemberRepository.delete({
+          UserId: userId,
+          ChannelId: channelId,
+        });
+        return false;
+      }
+    } else return false;
+  }
+
+  // mute 요청 는 그냥 채팅 못 치게 막으면 된다.
+  // TODO: 권한 설정해서 Owner, admin이 이거 요청할시에 컷 해야함 if 문말고 깔끔하게 !
+  async postMuteInChannel(channelId: number, userId: number, user: User) {
+    const isInUser = await this.channelMuteMemberRepository
+      .createQueryBuilder('channel_mute_member')
+      .where('channel_mute_member.UserId = :userId', { userId: userId })
+      .getOne();
+    console.log(isInUser);
+    if (!isInUser) {
+      const cm = this.channelMuteMemberRepository.create({
+        UserId: userId,
+        ChannelId: channelId,
+        expiresAt: new Date(Date.now() + 10 * 1000),
+      });
+      this.channelMuteMemberRepository.save(cm);
     }
   }
 }
