@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chats } from './chats.entity'
 import { User } from 'src/users/users.entity';
 import { ChannelsGateway } from 'src/events/events.channels.gateway';
 import { Channels } from 'src/channels/channels.entity';
+import { ChannelMuteMember } from 'src/channels/channelmutemember.entity';
+import { ChannelsService } from 'src/channels/channels.service';
+
 function getKeyByValue(object, value) {
     return Object.keys(object).find((key) =>object[key] === value);
 }
@@ -15,6 +18,8 @@ export class ChatsService {
         @InjectRepository(Chats) private chatsRepository: Repository<Chats>,
         @InjectRepository(User) private usersRepository: Repository<User>,
         @InjectRepository(Channels) private channelsRepository: Repository<Channels>,
+        @InjectRepository(ChannelMuteMember) private channelMuteRpository: Repository<ChannelMuteMember>,
+        private readonly channelsService: ChannelsService,
         private readonly channelsGateway: ChannelsGateway,
     ) {}
 
@@ -48,15 +53,19 @@ export class ChatsService {
         // this.channelsGateway.server.to(receiverSocketId).emit('dm', dmWithSender);
     }
 
+    //TODO: 채팅창 연결해서 User.id랑 연결해서 테스트 , 인자들 정리, entity 도 정리 
     async sendChatToChannel(
-        id : number, 
+        roomId : number, 
         chat : string,
         user : User,
     ) {
+        console.log(await this.channelsService.isMutted(roomId,2))
+        if (await this.channelsService.isMutted(roomId,2))
+            throw new UnauthorizedException('YOU ARE MUTTED')
         const chats = this.chatsRepository.create({
-            id: id,
-            SenderId: id,
-            ChannelId: id,
+            UserId: 1, // Sender가 유저 아님 ? 
+            SenderId: 2,//user.id,
+            ChannelId: roomId,
             content: chat
         })
         const saveChat  = await this.chatsRepository.save(chats);
