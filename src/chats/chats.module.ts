@@ -6,8 +6,10 @@ import { User } from 'src/users/users.entity';
 import { Chats } from 'src/chats/chats.entity';
 import { EventsModule } from 'src/events/events.module';
 import { Channels } from 'src/channels/channels.entity';
+import { ChannelMuteMember } from 'src/channels/channelmutemember.entity';
+import { ChannelsModule } from 'src/channels/channels.module';
 @Module({
-  imports: [TypeOrmModule.forFeature([Chats, User, Channels]) , EventsModule],
+  imports: [TypeOrmModule.forFeature([Chats, User, Channels,ChannelMuteMember ]) , EventsModule,ChannelsModule],
   providers: [ChatsService],
   controllers: [ChatsController]
 })
