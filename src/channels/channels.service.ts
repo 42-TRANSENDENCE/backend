@@ -284,6 +284,23 @@ export class ChannelsService {
         else 
             return false
     }
+    async isMutted(channelId: number, userId: number)
+    : Promise<boolean>
+    {
+        const ban = await this.channelMuteMemberRepository.findOne({ where: { ChannelId:channelId, UserId:userId } });
+        // console.log(ban.ChannelId)
+        if (ban) {
+            console.log(Number(ban.expiresAt) -Number(new Date(Date.now())))
+            if (Number(ban.expiresAt) -Number(new Date(Date.now())) > 0)
+                return true
+            else{
+                this.channelMuteMemberRepository.delete({UserId: userId ,ChannelId:channelId})
+                return false
+            }
+        }
+        else 
+            return false
+    }
     
     // mute 요청 는 그냥 채팅 못 치게 막으면 된다. 
     // TODO: 권한 설정해서 Owner, admin이 이거 요청할시에 컷 해야함 if 문말고 깔끔하게 ! 
@@ -296,7 +313,7 @@ export class ChannelsService {
             const cm = this.channelMuteMemberRepository.create({
                 UserId:userId, 
                 ChannelId:channelId,
-                expiresAt : new Date(Date.now() + 10 *1000)
+                expiresAt : new Date(Date.now() + 100 *1000)
             })
             this.channelMuteMemberRepository.save(cm);
         }
