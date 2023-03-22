@@ -11,7 +11,7 @@ import {
   WsException,
 } from '@nestjs/websockets';
 
-import { Chats } from 'src/chats/chats.entity';
+import { Chats } from './chats/chats.entity';
 import { Server, Socket, Namespace } from 'socket.io';
 import { ChannelsService } from './channels.service';
 // import { ChannelsGateway } from './events.channels.gateway';
