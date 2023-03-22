@@ -1,31 +1,30 @@
-name: Nest CI
+name: 42 Pong Server CI
 
 on:
   push:
-    branches:
-      - main
-      - develop
-      - 'feat/**'
-      - 'fix/**'
+    branches: [main, develop, "feat/CI-CD"]
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: ["feat/**", "fix/**"]
 
 jobs:
-  ci:
+  CI-CD:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
+      # Set up Node.js
       - name: Use Node.js 18
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
+      # clean install
       - run: npm ci
+      # build
       - run: npm run build --if-present
+      # test
       - run: npm test
+      # SLACK Notification
       - uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
