@@ -6,7 +6,7 @@ import { Entity,
     OneToMany,
      } from "typeorm";
 import { ChannelMember } from "./channelmember.entity";
-import { Chats } from "src/chats/chats.entity";
+import { Chats } from "src/channels/chats/chats.entity";
 @Entity()
 export class Channels {
     @PrimaryGeneratedColumn()

@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelmember.entity';
-import { ChannelsGateway } from 'src/events/events.channels.gateway';
+import { ChannelsGateway } from 'src/channels/events/events.channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { response } from 'express';
@@ -284,6 +284,7 @@ export class ChannelsService {
         else 
             return false
     }
+    
     async isMutted(channelId: number, userId: number)
     : Promise<boolean>
     {
