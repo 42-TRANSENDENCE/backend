@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chats } from './chats.entity';
 import { User } from 'src/users/users.entity';
-import { ChannelsGateway } from 'src/events/events.channels.gateway';
+import { ChannelsGateway } from 'src/channels/events/events.channels.gateway';
 import { Channels } from 'src/channels/channels.entity';
 import { ChannelMuteMember } from 'src/channels/channelmutemember.entity';
 import { ChannelsService } from 'src/channels/channels.service';

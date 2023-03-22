@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Post, Body } from '@nestjs/common';
 import { ChatsService } from './chats.service';
 import { User } from 'src/users/users.entity';
-import { Users } from 'src/common/decorators/user.decorator';
+import { Users } from 'src/channels/common/decorators/user.decorator';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('CHAT')
