@@ -1,32 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GeneratedSecret } from 'speakeasy';
-import { User, UserStatus } from 'src/users/users.entity';
 import { UsersService } from 'src/users/users.service';
 import { TwoFactorAuthService } from '../two-factor-authentication/two-factor-auth.service';
 import * as speakeasy from 'speakeasy';
 import { Logger, UnauthorizedException } from '@nestjs/common';
 
-const setTwoFactorAuthenticationSecret = jest.fn(
-  (id: number, secret: string) => {
-    return;
-  },
-);
-
-const getById = jest.fn(async (id: number) => {
-  const user: User = {
-    id,
-    nickname: 'test user',
-    isTwoFactorAuthenticationEnabled: false,
-    avatar: new Uint8Array([]),
-    status: UserStatus.OFFLINE,
-    twoFactorSecret: 'test secret',
-  };
-  return user;
-});
-
 const mockedUsersService = {
-  setTwoFactorAuthenticationSecret,
-  getById,
+  setTwoFactorAuthenticationSecret: jest.fn(),
 };
 
 describe('TwoFactorAuthSercie', () => {
@@ -56,10 +36,9 @@ describe('TwoFactorAuthSercie', () => {
       };
       jest.spyOn(speakeasy, 'generateSecret').mockReturnValue(secret);
 
-      const setTwoFactorAuthenticationSecretSpy = jest.spyOn(
-        mockedUsersService,
-        'setTwoFactorAuthenticationSecret',
-      );
+      const setTwoFactorAuthenticationSecretSpy = jest
+        .spyOn(mockedUsersService, 'setTwoFactorAuthenticationSecret')
+        .mockReturnValue(null);
       const result: GeneratedSecret = await twoFactorAuthService.register(id);
 
       expect(result).toBeDefined();

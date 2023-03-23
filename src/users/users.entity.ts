@@ -1,5 +1,13 @@
 import { Exclude } from 'class-transformer';
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Friendship } from 'src/users/friends/friendship.entity';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  PrimaryColumn,
+} from 'typeorm';
 
 export enum UserStatus {
   ONLINE = 'ONLINE',
@@ -7,7 +15,7 @@ export enum UserStatus {
   INGAME = 'INGAME',
 }
 
-@Entity({ name: 'user'})
+@Entity({ name: 'user' })
 export class User {
   @PrimaryColumn()
   id: number;
@@ -39,5 +47,11 @@ export class User {
 
   @Column({ default: false })
   isTwoFactorAuthenticationEnabled: boolean;
-}
 
+  @OneToMany(() => Friendship, (friends) => friends.user)
+  friends: Friendship[];
+
+  @ManyToMany(() => User, (user) => user.blocked, { onDelete: 'CASCADE' })
+  @JoinTable()
+  blocked: User[];
+}

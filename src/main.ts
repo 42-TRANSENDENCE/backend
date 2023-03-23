@@ -10,11 +10,6 @@ import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const fourtyTwoAccessToken: SecuritySchemeObject = {
-    type: 'http',
-    scheme: 'bearer',
-  };
-
   const authenticationCookie: SecuritySchemeObject = {
     type: 'apiKey',
     description: '42 Pong JWT Access Token',
@@ -33,12 +28,12 @@ async function bootstrap() {
     .setTitle('42 Pong API')
     .setDescription('42 Pong API description')
     .setVersion('1.0')
-    .addBearerAuth(fourtyTwoAccessToken, '42-token')
     .addCookieAuth('Authentication', authenticationCookie)
     .addCookieAuth('Refresh', refreshCookie)
     .addTag('auth', '인증 API')
     .addTag('users', '사용자 API')
     .addTag('2fa', '2차 인증 API')
+    .addTag('users/friends', '친구 API')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
