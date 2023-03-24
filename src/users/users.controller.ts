@@ -19,6 +19,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiConsumes,
   ApiNotFoundResponse,
@@ -108,6 +109,9 @@ export class UsersController {
 
   @Patch('nickname')
   @UseGuards(JwtTwoFactorGuard)
+  @ApiOperation({ summary: 'nickname 변경' })
+  @ApiOkResponse({ description: '변경 완료' })
+  @ApiBadRequestResponse({ description: '변경 실패. 메세지에 실패 이유 포함' })
   modifyNickname(@User() user, @Body() modifyUserDto: ModifyUserDto) {
     return this.userService.modifyNickname(user, modifyUserDto.nickname);
   }
