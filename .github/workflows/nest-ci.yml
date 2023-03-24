@@ -30,7 +30,7 @@ jobs:
       # below steps work only for main branch
       # docker build & push image to registry
       - name: Get Github Actions IP
-        if: contains(github.ref, 'main')
+        if: contains(github.ref, 'main') || contains(github.ref, 'develop')
         id: ip
         uses: haythem/public-ip@v1.2
 
