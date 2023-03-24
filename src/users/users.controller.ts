@@ -1,4 +1,5 @@
 import {
+  Body,
   ClassSerializerInterceptor,
   Controller,
   Delete,
@@ -28,6 +29,7 @@ import {
 import { User } from 'src/auth/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
 import { FriendsService } from 'src/users/friends/friends.service';
+import { ModifyUserDto } from './dto/users.dto';
 import { userAvatarApiBody } from './users.constants';
 import { UsersService } from './users.service';
 
@@ -102,6 +104,12 @@ export class UsersController {
   @ApiOperation({ summary: '사용자 삭제', description: '회원 탈퇴' })
   deleteUser(@User() user) {
     return this.userService.deleteUser(user.id);
+  }
+
+  @Patch('nickname')
+  @UseGuards(JwtTwoFactorGuard)
+  modifyNickname(@User() user, @Body() modifyUserDto: ModifyUserDto) {
+    return this.userService.modifyNickname(user, modifyUserDto.nickname);
   }
 
   @Get('blocked')

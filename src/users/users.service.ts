@@ -214,4 +214,13 @@ export class UsersService {
     this.userRepository.save(user);
     return user;
   }
+
+  async modifyNickname(user: User, nickname: string): Promise<User> {
+    const isExist = await this.userRepository.findOneBy({ nickname });
+    if (isExist) {
+      throw new BadRequestException('이미 존재하는 nickname입니다.');
+    }
+    user.nickname = nickname;
+    return this.userRepository.save(user);
+  }
 }
