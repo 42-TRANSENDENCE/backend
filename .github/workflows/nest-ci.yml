@@ -54,7 +54,7 @@ jobs:
           docker build -t ${{ secrets.DOCKER_REPO }}/mj42-pong .
           docker push ${{ secrets.DOCKER_REPO }}/mj42-pong
 
-      ## deploy to aws ec2
+      ## deploy to aws ec2 with ssh
       - name: Deploy to AWS EC2
         uses: appleboy/ssh-action@master
         if: contains(github.ref, 'main') || contains(github.ref, 'develop')
