@@ -2,7 +2,7 @@ name: 42 Pong Server CI
 
 on:
   push:
-    branches: [main, develop, ""]
+    branches: [main, develop, "feat/CI-CD"]
   pull_request:
     branches: ["feat/**", "fix/**", "chore/**", "refactor/**"]
 
