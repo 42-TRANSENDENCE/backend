@@ -23,7 +23,7 @@ export class ChatsService {
         
         @Inject(forwardRef(()=>ChannelsService))
         private readonly channelsService: ChannelsService,
-        
+    
         private readonly channelsGateway: ChannelsGateway,
         
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
