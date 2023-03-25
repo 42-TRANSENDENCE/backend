@@ -1,4 +1,4 @@
-import { CacheModule, Module, ValidationPipe } from '@nestjs/common';
+import { CacheModule, Module, ValidationPipe,MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import * as Joi from 'joi';
@@ -13,6 +13,7 @@ import { EventsModule } from './channels/events/events.module';
 import { DatabaseModule } from './database/database.module';
 import { GameModule } from './game/game.module';
 import { BullModule } from '@nestjs/bull';
+import { RateLimitMiddleware } from './ratelimit/rateLimitMiddleware';
 
 @Module({
   imports: [
@@ -66,4 +67,8 @@ import { BullModule } from '@nestjs/bull';
     },
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RateLimitMiddleware).forRoutes('*');
+  }
+}
