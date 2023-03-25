@@ -1,5 +1,5 @@
-import { Module, ValidationPipe } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { CacheModule, Module, ValidationPipe } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import * as Joi from 'joi';
 import { AppController } from './app.controller';
@@ -42,6 +42,7 @@ import { EventsModule } from './events/events.module';
     EventsModules,
     EventsModule,
     GameModule,
+    CacheModule.register(),
   ],
   controllers: [AppController],
   providers: [

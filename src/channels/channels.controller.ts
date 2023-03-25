@@ -89,7 +89,8 @@ export class ChannelsController {
     @Param('userId') userId: number,
     @Users() user: User,
   ) {
-    return this.channelsService.postKickInChannel(channelId, userId, user);
+    // return this.channelsService.postKickInChannel(channelId, userId, user)
+    return this.channelsService.addToKicklist(channelId, userId, 3000);
   }
 
   @ApiOperation({ summary: 'mute 요청' })
@@ -99,6 +100,6 @@ export class ChannelsController {
     @Param('userId') userId: number,
     @Users() user: User,
   ) {
-    return this.channelsService.postMuteInChannel(channelId, userId, user);
+    return this.channelsService.addToMutelist(channelId, userId, 3000);
   }
 }
