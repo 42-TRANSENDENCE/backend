@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, UnauthorizedException,CACHE_MANAGER } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chats } from './chats.entity'
@@ -7,6 +7,7 @@ import { ChannelsGateway } from 'src/channels/events/events.channels.gateway';
 import { Channels } from 'src/channels/channels.entity';
 import { ChannelMuteMember } from 'src/channels/channelmutemember.entity';
 import { ChannelsService } from 'src/channels/channels.service';
+import { Cache } from 'cache-manager';
 
 function getKeyByValue(object, value) {
     return Object.keys(object).find((key) =>object[key] === value);
@@ -19,8 +20,14 @@ export class ChatsService {
         @InjectRepository(User) private usersRepository: Repository<User>,
         @InjectRepository(Channels) private channelsRepository: Repository<Channels>,
         @InjectRepository(ChannelMuteMember) private channelMuteRpository: Repository<ChannelMuteMember>,
+        
+        @Inject(forwardRef(()=>ChannelsService))
         private readonly channelsService: ChannelsService,
+        
         private readonly channelsGateway: ChannelsGateway,
+        
+        @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    
     ) {}
 
     async getChats(channel_id: number, myId: number) {
@@ -58,10 +65,14 @@ export class ChatsService {
         roomId : number, 
         chat : string,
         user : User,
-    ) {
-        console.log(await this.channelsService.isMutted(roomId,2))
-        if (await this.channelsService.isMutted(roomId,2))
-            throw new UnauthorizedException('YOU ARE MUTTED')
+    ) {        
+        const mutelist = await this.channelsService.getMutelist(roomId)
+        console.log(`this is chatsservice ${mutelist}`)
+        for (const userId of mutelist) {
+            if (userId == 1) {
+                throw new UnauthorizedException('YOU ARE MUTED');
+            }
+        }
         const chats = this.chatsRepository.create({
             UserId: 1, // Sender가 유저 아님 ? 
             SenderId: 2,//user.id,
@@ -70,5 +81,5 @@ export class ChatsService {
         })
         const saveChat  = await this.chatsRepository.save(chats);
         this.channelsGateway.nsp.emit('message',chat)
-    }
+     }
 }

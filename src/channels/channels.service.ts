@@ -1,4 +1,11 @@
-import { HttpCode, Injectable,UnauthorizedException, Res, Inject, forwardRef, NotFoundException } from '@nestjs/common';
+import { Injectable, 
+        UnauthorizedException, 
+        Res, 
+        Inject, 
+        forwardRef, 
+        NotFoundException, 
+        CACHE_MANAGER, 
+         } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
@@ -11,8 +18,7 @@ import { response } from 'express';
 import { Socket } from 'socket.io';
 import { ChannelBanMember } from './channelbanmember.entity';
 import { ChannelMuteMember } from './channelmutemember.entity';
-
-
+import { Cache } from 'cache-manager';
 @Injectable()
 export class ChannelsService {
     constructor(
@@ -31,6 +37,8 @@ export class ChannelsService {
 
         @Inject(forwardRef(()=>ChannelsGateway))
         private readonly channelsGateway: ChannelsGateway,
+
+        @Inject(CACHE_MANAGER) private cacheManager: Cache,
     ) {}
     private logger = new Logger('channelService')
 
@@ -268,13 +276,39 @@ export class ChannelsService {
         // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
     }
 
+    async addToKicklist(roomId: number, userId: number, ttl: number): Promise<void> {
+        const key = `chatroom:${roomId}:kicklist`;
+        const kicklist = await this.cacheManager.get<number[]>(key) || [];
+        if (!kicklist.includes(userId)) {
+          kicklist.push(userId);
+          await this.cacheManager.set(key, kicklist, 50000);
+        }
+        console.log(kicklist)
+    }
+
+    async addToMutelist(roomId: number, userId: number, ttl: number): Promise<void> {
+        const key = `chatroom:${roomId}:mutelist`;
+        const mutelist = await this.cacheManager.get<number[]>(key) || [];
+      
+        if (!mutelist.includes(userId)) {
+          mutelist.push(userId);
+          await this.cacheManager.set(key, mutelist,  50000 );
+        }
+        
+        console.log(mutelist);
+    }
+    async getMutelist(roomId: number): Promise<number[]> {
+        const key = `chatroom:${roomId}:mutelist`;
+        const mutelist = await this.cacheManager.get<number[]>(key) || [];
+        return mutelist;
+    }
     async isBanned(channelId: number, userId: number)
     : Promise<boolean>
     {
         const ban = await this.channelBanMemberRepository.findOne({ where: { ChannelId:channelId, UserId:userId } });
         // console.log(ban.ChannelId)
         if (ban) {
-            console.log(Number(ban.expiresAt) -Number(new Date(Date.now())))
+            console.log(Number(ban.expiresAt) - Number(new Date(Date.now())))
             if (Number(ban.expiresAt) -Number(new Date(Date.now())) > 0)
                 return true
             else{
