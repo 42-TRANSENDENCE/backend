@@ -1,4 +1,4 @@
-import { Module, ValidationPipe } from '@nestjs/common';
+import { CacheModule, Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import * as Joi from 'joi';
@@ -6,11 +6,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { ChatsModule } from './chats/chats.module';
+import { ChatsModule } from './channels/chats/chats.module';
 import { ChannelsModule } from './channels/channels.module';
 import { DatabaseModule } from './database/database.module';
 import { GameModule } from './game/game.module';
-import { EventsModule } from './events/events.module';
+import { EventsModule } from './channels/events/events.module';
 
 @Module({
   imports: [
@@ -41,6 +41,7 @@ import { EventsModule } from './events/events.module';
     ChannelsModule,
     EventsModule,
     GameModule,
+    CacheModule.register(),
   ],
   controllers: [AppController],
   providers: [

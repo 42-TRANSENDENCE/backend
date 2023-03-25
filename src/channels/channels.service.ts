@@ -1,11 +1,11 @@
 import {
-  HttpCode,
   Injectable,
-  UnauthorizedException,
-  NotFoundException,
   Res,
   Inject,
   forwardRef,
+  CACHE_MANAGER,
+  UnauthorizedException,
+  NotFoundException,
   MethodNotAllowedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,7 +13,7 @@ import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelmember.entity';
-import { ChannelsGateway } from 'src/events/events.channels.gateway';
+import { ChannelsGateway } from './events/events.channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { response } from 'express';
@@ -24,6 +24,7 @@ import { ChannelMuteMember } from './channelmutemember.entity';
 
 import { WsException } from '@nestjs/websockets';
 
+import { Cache } from 'cache-manager';
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -40,6 +41,7 @@ export class ChannelsService {
 
     @Inject(forwardRef(() => ChannelsGateway))
     private readonly channelsGateway: ChannelsGateway,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
   private logger = new Logger(ChannelsService.name);
 
@@ -188,6 +190,7 @@ export class ChannelsService {
     if (!isInUser)
       throw new NotFoundException(`In this room ${toUserId} is not exsit`);
     const curChannel = await this.findById(channelId);
+    if (!curChannel) throw new NotFoundException(`${channelId} is not exsit`);
     if (curChannel.owner == toUserId)
       throw new MethodNotAllowedException('Owner could not downgrade admin');
     // 채팅방의 Owner가 현재 명령한  userid와 일치 할때  근데 지금은  user가 연동이 안 되어 있닌까
@@ -301,6 +304,40 @@ export class ChannelsService {
     } else return false;
   }
 
+  async addToKicklist(
+    roomId: number,
+    userId: number,
+    ttl: number,
+  ): Promise<void> {
+    const key = `chatroom:${roomId}:kicklist`;
+    const kicklist = (await this.cacheManager.get<number[]>(key)) || [];
+    if (!kicklist.includes(userId)) {
+      kicklist.push(userId);
+      await this.cacheManager.set(key, kicklist, 50000);
+    }
+    console.log(kicklist);
+  }
+
+  async addToMutelist(
+    roomId: number,
+    userId: number,
+    ttl: number,
+  ): Promise<void> {
+    const key = `chatroom:${roomId}:mutelist`;
+    const mutelist = (await this.cacheManager.get<number[]>(key)) || [];
+
+    if (!mutelist.includes(userId)) {
+      mutelist.push(userId);
+      await this.cacheManager.set(key, mutelist, 50000);
+    }
+
+    console.log(mutelist);
+  }
+  async getMutelist(roomId: number): Promise<number[]> {
+    const key = `chatroom:${roomId}:mutelist`;
+    const mutelist = (await this.cacheManager.get<number[]>(key)) || [];
+    return mutelist;
+  }
   async isMutted(channelId: number, userId: number): Promise<boolean> {
     const ban = await this.channelMuteMemberRepository.findOne({
       where: { ChannelId: channelId, UserId: userId },

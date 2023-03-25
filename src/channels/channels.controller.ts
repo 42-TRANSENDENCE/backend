@@ -2,7 +2,7 @@ import { Controller, Get, Param, Post, Body, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChannelsService } from './channels.service';
 import { User } from 'src/users/users.entity';
-import { Users } from 'src/common/decorators/user.decorator';
+import { Users } from './common/decorators/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
 import { Response } from 'express';
@@ -89,7 +89,8 @@ export class ChannelsController {
     @Param('userId') userId: number,
     @Users() user: User,
   ) {
-    return this.channelsService.postKickInChannel(channelId, userId, user);
+    // return this.channelsService.postKickInChannel(channelId, userId, user)
+    return this.channelsService.addToKicklist(channelId, userId, 3000);
   }
 
   @ApiOperation({ summary: 'mute 요청' })
@@ -99,6 +100,6 @@ export class ChannelsController {
     @Param('userId') userId: number,
     @Users() user: User,
   ) {
-    return this.channelsService.postMuteInChannel(channelId, userId, user);
+    return this.channelsService.addToMutelist(channelId, userId, 3000);
   }
 }
