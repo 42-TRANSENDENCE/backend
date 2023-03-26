@@ -50,7 +50,7 @@ export class UsersController {
     return user;
   }
 
-  @Get(':nickname')
+  @Get('search/:nickname')
   @UseGuards(JwtTwoFactorGuard)
   @ApiOperation({ summary: '닉네임으로 유저 정보 검색' })
   getUserByNickname(@Param('nickname') nickname: string) {
