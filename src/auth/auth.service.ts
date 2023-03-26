@@ -1,18 +1,13 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { JwtTokenPayload } from './interface/jwt-token-payload.interface';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
-import { FourtyTwoToken } from './interface/fourty-two-token.interface';
 
 @Injectable()
 export class AuthService {
   private logger: Logger = new Logger(AuthService.name);
 
   constructor(
-    @InjectQueue('fourtyTwoLogin')
-    private readonly loginQueue: Queue,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -54,15 +49,5 @@ export class AuthService {
       `Authentication=; HttpOnly; Path=/; Max-Age=0`,
       'Refresh=; HttpOnly; Path=/; Max-Age=0',
     ];
-  }
-
-  async getFourtyTwoUser(token: FourtyTwoToken) {
-    const job = await this.loginQueue.add('userInfo', { token });
-    try {
-      return await job.finished();
-    } catch (err) {
-      this.logger.error('42 Authorization failed');
-      throw new UnauthorizedException('42 Authorization failed');
-    }
   }
 }

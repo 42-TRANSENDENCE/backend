@@ -11,12 +11,15 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtTwoFactorStrategy } from './strategies/jwt-two-factor.strategy';
 import { TwoFactorAuthService } from './two-factor-authentication/two-factor-auth.service';
+import { LoginService } from './login.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     JwtModule.register({}),
-    HttpModule,
+    HttpModule.register({
+      timeout: 2000,
+    }),
     UsersModule,
   ],
   controllers: [AuthController, TwoFactorAuthController],
@@ -26,7 +29,7 @@ import { TwoFactorAuthService } from './two-factor-authentication/two-factor-aut
     JwtTwoFactorStrategy,
     AuthService,
     TwoFactorAuthService,
-    LoginConsumer,
+    LoginService,
   ],
   exports: [],
 })
