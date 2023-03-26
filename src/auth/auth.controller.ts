@@ -60,9 +60,9 @@ export class AuthController {
       throw new ForbiddenException('잘못된 접근입니다.');
     }
     const fourtyTwoUserInfo = await this.loginService.oauthLogin(code);
-
-    this.logger.log(fourtyTwoUserInfo.id);
-
+    this.logger.log(
+      `42 User id: ${fourtyTwoUserInfo.id}, intra name: ${fourtyTwoUserInfo.login}`,
+    );
     const accessCookie = this.authService.getCookieWithJwtAccessToken(
       fourtyTwoUserInfo.id,
     );
