@@ -8,11 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ChatsModule } from './chats/chats.module';
 import { ChannelsModule } from './channels/channels.module';
-import { ChannelsGateway } from './events/events.channels.gateway';
-import { EventsModule } from './events/events.module';
 import { DatabaseModule } from './database/database.module';
 import { GameModule } from './game/game.module';
-import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -31,8 +28,6 @@ import { BullModule } from '@nestjs/bull';
         JWT_ACCESS_TOKEN_EXPIRATION_TIME: Joi.string().required(),
         JWT_REFRESH_TOKEN_SECRET: Joi.string().required(),
         JWT_REFRESH_TOKEN_EXPIRATION_TIME: Joi.string().required(),
-        REDIS_HOST: Joi.string().required(),
-        REDIS_PORT: Joi.number().required(),
         SESSION_SECRET: Joi.string().required(),
         FRONTEND_URL: Joi.string().required(),
       }),
@@ -44,16 +39,6 @@ import { BullModule } from '@nestjs/bull';
     ChatsModule,
     ChannelsModule,
     GameModule,
-    BullModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        redis: {
-          host: configService.get<string>('REDIS_HOST'),
-          port: configService.get<number>('REDIS_PORT'),
-        },
-      }),
-      inject: [ConfigService],
-    }),
   ],
   controllers: [AppController],
   providers: [

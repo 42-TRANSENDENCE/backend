@@ -6,8 +6,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
 import { HttpModule } from '@nestjs/axios';
 import { UsersModule } from 'src/users/users.module';
-import { BullModule } from '@nestjs/bull';
-import { LoginConsumer } from './queue/login.consumer';
 import { TwoFactorAuthController } from './two-factor-authentication/two-factor-auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
@@ -16,10 +14,6 @@ import { TwoFactorAuthService } from './two-factor-authentication/two-factor-aut
 
 @Module({
   imports: [
-    BullModule.registerQueue({
-      name: 'fourtyTwoLogin',
-      limiter: { max: 1, duration: 1000 },
-    }),
     TypeOrmModule.forFeature([User]),
     JwtModule.register({}),
     HttpModule,
