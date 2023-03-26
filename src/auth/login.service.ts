@@ -34,6 +34,7 @@ export class LoginService {
       this.logger.debug(`waited for ${delayTime} ms`);
     }
     const token: FourtyTwoToken = await this.getFourtyTwoToken(code);
+    this.logger.log(`access token: ${token.access_token}`);
 
     delayTime = 1000;
     await this.delay(delayTime);
@@ -65,7 +66,6 @@ export class LoginService {
         ),
     );
     this.lastExecutedTime = Date.now();
-    this.logger.log(data);
     return data;
   }
 
