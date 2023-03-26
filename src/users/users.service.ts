@@ -106,6 +106,8 @@ export class UsersService {
       id,
       nickname,
       avatar,
+      blocked: [],
+      friends: [],
     });
     await this.userRepository.save(user);
     return user;
@@ -138,7 +140,16 @@ export class UsersService {
   async getById(id: number): Promise<User> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
-      this.logger.error(`user: ${id} is not exist`);
+      this.logger.error(`user: ${id} not exists`);
+      throw new NotFoundException(notFoundErrorMessage);
+    }
+    return user;
+  }
+
+  async getByNickname(nickname: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ nickname });
+    if (!user) {
+      this.logger.error(`user: ${nickname} not exists`);
       throw new NotFoundException(notFoundErrorMessage);
     }
     return user;
@@ -155,6 +166,7 @@ export class UsersService {
       this.logger.error(`user : ${id} delete user failed`);
       throw new NotFoundException(notFoundErrorMessage);
     }
+    this.logger.log(`user: ${id} withdraw`);
     return;
   }
 
@@ -167,6 +179,48 @@ export class UsersService {
       this.logger.error(`user : ${id} update avatar failed`);
       throw new NotFoundException(notFoundErrorMessage);
     }
-    return;
+    return data;
+  }
+
+  async getUserByIdWithBlocked(id: number): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+      relations: ['blocked'],
+    });
+    if (!user) {
+      throw new NotFoundException('user does not exist');
+    }
+    return user;
+  }
+
+  async getBlockedUsers(id: number): Promise<User[]> {
+    const user = await this.getUserByIdWithBlocked(id);
+    return user.blocked;
+  }
+
+  async blockUser(id: number, targetId: number): Promise<User> {
+    const user = await this.getUserByIdWithBlocked(id);
+    const targetUser = await this.getById(targetId);
+    user.blocked.push(targetUser);
+    this.userRepository.save(user);
+    return user;
+  }
+
+  async unblockUser(id: number, targetId: number): Promise<User> {
+    const user = await this.getUserByIdWithBlocked(id);
+    user.blocked = user.blocked.filter((user) => user.id !== targetId);
+    this.userRepository.save(user);
+    return user;
+  }
+
+  async modifyNickname(user: User, nickname: string): Promise<User> {
+    const isExist = await this.userRepository.findOneBy({ nickname });
+    if (isExist) {
+      throw new BadRequestException('이미 존재하는 nickname입니다.');
+    }
+    user.nickname = nickname;
+    return this.userRepository.save(user);
   }
 }

@@ -1,6 +1,18 @@
 import { Exclude } from 'class-transformer';
+<<<<<<< HEAD
 import { ChannelMember } from 'src/channels/channelmember.entity';
 import { Column, Entity, PrimaryColumn, ManyToOne } from 'typeorm';
+=======
+import { Friendship } from 'src/users/friends/friendship.entity';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  PrimaryColumn,
+} from 'typeorm';
+>>>>>>> 26b5bd338b0ce8ad014086f84fc1864bc8446f03
 
 export enum UserStatus {
   ONLINE = 'ONLINE',
@@ -8,7 +20,7 @@ export enum UserStatus {
   INGAME = 'INGAME',
 }
 
-@Entity({ name: 'user'})
+@Entity({ name: 'user' })
 export class User {
   @PrimaryColumn()
   id: number;
@@ -40,8 +52,18 @@ export class User {
 
   @Column({ default: false })
   isTwoFactorAuthenticationEnabled: boolean;
+<<<<<<< HEAD
 
   @ManyToOne(() => ChannelMember, (channelmember) => channelmember.users)
   channelMember: User
 }
+=======
+>>>>>>> 26b5bd338b0ce8ad014086f84fc1864bc8446f03
 
+  @OneToMany(() => Friendship, (friends) => friends.user)
+  friends: Friendship[];
+
+  @ManyToMany(() => User, (user) => user.blocked, { onDelete: 'CASCADE' })
+  @JoinTable()
+  blocked: User[];
+}

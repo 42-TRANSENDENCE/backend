@@ -8,3 +8,11 @@ export class CreateUserDto {
   @Matches(/^[a-z0-9_\-']+(\.[a-z0-9_\-']+)*$/)
   nickname: string;
 }
+
+export class ModifyUserDto {
+  @ApiProperty()
+  @IsString()
+  @Length(2, 12)
+  @Matches(/^[a-z0-9_\-']+(\.[a-z0-9_\-']+)*$/)
+  nickname: string;
+}
