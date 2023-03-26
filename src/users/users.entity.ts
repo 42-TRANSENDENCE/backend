@@ -1,13 +1,6 @@
 import { Exclude } from 'class-transformer';
 import { Friendship } from 'src/users/friends/friendship.entity';
-import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  OneToMany,
-  PrimaryColumn,
-} from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
 
 export enum UserStatus {
   ONLINE = 'ONLINE',
@@ -50,8 +43,4 @@ export class User {
 
   @OneToMany(() => Friendship, (friends) => friends.user)
   friends: Friendship[];
-
-  @ManyToMany(() => User, (user) => user.blocked, { onDelete: 'CASCADE' })
-  @JoinTable()
-  blocked: User[];
 }

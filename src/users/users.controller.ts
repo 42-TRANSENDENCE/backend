@@ -9,7 +9,6 @@ import {
   MaxFileSizeValidator,
   Param,
   ParseFilePipe,
-  ParseIntPipe,
   Patch,
   Put,
   StreamableFile,
@@ -22,7 +21,6 @@ import {
   ApiBadRequestResponse,
   ApiBody,
   ApiConsumes,
-  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -114,35 +112,5 @@ export class UsersController {
   @ApiBadRequestResponse({ description: '변경 실패. 메세지에 실패 이유 포함' })
   modifyNickname(@User() user, @Body() modifyUserDto: ModifyUserDto) {
     return this.userService.modifyNickname(user, modifyUserDto.nickname);
-  }
-
-  @Get('blocked')
-  @UseGuards(JwtTwoFactorGuard)
-  @ApiOperation({
-    summary: '차단한 친구 목록 조회',
-    description: '차단한 친구의 id 조회',
-  })
-  @ApiNotFoundResponse({ description: '사용자 정보 없음' })
-  getBlockedFriends(@User() user) {
-    return this.userService.getBlockedUsers(user.id);
-  }
-
-  @Patch('block/:id')
-  @UseGuards(JwtTwoFactorGuard)
-  @ApiOperation({ summary: '사용자 차단', description: '다른 사용자 차단' })
-  @ApiNotFoundResponse({ description: '사용자 정보 없음' })
-  blockUser(@User() user, @Param('id') id: number) {
-    return this.userService.blockUser(user.id, id);
-  }
-
-  @Delete('block/:id')
-  @UseGuards(JwtTwoFactorGuard)
-  @ApiOperation({
-    summary: '사용자 차단 해제',
-    description: '다른 사용자 차단 해제',
-  })
-  @ApiNotFoundResponse({ description: '사용자 정보 없음' })
-  unblockUser(@User() user, @Param('id', ParseIntPipe) id: number) {
-    return this.userService.unblockUser(user.id, id);
   }
 }
