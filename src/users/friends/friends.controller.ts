@@ -30,17 +30,16 @@ export class FriendsController {
   @Get()
   @ApiOperation({
     summary: '모든 친구 조회',
-    description: '차단 친구를 제외한 모든 친구 조회',
   })
   @ApiNotFoundResponse({ description: '사용자 정보 없음' })
   getAllFriends(@User() user) {
-    return this.friendsService.getAllFriends(user.id);
+    return this.friendsService.getAllFriends(user);
   }
 
   @Get('pending')
   @ApiOperation({
     summary: '보낸 친구 요청 조회',
-    description: '아직 수락하지 않은 친구 요청 조회',
+    description: '보낸 친구요청을 아직 수락하지 않은 사용자들을 반환',
   })
   getPendingRequests(@User() user) {
     return this.friendsService.getPendingRequests(user);
@@ -49,10 +48,10 @@ export class FriendsController {
   @Get('received')
   @ApiOperation({
     summary: '받은 친구 요청 조회',
-    description: '받은 친구 요청 조회',
+    description: '나에게 친구 요청을 보낸 사용자들을 반환',
   })
   receivedRequest(@User() user) {
-    return this.friendsService.receivedFriendship(user);
+    return this.friendsService.getReceivedFriendships(user);
   }
 
   @Post('request/:id')
@@ -68,7 +67,7 @@ export class FriendsController {
   @Delete('request/:id')
   @ApiOperation({
     summary: '친구 요청 삭제',
-    description: '보낸 친구 요청 삭제, 친구 요청 거절 두가지 용도',
+    description: '보낸 친구 요청 삭제',
   })
   @ApiNotFoundResponse({
     description: '친구 요청 정보 없음',

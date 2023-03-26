@@ -4,25 +4,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { mockedConfigService } from 'src/utils/mocks/config.service';
 import { mockedJwtService } from 'src/utils/mocks/jwt.service';
 import { AuthService } from '../auth.service';
-import { LoginService } from '../login.service';
-
-const mockedLoginService = {
-  oauthLogin: jest.fn(),
-};
 
 describe('AuthService', () => {
   let authService: AuthService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AuthService, ConfigService, JwtService, LoginService],
+      providers: [AuthService, ConfigService, JwtService],
     })
       .overrideProvider(ConfigService)
       .useValue(mockedConfigService)
       .overrideProvider(JwtService)
       .useValue(mockedJwtService)
-      .overrideProvider(LoginService)
-      .useValue(mockedLoginService)
       .compile();
 
     authService = module.get<AuthService>(AuthService);

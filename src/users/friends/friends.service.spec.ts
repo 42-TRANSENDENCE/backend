@@ -6,6 +6,7 @@ import { User, UserStatus } from '../users.entity';
 import { UsersService } from '../users.service';
 import { Friendship, FriendStatus } from './friendship.entity';
 import { FriendsService } from './friends.service';
+import { requestNotFoundErr } from './friends.constants';
 
 describe('FriendsService', () => {
   function createRandomUser(): User {
@@ -15,7 +16,6 @@ describe('FriendsService', () => {
       avatar: new Uint8Array([]),
       status: UserStatus.OFFLINE,
       isTwoFactorAuthenticationEnabled: false,
-      blocked: [],
       friends: [],
     };
     return user;
@@ -64,7 +64,6 @@ describe('FriendsService', () => {
     avatar: new Uint8Array([]),
     status: UserStatus.OFFLINE,
     isTwoFactorAuthenticationEnabled: false,
-    blocked: [],
     friends: [],
   };
 
@@ -94,12 +93,6 @@ describe('FriendsService', () => {
     status: FriendStatus.PENDING,
   };
 
-  const mockedFriendship: Friendship[] = [
-    friendship1,
-    friendship2,
-    friendship3,
-  ];
-
   describe('getAllFriends', () => {
     beforeEach(() => {
       mockedFriendshipRepository.find.mockReturnValueOnce([
@@ -110,21 +103,11 @@ describe('FriendsService', () => {
 
     it('should return friends', async () => {
       mockedUsersService.getUserByIdWithBlocked.mockReturnValueOnce(mockedUser);
-      const result = await friendsService.getAllFriends(mockedUser.id);
+      const result = await friendsService.getAllFriends(mockedUser);
 
       expect(result.size).toEqual(2);
       expect(result).toContain(tempUser1);
       expect(result).toContain(tempUser2);
-    });
-
-    it('should return friends except blocked friends', async () => {
-      mockedUser.blocked = [tempUser1];
-      mockedUsersService.getUserByIdWithBlocked.mockReturnValueOnce(mockedUser);
-      const result = await friendsService.getAllFriends(mockedUser.id);
-
-      expect(result.size).toEqual(1);
-      expect(result).toContain(tempUser2);
-      mockedUser.blocked = [];
     });
   });
 
@@ -143,16 +126,10 @@ describe('FriendsService', () => {
   });
 
   describe('deleteRequestedFriendship', () => {
-    beforeEach(() => {
-      mockedFriendshipRepository.remove.mockImplementationOnce((target) => {
-        mockedFriendship.filter((friendship) => {
-          friendship !== target;
-        });
-      });
-    });
-
     it('should delete friendship which status is PENDING', async () => {
-      mockedFriendshipRepository.findOne.mockReturnValue(friendship3);
+      mockedFriendshipRepository.findOne.mockReturnValueOnce(friendship3);
+      mockedFriendshipRepository.remove.mockReturnValueOnce(friendship3);
+
       const result = await friendsService.deleteRequestedFriendship(
         mockedUser,
         tempUser3.id,
@@ -170,14 +147,17 @@ describe('FriendsService', () => {
         );
       } catch (e) {
         expect(e).toBeInstanceOf(NotFoundException);
-        expect(e.message).toBe('requested friendship does not exist');
+        expect(e.message).toBe(requestNotFoundErr);
       }
     });
   });
 
   describe('approveFriendship', () => {
     it('should approve friendship request', async () => {
-      mockedFriendshipRepository.findOne.mockReturnValue(friendship3);
+      mockedFriendshipRepository.findOne.mockReturnValueOnce(friendship3);
+      const clone = JSON.parse(JSON.stringify(friendship3));
+      clone.status = FriendStatus.APPROVED;
+      mockedFriendshipRepository.save.mockReturnValueOnce(clone);
       const result = await friendsService.approveFriendship(
         tempUser3,
         mockedUser.id,
@@ -186,12 +166,12 @@ describe('FriendsService', () => {
     });
 
     it('should throw NotFoundException if friendship does not exist', async () => {
-      mockedFriendshipRepository.findOne.mockReturnValue(undefined);
+      mockedFriendshipRepository.findOne.mockReturnValueOnce(undefined);
       try {
         await friendsService.approveFriendship(mockedUser, tempUser3.id);
       } catch (e) {
         expect(e).toBeInstanceOf(NotFoundException);
-        expect(e.message).toBe("can't find friendship request");
+        expect(e.message).toBe(requestNotFoundErr);
       }
     });
   });
