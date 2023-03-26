@@ -19,7 +19,7 @@ jobs:
           cache: "npm"
 
       # clean install
-      - run: npm ci
+      - run: npm install
 
       # build
       - run: npm run build --if-present
