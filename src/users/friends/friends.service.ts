@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ClassSerializerInterceptor,
   Injectable,
   Logger,
@@ -9,6 +10,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
+import {
+  friendshipNotFoundErr,
+  isExistRequestErr,
+  requestNotFoundErr,
+} from './friends.constants';
 import { Friendship, FriendStatus } from './friendship.entity';
 
 @Injectable()
@@ -22,7 +28,22 @@ export class FriendsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async getAllApprovedFriendships(user: User): Promise<Friendship[]> {
+  async getAllFriends(user: User): Promise<Set<User>> {
+    const friendships = await this.findApprovedFriendships(user);
+    const friends = new Set<User>();
+    friendships.forEach((friendship: Friendship) => {
+      if (friendship.userId !== user.id) {
+        friends.add(friendship.user);
+      }
+      if (friendship.otherUserId !== user.id) {
+        friends.add(friendship.otherUser);
+      }
+    });
+    this.logger.debug(`${user.nickname}'s friends: ${friends}`);
+    return friends;
+  }
+
+  async findApprovedFriendships(user: User): Promise<Friendship[]> {
     const friendships = await this.friendsRepository.find({
       where: [
         { userId: user.id, status: FriendStatus.APPROVED },
@@ -33,50 +54,43 @@ export class FriendsService {
     return friendships;
   }
 
-  filterBlockedUsers(friends: Set<User>, user: User): Set<User> {
-    friends.forEach((friend) => {
-      if (user.blocked.find((user) => user === friend)) {
-        friends.delete(friend);
-      }
-    });
-    return friends;
-  }
-
-  async getAllFriends(id: number): Promise<Set<User>> {
-    const user = await this.usersService.getUserByIdWithBlocked(id);
-    const friendships = await this.getAllApprovedFriendships(user);
-    const friends = new Set<User>();
-    friendships.forEach((friendship: Friendship) => {
-      if (friendship.userId !== user.id) {
-        friends.add(friendship.user);
-      }
-      if (friendship.otherUserId !== user.id) {
-        friends.add(friendship.otherUser);
-      }
-    });
-    return this.filterBlockedUsers(friends, user);
-  }
-
   async getPendingRequests(user: User): Promise<User[]> {
     const pendingRequests = await this.friendsRepository.find({
       where: [{ userId: user.id, status: FriendStatus.PENDING }],
       relations: { otherUser: true },
     });
-    const waitingUsers: User[] = pendingRequests.map((pendingRequest) => {
+    return pendingRequests.map((pendingRequest) => {
       return pendingRequest.otherUser;
     });
-    return waitingUsers;
+  }
+
+  async getReceivedFriendships(user: User): Promise<User[]> {
+    const receivedRequests = await this.friendsRepository.find({
+      where: [{ otherUserId: user.id, status: FriendStatus.PENDING }],
+      relations: { user: true },
+    });
+    return receivedRequests.map((receivedRequest) => {
+      return receivedRequest.user;
+    });
   }
 
   async requestFriendship(user: User, id: number): Promise<Friendship> {
+    const isExist = await this.friendsRepository.findOne({
+      where: [
+        { userId: user.id, otherUserId: id },
+        { userId: id, otherUserId: user.id },
+      ],
+    });
+    if (isExist) {
+      throw new BadRequestException(isExistRequestErr);
+    }
     const otherUser = await this.usersService.getById(id);
     const friendship = this.friendsRepository.create({
-      user: user,
-      otherUser: otherUser,
+      user,
+      otherUser,
       status: FriendStatus.PENDING,
     });
-    this.friendsRepository.save(friendship);
-    return friendship;
+    return this.friendsRepository.save(friendship);
   }
 
   async deleteRequestedFriendship(user: User, id: number): Promise<Friendship> {
@@ -86,10 +100,9 @@ export class FriendsService {
       ],
     });
     if (!friendship) {
-      throw new NotFoundException('requested friendship does not exist');
+      throw new NotFoundException(requestNotFoundErr);
     }
-    this.friendsRepository.remove(friendship);
-    return friendship;
+    return this.friendsRepository.remove(friendship);
   }
 
   async approveFriendship(user: User, id: number): Promise<Friendship> {
@@ -99,11 +112,10 @@ export class FriendsService {
       ],
     });
     if (!friendship) {
-      throw new NotFoundException("can't find friendship request");
+      throw new NotFoundException(requestNotFoundErr);
     }
     friendship.status = FriendStatus.APPROVED;
-    this.friendsRepository.save(friendship);
-    return friendship;
+    return this.friendsRepository.save(friendship);
   }
 
   async deleteFriendship(user: User, id: number): Promise<Friendship> {
@@ -114,19 +126,8 @@ export class FriendsService {
       ],
     });
     if (!friendship) {
-      throw new NotFoundException("can't find friendship");
+      throw new NotFoundException(friendshipNotFoundErr);
     }
-    return await this.friendsRepository.remove(friendship);
-  }
-
-  async receivedFriendship(user: User): Promise<User[]> {
-    const receivedRequests = await this.friendsRepository.find({
-      where: [{ otherUserId: user.id, status: FriendStatus.PENDING }],
-      relations: { user: true },
-    });
-    const waitingUsers: User[] = receivedRequests.map((receivedRequest) => {
-      return receivedRequest.user;
-    });
-    return waitingUsers;
+    return this.friendsRepository.remove(friendship);
   }
 }
