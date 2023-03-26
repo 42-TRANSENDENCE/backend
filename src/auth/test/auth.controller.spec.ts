@@ -57,7 +57,6 @@ describe('AuthController', () => {
     avatar: new Uint8Array([]),
     isTwoFactorAuthenticationEnabled: false,
     status: UserStatus.OFFLINE,
-    blocked: [],
     friends: [],
   };
 
