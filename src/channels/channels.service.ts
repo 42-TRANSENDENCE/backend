@@ -19,11 +19,11 @@ export class ChannelsService {
         // private readonly eventsGateway: EventsGateway,
         private readonly channelsGateway: ChannelsGateway,
     ) { }
-    private logger = new Logger('channelService')
+    private logger = new Logger(ChannelsService.name)
 
-    async findById(id: number) {
-        return this.channelsRepository.findOne({ where: { id } });
-    }
+    // async findById(id: number) {
+    //     return this.channelsRepository.findOne({ where: { id } });
+    // }
 
     async getChannels() {
         return this.channelsRepository.createQueryBuilder('channels').getMany()
@@ -61,7 +61,7 @@ export class ChannelsService {
         // 소켓 연결은 나중에 
         // 맞으면 채팅방 멤버에추가 해줘야한다. -> channel member entitiy 에 insert 하는거 추가 해야함.
         const saltRounds = 10;
-        const curChannel = await this.channelsRepository.findOne({ where: { id: channel_id } });
+        const curChannel = await this.channelsRepository.findOneBy({ id: channel_id });
         // const curChannel = await this.channelsRepository.createQueryBuilder()
         // .where('id = :channel_id', {channel_id})
         // .getOne();
