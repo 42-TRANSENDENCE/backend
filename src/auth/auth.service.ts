@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { UsersService } from 'src/users/users.service';
 import { JwtTokenPayload } from './interface/jwt-token-payload.interface';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly usersService: UsersService,
   ) {}
 
   getCookieWithJwtAccessToken(
@@ -49,5 +51,14 @@ export class AuthService {
       `Authentication=; HttpOnly; Path=/; Max-Age=0`,
       'Refresh=; HttpOnly; Path=/; Max-Age=0',
     ];
+  }
+
+  async getUserFromAuthenticationToken(token: string) {
+    const payload: JwtTokenPayload = this.jwtService.verify(token, {
+      secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
+    });
+    if (payload.id) {
+      return this.usersService.getById(payload.id);
+    }
   }
 }

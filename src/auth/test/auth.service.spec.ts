@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
+import { UsersService } from 'src/users/users.service';
 import { mockedConfigService } from 'src/utils/mocks/config.service';
 import { mockedJwtService } from 'src/utils/mocks/jwt.service';
 import { AuthService } from '../auth.service';
@@ -10,12 +11,14 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AuthService, ConfigService, JwtService],
+      providers: [AuthService, ConfigService, JwtService, UsersService],
     })
       .overrideProvider(ConfigService)
       .useValue(mockedConfigService)
       .overrideProvider(JwtService)
       .useValue(mockedJwtService)
+      .overrideProvider(UsersService)
+      .useValue({})
       .compile();
 
     authService = module.get<AuthService>(AuthService);
