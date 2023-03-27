@@ -11,7 +11,10 @@ export class Chats {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column('varchar', {length:100, nullable:true})
+    @Column('varchar', {
+        length:100, 
+        nullable:true
+    })
     content?: string;
 
     @CreateDateColumn()
