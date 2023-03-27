@@ -2,7 +2,7 @@ import { Controller, Get, Param, Post, Body } from '@nestjs/common';
 import { ChatsService } from './chats.service';
 import { User } from 'src/users/users.entity';
 import { Users } from 'src/common/decorators/user.decorator';
-import { Chatsdto } from './dto/chats.dto';
+import { ChatsDto } from './dto/chats.dto';
 
 @Controller('test')
 export class ChatsController {
@@ -22,7 +22,7 @@ export class ChatsController {
     @Param('url') url,
     @Param('id') id: number, // ParseIntPipe
     @Body('content') content,
-    @Body() chats: Chatsdto,
+    @Body() chats: ChatsDto,
     @Users() user: User,
   ) {
     return this.chatsService.createChats(url, content, id, 12);
