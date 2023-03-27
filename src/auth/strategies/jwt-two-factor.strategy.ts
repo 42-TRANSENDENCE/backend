@@ -1,16 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from 'src/users/users.service';
-import { TokenPayload } from '../token-payload.interface';
+import { JwtTokenPayload } from '../interface/jwt-token-payload.interface';
 
 @Injectable()
 export class JwtTwoFactorStrategy extends PassportStrategy(
   Strategy,
   'jwt-2fa',
 ) {
+  private logger: Logger = new Logger(JwtTwoFactorStrategy.name);
+
   constructor(
     private readonly configService: ConfigService,
     private readonly userService: UsersService,
@@ -25,13 +27,17 @@ export class JwtTwoFactorStrategy extends PassportStrategy(
     });
   }
 
-  async validate(payload: TokenPayload) {
+  async validate(payload: JwtTokenPayload) {
     const user = await this.userService.getById(payload.id);
+
     if (!user.isTwoFactorAuthenticationEnabled) {
+      this.logger.debug(`user ${user.nickname} does not using 2FA`);
       return user;
     }
     if (payload.isTwoFactorAuthenticationCompleted) {
+      this.logger.debug(`user ${user.nickname} already done 2FA`);
       return user;
     }
+    this.logger.debug(`user ${user.nickname} needs 2FA validation`);
   }
 }

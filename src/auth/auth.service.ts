@@ -1,35 +1,35 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { catchError, firstValueFrom } from 'rxjs';
-import { AxiosError } from 'axios';
-import { HttpService } from '@nestjs/axios';
-import { TokenPayload } from './token-payload.interface';
+import { JwtTokenPayload } from './interface/jwt-token-payload.interface';
 
 @Injectable()
 export class AuthService {
+  private logger: Logger = new Logger(AuthService.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
   ) {}
 
   getCookieWithJwtAccessToken(
     id: number,
     isTwoFactorAuthenticationCompleted = false,
   ) {
-    const payload: TokenPayload = { id, isTwoFactorAuthenticationCompleted };
+    const payload: JwtTokenPayload = { id, isTwoFactorAuthenticationCompleted };
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
       expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME'),
     });
-    return `Authentication=${token}; HttpOnly; Path=/; Max-Age=${this.configService.get(
+    const accessCookie = `Authentication=${token}; HttpOnly; Path=/; Max-Age=${this.configService.get(
       'JWT_ACCESS_TOKEN_EXPIRATION_TIME',
     )}`;
+    this.logger.log(`user ${id} access token cookie: ${accessCookie}`);
+    return accessCookie;
   }
 
   getCookieWithJwtRefreshToken(id: number) {
-    const payload: TokenPayload = { id };
+    const payload: JwtTokenPayload = { id };
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_REFRESH_TOKEN_SECRET'),
       expiresIn: this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME'),
@@ -37,6 +37,7 @@ export class AuthService {
     const refreshCookie = `Refresh=${refreshToken}; HttpOnly; Path=/; Max-Age=${this.configService.get(
       'JWT_REFRESH_TOKEN_EXPIRATION_TIME',
     )}`;
+    this.logger.log(`user ${id} refresh token cookie: ${refreshCookie}`);
     return {
       refreshCookie,
       refreshToken,
@@ -48,20 +49,5 @@ export class AuthService {
       `Authentication=; HttpOnly; Path=/; Max-Age=0`,
       'Refresh=; HttpOnly; Path=/; Max-Age=0',
     ];
-  }
-
-  async getFourtyTwoUserInfo(token: string) {
-    const { data } = await firstValueFrom(
-      this.httpService
-        .get('https://api.intra.42.fr/v2/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .pipe(
-          catchError((error: AxiosError) => {
-            throw new UnauthorizedException('invalid 42 token');
-          }),
-        ),
-    );
-    return data;
   }
 }

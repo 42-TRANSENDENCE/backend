@@ -1,5 +1,5 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import * as Joi from 'joi';
 import { AppController } from './app.controller';
@@ -8,9 +8,9 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ChatsModule } from './chats/chats.module';
 import { ChannelsModule } from './channels/channels.module';
-import { ChannelsGateway } from './events/events.channels.gateway';
-import { EventsModule } from './events/events.module';
 import { DatabaseModule } from './database/database.module';
+import { GameModule } from './game/game.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -24,13 +24,15 @@ import { DatabaseModule } from './database/database.module';
         DB_DATABASE: Joi.string().required(),
         CLIENT_ID: Joi.string().required(),
         CLIENT_SECRET: Joi.string().required(),
+        REDIRECT_URI: Joi.string().required(),
         JWT_ACCESS_TOKEN_SECRET: Joi.string().required(),
         JWT_ACCESS_TOKEN_EXPIRATION_TIME: Joi.string().required(),
         JWT_REFRESH_TOKEN_SECRET: Joi.string().required(),
         JWT_REFRESH_TOKEN_EXPIRATION_TIME: Joi.string().required(),
+        SESSION_SECRET: Joi.string().required(),
+        FRONTEND_URL: Joi.string().required(),
       }),
-      envFilePath:
-        process.env.NODE_ENV == 'dev' ? '.env.dev' : '.env',
+      envFilePath: process.env.NODE_ENV == 'dev' ? '.env.dev' : '.env',
     }),
     DatabaseModule,
     AuthModule,
@@ -38,6 +40,7 @@ import { DatabaseModule } from './database/database.module';
     ChatsModule,
     ChannelsModule,
     EventsModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [

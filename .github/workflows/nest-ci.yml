@@ -1,0 +1,73 @@
+name: 42 Pong Server CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: ["feat/**", "fix/**", "chore/**", "refactor/**"]
+
+jobs:
+  CI-CD:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      # Set up Node.js
+      - name: Use Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      # clean install
+      - run: npm install
+
+      # build
+      - run: npm run build --if-present
+
+      # test
+      - run: npm test
+
+      # below steps work only for main branch
+      # docker build & push image to registry
+      - name: Get Github Actions IP
+        if: contains(github.ref, 'main') || contains(github.ref, 'develop')
+        id: ip
+        uses: haythem/public-ip@v1.2
+
+      - name: Configure AWS Credentials
+        if: contains(github.ref, 'main') || contains(github.ref, 'develop')
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Add Github Actions IP to Security group
+        if: contains(github.ref, 'main') || contains(github.ref, 'develop')
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+      - name: Docker build & push to registry
+        if: contains(github.ref, 'main') || contains(github.ref, 'develop')
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker build -t ${{ secrets.DOCKER_REPO }}/mj42-pong .
+          docker push ${{ secrets.DOCKER_REPO }}/mj42-pong
+
+      ## deploy to aws ec2 with ssh *HOST *USER_NAME *PRIVATE_KEY
+      - name: Deploy to AWS EC2
+        uses: appleboy/ssh-action@master
+        if: contains(github.ref, 'main') || contains(github.ref, 'develop')
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER_NAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: |
+            docker-compose down
+            docker rm -f $(docker ps -qa)
+            docker-compose up -d
+
+      - name: Remove Github Actions IP From Security Group
+        if: contains(github.ref, 'main') || contains(github.ref, 'develop')
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
