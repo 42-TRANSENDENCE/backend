@@ -5,10 +5,10 @@ import { Server } from "socket.io";
 @WebSocketGateway()
 export class ChatGateway {
     @WebSocketServer()
-    server:Server;
+    server: Server;
 
     @SubscribeMessage('send_message')
-    listenForMessage(@MessageBody() data:string) {
-        this.server.sockets.emit('recieve_message',data)
+    listenForMessage(@MessageBody() data: string) {
+        this.server.sockets.emit('recieve_message', data)
     }
 }

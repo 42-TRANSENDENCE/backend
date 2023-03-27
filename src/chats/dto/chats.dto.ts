@@ -6,8 +6,8 @@ export class Chatsdto {
     @Length(100)
     @IsString()
     @ApiProperty({
-      example: '채팅 문자열',
-      description: '우리정글 뭐함?',
+        example: '채팅 문자열',
+        description: '우리정글 뭐함?',
     })
     public content: string;
-  }
+}

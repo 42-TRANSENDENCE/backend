@@ -16,7 +16,7 @@ export class Channels {
   @Column('varchar', { length: 30, default: "default" })
   title: string;
 
-  @Column({ nullable: true})
+  @Column({ nullable: true })
   owner?: number;
 
   @Column({

@@ -17,7 +17,7 @@ import { ChannelsService } from 'src/channels/channels.service';
 // }
 
 @WebSocketGateway({
-  namespace:'channel'
+  namespace: 'channel'
 })
 export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // constructor(private readonly ChannelsService: ChannelsService) { }
@@ -66,7 +66,6 @@ export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect
     @MessageBody() roomName: string,
   ) {
     this.logger.log('<-------create-room------>')
-    return { success: true};
+    return { success: true };
   }
 }
-
