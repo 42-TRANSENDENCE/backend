@@ -5,4 +5,4 @@ import { ChannelsGateway } from './events.channels.gateway';
   providers: [ChannelsGateway],
   exports: [ChannelsGateway],
 })
-export class EventsModule { }
+export class EventsModule {}

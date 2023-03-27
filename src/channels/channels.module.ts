@@ -7,8 +7,11 @@ import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelcember.entity';
 import { EventsModule } from 'src/events/events.module';
 @Module({
-  imports: [TypeOrmModule.forFeature([Channels, User, ChannelMember]), EventsModule],
+  imports: [
+    TypeOrmModule.forFeature([Channels, User, ChannelMember]),
+    EventsModule,
+  ],
   providers: [ChannelsService],
-  controllers: [ChannelsController]
+  controllers: [ChannelsController],
 })
-export class ChannelsModule { }
+export class ChannelsModule {}

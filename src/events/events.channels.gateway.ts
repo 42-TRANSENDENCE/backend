@@ -9,7 +9,7 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket, Namespace } from 'socket.io';
-import { ChannelsService } from 'src/channels/channels.service';
+// import { ChannelsService } from 'src/channels/channels.service';
 
 // interface MessagePayload {
 //   roomName: string;
@@ -17,13 +17,15 @@ import { ChannelsService } from 'src/channels/channels.service';
 // }
 
 @WebSocketGateway({
-  namespace: 'channel'
+  namespace: 'channel',
 })
-export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChannelsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   // constructor(private readonly ChannelsService: ChannelsService) { }
-  private logger = new Logger(ChannelsGateway.name)
+  private logger = new Logger(ChannelsGateway.name);
 
-  @WebSocketServer() nsp: Namespace
+  @WebSocketServer() nsp: Namespace;
   server: Server;
 
   afterInit() {
@@ -47,14 +49,13 @@ export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
-    console.log("TEST ---------------- get connection")
+    console.log('TEST ---------------- get connection');
     this.logger.log(`${socket.id} 소켓 연결`);
 
     // socket.broadcast.emit('message', {
     //   message: `${socket.id}가 들어왔습니다.`,
     // });
   }
-
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
@@ -65,7 +66,8 @@ export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect
     @ConnectedSocket() socket: Socket,
     @MessageBody() roomName: string,
   ) {
-    this.logger.log('<-------create-room------>')
+    this.logger.log('<-------create-room------>');
+    this.logger.log(`TEST : ${socket.id} :  ${roomName}`);
     return { success: true };
   }
 }

@@ -5,15 +5,15 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from "typeorm";
-import { ChannelMember } from "./channelcember.entity";
+} from 'typeorm';
+import { ChannelMember } from './channelcember.entity';
 
 @Entity()
 export class Channels {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('varchar', { length: 30, default: "default" })
+  @Column('varchar', { length: 30, default: 'default' })
   title: string;
 
   @Column({ nullable: true })
@@ -24,7 +24,7 @@ export class Channels {
   })
   private?: boolean;
 
-  @Column('varchar', { length: 1000, default: "" })
+  @Column('varchar', { length: 1000, default: '' })
   password: string;
 
   @CreateDateColumn()
