@@ -60,7 +60,6 @@ export class ChannelsService {
     //private 일때 패스워드 hash compare해서 맞는지 만 체크
     // 소켓 연결은 나중에
     // 맞으면 채팅방 멤버에추가 해줘야한다. -> channel member entitiy 에 insert 하는거 추가 해야함.
-    const saltRounds = 10;
     const curChannel = await this.channelsRepository.findOneBy({
       id: channel_id,
     });

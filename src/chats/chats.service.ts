@@ -3,9 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chats } from './chats.entity';
 import { User } from 'src/users/users.entity';
-function getKeyByValue(object, value) {
-  return Object.keys(object).find((key) => object[key] === value);
-}
+
+// function getKeyByValue(object, value) {
+//   return Object.keys(object).find((key) => object[key] === value);
+// }
 
 @Injectable()
 export class ChatsService {
@@ -29,10 +30,10 @@ export class ChatsService {
       content: content,
     });
     const saveChat = await this.chatsRepository.save(chat);
-    const chatWithSender = await this.chatsRepository.findOne({
-      where: { id: saveChat.id },
-      // relations:['Sender'],
+    const chatWithSender = await this.chatsRepository.findOneBy({
+      id: saveChat.id,
     });
+    // relations:['Sender'],
     // this.eventsGateway.server.to(receiverSocketId).emit('dm', dmWithSender);
   }
 }

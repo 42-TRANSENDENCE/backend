@@ -4,9 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
 } from 'typeorm';
-import { ChannelMember } from './channelcember.entity';
+// import { ChannelMember } from './channelcember.entity';
 
 @Entity()
 export class Channels {
