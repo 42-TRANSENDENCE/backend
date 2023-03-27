@@ -19,12 +19,10 @@ export class Channels {
   @Column({ nullable: true, default: () => "'0'" })
   owner: number;
 
-  @Column('smallint', {
+  @Column({
     nullable: true,
-    width: 1,
-    default: () => "'0'",
   })
-  private: boolean | null;
+  private?: boolean;
 
   @Column('varchar', { length: 1000, default: "" })
   password: string;
