@@ -5,8 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
 import { Chats } from 'src/chats/chats.entity';
 @Module({
-  imports: [TypeOrmModule.forFeature([Chats, User])] , // EventsMoudle
+  imports: [TypeOrmModule.forFeature([Chats, User])], // EventsMoudle
   providers: [ChatsService],
   controllers: [ChatsController]
 })
-export class ChatsModule {}
+export class ChatsModule { }

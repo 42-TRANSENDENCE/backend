@@ -1,30 +1,31 @@
-import { PrimaryGeneratedColumn, 
-    Column, 
+import {
+    PrimaryGeneratedColumn,
+    Column,
     CreateDateColumn,
     UpdateDateColumn,
     Entity,
- } from "typeorm";
+} from "typeorm";
 
 @Entity()
 export class Chats {
     @PrimaryGeneratedColumn()
-    id : number;
+    id: number;
 
     @Column()
     content: string;
-  
+
     @CreateDateColumn()
     createdAt: Date;
-  
+
     @UpdateDateColumn()
     updatedAt: Date;
-  
+
     @Column({ nullable: true })
     ChannelId: number | null;
-  
+
     @Column({ nullable: true })
     SenderId: number | null;
-  
+
     @Column({ nullable: true })
-    ReceiverId: number | null;   
+    ReceiverId: number | null;
 }

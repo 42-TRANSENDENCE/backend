@@ -1,4 +1,4 @@
-import { Injectable,UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
@@ -18,18 +18,18 @@ export class ChannelsService {
         private channelMemberRepository: Repository<ChannelMember>,
         // private readonly eventsGateway: EventsGateway,
         private readonly channelsGateway: ChannelsGateway,
-    ) {}
+    ) { }
     private logger = new Logger('channelService')
-    
-    async findById(id:number) {
-        return this.channelsRepository.findOne({ where: {id}});
+
+    async findById(id: number) {
+        return this.channelsRepository.findOne({ where: { id } });
     }
 
     async getChannels() {
         return this.channelsRepository.createQueryBuilder('channels').getMany()
     }
 
-    async createChannels(title: string, password:string, myId: number) {
+    async createChannels(title: string, password: string, myId: number) {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password.toString(), saltRounds);
         const channel = this.channelsRepository.create({
@@ -42,23 +42,21 @@ export class ChannelsService {
         console.log('channelReturned:', channelReturned.title);
         // this.channelsGateway.nsp.server.emit('create-room', {message:`${channelReturned.title}`});
         const channelMember = this.channelMemberRepository.create({
-            UserId : myId,
+            UserId: myId,
             ChannelId: channelReturned.id,
         })
         await this.channelMemberRepository.save(channelMember);
     }
 
     // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
-    async getChannelMembers(channel_id: number)
-    {
+    async getChannelMembers(channel_id: number) {
         return this.channelMemberRepository
-        .createQueryBuilder('channel_member')
-        .where('channel_member.ChannelId = :channel_id', { channel_id })
-        .getMany();
+            .createQueryBuilder('channel_member')
+            .where('channel_member.ChannelId = :channel_id', { channel_id })
+            .getMany();
     }
 
-    async userEnterChannel(channel_id: number ,password:string, user:User)
-    {
+    async userEnterChannel(channel_id: number, password: string, user: User) {
         //private 일때 패스워드 hash compare해서 맞는지 만 체크  
         // 소켓 연결은 나중에 
         // 맞으면 채팅방 멤버에추가 해줘야한다. -> channel member entitiy 에 insert 하는거 추가 해야함.
@@ -70,13 +68,13 @@ export class ChannelsService {
         const inputPasswordMatches = await bcrypt.compare(password, (await curChannel).password);
         console.log(inputPasswordMatches)
         if (!inputPasswordMatches) {
-          throw new UnauthorizedException('Invalid password');
+            throw new UnauthorizedException('Invalid password');
         }
         else {
             // 맞으면 소켓 연결하고 디비에 추가 채널멤버에 .
             console.log("suceccses")
         }
-      
+
         // const inputhashPassword = await bcrypt.compare(password.toString(), (await curChannel).password);
         // console.log(inputhashPassword)
         return curChannel;

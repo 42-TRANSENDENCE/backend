@@ -1,7 +1,7 @@
-import { 
+import {
     CreateDateColumn,
     Entity,
-    UpdateDateColumn ,
+    UpdateDateColumn,
     Column,
     ManyToOne,
     PrimaryColumnCannotBeNullableError,
@@ -13,7 +13,7 @@ import { Channels } from './channels.entity'
 @Entity()
 export class ChannelMember {
     @PrimaryGeneratedColumn()
-    id:number;
+    id: number;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -23,7 +23,7 @@ export class ChannelMember {
 
     @Column({ primary: true })
     ChannelId: number;
-  
+
     @Column({ primary: true })
     UserId: number;
 
@@ -33,6 +33,6 @@ export class ChannelMember {
    * 여기서 Many 는 채널 이고 One이 멤버 이다. 
    */
     @ManyToOne(() => Channels)
-    @JoinColumn({name: "ChannelId"})
+    @JoinColumn({ name: "ChannelId" })
     channelMember: ChannelMember;
 }

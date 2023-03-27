@@ -11,4 +11,4 @@ import { EventsModule } from 'src/events/events.module';
   providers: [ChannelsService],
   controllers: [ChannelsController]
 })
-export class ChannelsModule {}
+export class ChannelsModule { }
