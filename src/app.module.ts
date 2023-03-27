@@ -10,6 +10,7 @@ import { ChatsModule } from './chats/chats.module';
 import { ChannelsModule } from './channels/channels.module';
 import { DatabaseModule } from './database/database.module';
 import { GameModule } from './game/game.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { GameModule } from './game/game.module';
     UsersModule,
     ChatsModule,
     ChannelsModule,
+    EventsModule,
     GameModule,
   ],
   controllers: [AppController],
