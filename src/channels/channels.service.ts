@@ -93,7 +93,7 @@ export class ChannelsService {
     // .where('id = :channel_id', {channel_id})
     // .getOne();
     if (password) {
-      this.logger.log((await curChannel).password);
+      this.logger.log(`channel password: ${(await curChannel).password}`);
       const inputPasswordMatches = await bcrypt.compare(
         password,
         (
