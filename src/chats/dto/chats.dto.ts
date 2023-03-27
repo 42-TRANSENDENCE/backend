@@ -1,0 +1,13 @@
+import { ApiProperty } from "@nestjs/swagger";
+import { IsNotEmpty, IsString, Length } from "class-validator";
+
+export class Chatsdto {
+    @IsNotEmpty()
+    @Length(100)
+    @IsString()
+    @ApiProperty({
+      example: '채팅 문자열',
+      description: '우리정글 뭐함?',
+    })
+    public content: string;
+  }
