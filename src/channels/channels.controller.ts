@@ -4,6 +4,7 @@ import { ChannelsService } from './channels.service';
 import { User } from 'src/users/users.entity';
 import { Users } from 'src/common/decorators/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
+import { EnterChannelDto } from './dto/enter-channel.dto';
 
 @ApiTags('CHANNEL')
 @Controller('api/room_list')
@@ -15,17 +16,15 @@ export class ChannelsController {
   @ApiOperation({ summary: '채팅방 모두 가져오기' })
   @Get('/')
   async getChannels() {
-    //@Param('url',) url, @Users() user: User
+    // @Users() user: User
     return this.channelsService.getChannels();
   }
 
   @ApiOperation({ summary: '채팅방 만들기' })
   @Post('/room')
   async createChannels(
-    // @Param('url') url,
     @Body() body: CreateChannelDto,
     // @Users() user: User,
-    // @Socket() client: Socket,
   ) {
     // 처음 방을 만드는 유저의 아이디 에 해당 하는 닉네임을 보여줘야 한다.
     // 마지막 인자 1 -> user.nickname 으로 나중에
@@ -42,9 +41,13 @@ export class ChannelsController {
   @Post('/room/:channelId')
   async userEnterChannel(
     @Param('channelId') channelId: number,
-    @Body('password') password: string,
+    @Body() enterDto: EnterChannelDto,
     @Users() user: User,
   ) {
-    return this.channelsService.userEnterChannel(channelId, password, user);
+    return this.channelsService.userEnterChannel(
+      channelId,
+      enterDto.password,
+      user,
+    );
   }
 }
