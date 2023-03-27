@@ -4,6 +4,7 @@ import { ChannelsService } from './channels.service';
 import { User } from 'src/users/users.entity';
 import { Users } from 'src/common/decorators/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
+import { EnterChannelDto } from './dto/enter-channel.dto';
 
 @ApiTags('CHANNEL')
 @Controller('api/room_list')
@@ -40,9 +41,13 @@ export class ChannelsController {
   @Post('/room/:channelId')
   async userEnterChannel(
     @Param('channelId') channelId: number,
-    @Body('password') password: string,
+    @Body() enterDto: EnterChannelDto,
     @Users() user: User,
   ) {
-    return this.channelsService.userEnterChannel(channelId, password, user);
+    return this.channelsService.userEnterChannel(
+      channelId,
+      enterDto.password,
+      user,
+    );
   }
 }
