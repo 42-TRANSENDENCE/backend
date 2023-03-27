@@ -65,6 +65,7 @@ jobs:
           script: |
             docker-compose down
             docker rm -f $(docker ps -qa)
+            docker rmi -f ${{ secrets.DOCKER_REPO }}/mj42-pong
             docker-compose up -d
 
       - name: Remove Github Actions IP From Security Group
