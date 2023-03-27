@@ -130,4 +130,25 @@ export class FriendsService {
     }
     return this.friendsRepository.remove(friendship);
   }
+
+  async isFriend(user: User, otherUser: User): Promise<boolean> {
+    const friendship = this.friendsRepository.findOne({
+      where: [
+        {
+          userId: user.id,
+          otherUserId: otherUser.id,
+          status: FriendStatus.APPROVED,
+        },
+        {
+          userId: otherUser.id,
+          otherUserId: user.id,
+          status: FriendStatus.APPROVED,
+        },
+      ],
+    });
+    if (friendship) {
+      return true;
+    }
+    return false;
+  }
 }
