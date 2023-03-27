@@ -11,8 +11,8 @@ export class Chats {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
-    content: string;
+    @Column('varchar', {length:100, nullable:true})
+    content?: string;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -21,11 +21,11 @@ export class Chats {
     updatedAt: Date;
 
     @Column({ nullable: true })
-    ChannelId: number | null;
+    ChannelId?: number;
 
     @Column({ nullable: true })
-    SenderId: number | null;
+    SenderId?: number;
 
     @Column({ nullable: true })
-    ReceiverId: number | null;
+    ReceiverId?: number;
 }
