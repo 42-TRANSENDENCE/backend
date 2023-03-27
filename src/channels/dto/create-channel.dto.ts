@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString} from 'class-validator'
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateChannelDto {
   @IsNotEmpty()
@@ -9,17 +9,13 @@ export class CreateChannelDto {
     description: '채팅방 이름',
   })
   public title: string;
-  
-  // @IsString()
-  // @IsNotEmpty()
+
   @ApiProperty({
     example: '1q2w3e4r',
     description: '비밀번호',
   })
   public password: string;
-  
-  // @IsNotEmpty()
-  // @IsString()
+
   @ApiProperty({
     example: 'junyopar',
     description: '채팅방 소유자, 처음 생성자',
@@ -30,6 +26,5 @@ export class CreateChannelDto {
     example: true,
     description: '채팅방 비번 유무',
   })
-  public private : boolean;
-
+  public private: boolean;
 }

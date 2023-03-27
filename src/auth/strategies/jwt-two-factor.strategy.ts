@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from 'src/users/users.service';
-import { TokenPayload } from '../token-payload.interface';
+import { JwtTokenPayload } from '../interface/jwt-token-payload.interface';
 
 @Injectable()
 export class JwtTwoFactorStrategy extends PassportStrategy(
@@ -27,7 +27,7 @@ export class JwtTwoFactorStrategy extends PassportStrategy(
     });
   }
 
-  async validate(payload: TokenPayload) {
+  async validate(payload: JwtTokenPayload) {
     const user = await this.userService.getById(payload.id);
 
     if (!user.isTwoFactorAuthenticationEnabled) {

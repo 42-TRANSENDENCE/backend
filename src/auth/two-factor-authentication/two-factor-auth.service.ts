@@ -1,7 +1,6 @@
-import { Injectable, Logger, Res, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import * as speakeasy from 'speakeasy';
-import * as QRCode from 'qrcode';
 
 export interface QRCodeUrl {
   qrcode: string;
@@ -13,21 +12,17 @@ export class TwoFactorAuthService {
 
   constructor(private readonly usersService: UsersService) {}
 
-  async generateTwoFactorAuthSecret(id: number) {
+  async register(id: number) {
     const secret = speakeasy.generateSecret();
     await this.usersService.setTwoFactorAuthenticationSecret(id, secret.ascii);
-    return secret.otpauth_url;
+    return secret;
   }
 
-  async pipeQRCodeStream(@Res() response, url: string) {
-    return QRCode.toFileStream(response, url);
-  }
-
-  async verifyTwoFactorAuth(id: number, token: string) {
-    const user = await this.usersService.getById(id);
+  verifyTwoFactorAuth(secret: string, token: string) {
+    this.logger.log(`two factor token: ${token}`);
 
     const isVerified = speakeasy.totp.verify({
-      secret: user.twoFactorSecret,
+      secret,
       encoding: 'ascii',
       token,
     });
@@ -36,6 +31,6 @@ export class TwoFactorAuthService {
       this.logger.error(`2FA Failed token: ${token}`);
       throw new UnauthorizedException('two factor authentication fail');
     }
-    return;
+    return true;
   }
 }

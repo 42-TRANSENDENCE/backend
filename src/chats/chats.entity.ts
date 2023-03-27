@@ -1,30 +1,34 @@
-import { PrimaryGeneratedColumn, 
-    Column, 
-    CreateDateColumn,
-    UpdateDateColumn,
-    Entity,
- } from "typeorm";
+import {
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Entity,
+} from 'typeorm';
 
 @Entity()
 export class Chats {
-    @PrimaryGeneratedColumn()
-    id : number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    content: string;
-  
-    @CreateDateColumn()
-    createdAt: Date;
-  
-    @UpdateDateColumn()
-    updatedAt: Date;
-  
-    @Column({ nullable: true })
-    ChannelId: number | null;
-  
-    @Column({ nullable: true })
-    SenderId: number | null;
-  
-    @Column({ nullable: true })
-    ReceiverId: number | null;   
+  @Column('varchar', {
+    length: 100,
+    nullable: true,
+  })
+  content?: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @Column({ nullable: true })
+  ChannelId?: number;
+
+  @Column({ nullable: true })
+  SenderId?: number;
+
+  @Column({ nullable: true })
+  ReceiverId?: number;
 }

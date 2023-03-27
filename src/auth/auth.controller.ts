@@ -1,63 +1,128 @@
-import { InjectQueue } from '@nestjs/bull';
 import {
+  Body,
   ClassSerializerInterceptor,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
+  Logger,
   Post,
+  Redirect,
   Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
+  ApiBadRequestResponse,
+  ApiBody,
   ApiCookieAuth,
-  ApiNotFoundResponse,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Queue } from 'bull';
+import { CreateUserDto } from 'src/users/dto/users.dto';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
-import { FourtyTwoGuard } from './guards/fourty-two.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
+import { AuthSessionGuard } from './guards/auth-session.guard';
+import { SessionPayload } from './interface/session-payload.interface';
+import { ConfigService } from '@nestjs/config';
+import { User } from './decorator/user.decorator';
+import { SessionInfo } from './decorator/session-info.decorator';
+import { Code } from './decorator/code.decorator';
+import { LoginService } from './login.service';
 
 @ApiTags('auth')
 @Controller('auth')
 @UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
+  private logger: Logger = new Logger(AuthController.name);
+
   constructor(
-    @InjectQueue('fourtyTwoLogin')
-    private loginQueue: Queue,
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
+    private readonly loginService: LoginService,
   ) {}
 
-  @Post('login')
-  @UseGuards(FourtyTwoGuard)
-  @ApiOkResponse({
+  @Get('login')
+  @ApiOperation({
+    summary: 'Log In',
     description:
-      '로그인 성공 cookie 설정 사용자 정보를 반환하지 않으면 2차인증 필요',
+      '로그인 성공시 home, 2차 인증 필요시 twofactor, 회원가입 필요시 signup으로 redirect',
   })
-  @ApiBearerAuth('42-token')
-  @ApiNotFoundResponse({ description: '회원가입 필요' })
-  @HttpCode(200)
-  async login(@Req() req) {
-    const { id } = req.user;
-    const user = await this.usersService.getById(id);
-
-    const accessCookie = this.authService.getCookieWithJwtAccessToken(id);
-    const { refreshToken, refreshCookie } =
-      this.authService.getCookieWithJwtRefreshToken(id);
-
-    this.usersService.setCurrentRefreshToken(refreshToken, id);
-
-    req.res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
-    if (!user.isTwoFactorAuthenticationEnabled) {
-      return user;
+  @Redirect('')
+  async login(@Req() req, @Code() code) {
+    if (!code) {
+      throw new ForbiddenException('잘못된 접근입니다.');
     }
-    return;
+    const fourtyTwoUserInfo = await this.loginService.oauthLogin(code);
+    this.logger.log(
+      `42 User id: ${fourtyTwoUserInfo.id}, intra name: ${fourtyTwoUserInfo.login}`,
+    );
+    const accessCookie = this.authService.getCookieWithJwtAccessToken(
+      fourtyTwoUserInfo.id,
+    );
+    const { refreshToken, refreshCookie } =
+      this.authService.getCookieWithJwtRefreshToken(fourtyTwoUserInfo.id);
+
+    const redirect_url = this.configService.get<string>('FRONTEND_URL');
+    try {
+      const user = await this.usersService.getById(fourtyTwoUserInfo.id);
+      this.usersService.setCurrentRefreshToken(refreshToken, user.id);
+      req.res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
+      if (!user.isTwoFactorAuthenticationEnabled) {
+        this.logger.log(`user: ${user.id} logged in`);
+        return { url: `${redirect_url}/home` };
+      }
+      this.logger.log(`user: ${user.id} 2FA Required`);
+      return { url: `${redirect_url}/twofactor` };
+    } catch (err) {
+      this.logger.log(`needs sign up`);
+      const { id, image } = fourtyTwoUserInfo;
+      const { link } = image;
+      req.session.info = { id, link }; // session
+      return { url: `${redirect_url}/signup` };
+    }
+  }
+
+  @Post('signup')
+  @UseGuards(AuthSessionGuard)
+  @ApiOperation({
+    summary: '회원가입',
+    description: '회원 가입 기능. avatar는 기본으로 42 이미지를 기반으로 생성',
+  })
+  @ApiCreatedResponse({ description: '회원가입 성공' })
+  @ApiBadRequestResponse({ description: '이미 존재하는 닉네임입니다.' })
+  @ApiForbiddenResponse({
+    description: '잘못된 접근 / 로그인을 거치지 않고 온 경우',
+  })
+  @ApiBody({ type: CreateUserDto })
+  async signUp(
+    @Req() req,
+    @Body() createUserDto: CreateUserDto,
+    @SessionInfo() sessionInfo: SessionPayload,
+  ) {
+    const user = await this.usersService.create(
+      sessionInfo.id,
+      createUserDto.nickname,
+      sessionInfo.link,
+    );
+
+    const accessCookie = this.authService.getCookieWithJwtAccessToken(user.id);
+    const { refreshToken, refreshCookie } =
+      this.authService.getCookieWithJwtRefreshToken(user.id);
+    this.usersService.setCurrentRefreshToken(refreshToken, user.id);
+    req.res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
+
+    req.session.destroy(() =>
+      this.logger.debug(`user id : ${user.id} session destroyed`),
+    );
+    this.logger.log(`user id : ${user.id} signed up`);
+    return user;
   }
 
   @Get('refresh')
@@ -67,10 +132,12 @@ export class AuthController {
       'refresh token을 기반으로 새로운 access token을 cookie에 저장 기존 token이 만료되었을때 사용',
   })
   @ApiCookieAuth('Refresh')
-  refresh(@Req() req) {
-    const { id } = req.user;
-    const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(id);
+  refresh(@Req() req, @User() user) {
+    const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(
+      user.id,
+    );
     req.res.setHeader('Set-Cookie', accessTokenCookie);
+    return;
   }
 
   @Post('logout')
@@ -78,10 +145,11 @@ export class AuthController {
   @HttpCode(200)
   @ApiOkResponse({ description: '로그아웃. cookie token 삭제' })
   @ApiCookieAuth('Authentication')
-  async logOut(@Req() req) {
-    const { id } = req.user;
-    await this.usersService.removeRefreshToken(id);
+  async logOut(@Req() req, @User() user) {
+    await this.usersService.removeRefreshToken(user.id);
     const cookie = await this.authService.getCookieForLogOut();
     req.res.setHeader('Set-Cookie', cookie);
+    this.logger.log(`user ${user.id} logged out`);
+    return;
   }
 }
