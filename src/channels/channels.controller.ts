@@ -4,7 +4,7 @@ import { ChannelsService } from './channels.service';
 import { User } from 'src/users/users.entity';
 import { Users } from 'src/common/decorators/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
-import { Socket } from 'socket.io';
+
 @ApiTags('CHANNEL')
 @Controller('api/room_list')
 export class ChannelsController {
@@ -43,10 +43,10 @@ export class ChannelsController {
     @Post('/room/:channelId')
     async userEnterChannel(
         @Param('channelId') channelId: number,
-        @Body() body: CreateChannelDto,
+        @Body('password') password: string,
         @Users() user: User,
     ) {
-        return this.channelsService.userEnterChannel(channelId, body.password, user)
+        return this.channelsService.userEnterChannel(channelId, password, user)
     }
 
 }
