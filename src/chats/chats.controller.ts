@@ -4,11 +4,11 @@ import { User } from 'src/users/users.entity';
 import { Users } from 'src/common/decorators/user.decorator';
 @Controller('test')
 export class ChatsController {
-    constructor(private chatsService: ChatsService) {}
+    constructor(private chatsService: ChatsService) { }
 
     // @ApiOperation({ summary: 채팅방 모두 가져오기})
     @Get(':url/chats')       // @User user:Users
-    async getChats(@Param('url') url, @Users() user:User) {
+    async getChats(@Param('url') url, @Users() user: User) {
         return this.chatsService.getChats(url, 1);
     }
 
@@ -18,11 +18,11 @@ export class ChatsController {
     @Post(':url/chats/:id/contents')
     async createChats(
         @Param('url') url,
-        @Param('id') id:number, // ParseIntPipe 
+        @Param('id') id: number, // ParseIntPipe 
         @Body('content') content,
-        @Users() user:User,
-    ){
-        return this.chatsService.createChats(url,content,id,12)
+        @Users() user: User,
+    ) {
+        return this.chatsService.createChats(url, content, id, 12)
     }
 
 }
