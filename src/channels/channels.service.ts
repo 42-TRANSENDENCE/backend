@@ -11,7 +11,7 @@ import { ChannelMember } from 'src/channels/channelcember.entity';
 import { ChannelsGateway } from 'src/events/events.channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
-import { NotFoundError } from 'rxjs';
+
 @Injectable()
 export class ChannelsService {
   constructor(
