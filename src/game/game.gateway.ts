@@ -1,101 +1,138 @@
-import * as WS from '@nestjs/websockets';
-import { Socket, Namespace } from 'socket.io';
+import { Logger } from '@nestjs/common';
+import {
+  ConnectedSocket,
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
+import { Namespace } from 'socket.io';
+import { Socket } from 'socket.io';
 import { GameService } from './game.service';
-import { LobbyService } from './lobby.service';
+import { GamePlayDto } from './game.interface';
+import {
+  CreateFriendlyMatchDto,
+  InvitationDto,
+  MatchDto,
+  QueueDto,
+} from './lobby/lobby.interface';
+import { Player, PlayerStatus } from './player/player.interface';
+import { LobbyService } from './lobby/lobby.service';
+import { PlayerService } from './player/player.service';
+import { QueueService } from './queue/queue.service';
 
-@WS.WebSocketGateway({ namespace: '/game' })
-export class GameGateway implements WS.OnGatewayInit {
+@WebSocketGateway({ namespace: '/game' })
+export class GameGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
+  private readonly logger: Logger = new Logger(GameGateway.name);
+
+  @WebSocketServer() server: Namespace;
+
   constructor(
-    private readonly ingame: GameService,
-    private readonly lobby: LobbyService,
+    private readonly playerService: PlayerService,
+    private readonly lobbyService: LobbyService,
+    private readonly gameService: GameService,
+    private readonly queueService: QueueService,
   ) {}
 
-  @WS.WebSocketServer() nsp: Namespace;
-
-  games: Array<string> = [];
-
   afterInit() {
-    console.log(`game : 게이트웨이 생성됨✅`);
+    this.logger.log(`Game Gateway created`);
   }
 
-  handleConnection(@WS.ConnectedSocket() socket: Socket) {
-    console.log(`game : ${socket.id} 연결 됨`);
+  async handleConnection(@ConnectedSocket() client: Socket) {
+    const user = await this.playerService.getUserFromClient(client);
+    if (!user) {
+      client.disconnect(true);
+      return;
+    }
+    const player: Player = {
+      id: client.id,
+      user,
+      status: PlayerStatus.WAITING,
+    };
+    this.playerService.add(player);
+    this.logger.log(`${user.nickname} connected. client id : ${client.id}`);
   }
 
-  handleDisconnect(@WS.ConnectedSocket() socket: Socket) {
-    this.lobby.quit_queue(socket);
-    this.ingame.quitGame(this.nsp, socket.id);
-    console.log(`game : ${socket.id} 연결 끊어짐.`);
+  handleDisconnect(@ConnectedSocket() client: Socket) {
+    const player = this.playerService.get(client.id);
+    this.logger.log(`${player.user.nickname} disconnected.`);
+    this.playerService.delete(player);
+    this.queueService.leaveQueue(client);
+    this.gameService.quitGame(this.server, client);
   }
 
-  /*=========================*/
-  /*                         */
-  /*        GameLobby        */
-  /*                         */
-  /*=========================*/
+  /** Lobby */
 
-  @WS.SubscribeMessage('invite')
+  @SubscribeMessage('invite')
   handleInviteEvent(
-    @WS.ConnectedSocket() socket: Socket,
-    @WS.MessageBody() userinfo: string,
+    @ConnectedSocket() client: Socket,
+    @MessageBody() matchInfo: CreateFriendlyMatchDto,
+  ): void {
+    this.lobbyService.invite(this.server, client, matchInfo);
+  }
+
+  @SubscribeMessage('refuse')
+  handleRefuseEvent(@MessageBody() invitation: InvitationDto) {
+    this.lobbyService.refuse(this.server, invitation);
+  }
+
+  @SubscribeMessage('accept')
+  handleAccept(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() invitaton: InvitationDto,
   ) {
-    this.lobby.invite_to_game(socket, userinfo);
+    this.lobbyService.accept(this.server, client, invitaton);
   }
 
-  @WS.SubscribeMessage('watch')
-  handleWatchEvent(
-    @WS.ConnectedSocket() socket: Socket,
-    @WS.MessageBody() userinfo: string,
+  @SubscribeMessage('join_queue')
+  handleJoinEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: QueueDto,
   ) {
-    this.lobby.spectate_game(socket, userinfo);
+    this.queueService.joinQueue(this.server, client, data);
   }
 
-  @WS.SubscribeMessage('join_queue')
-  handleQueueEvent(@WS.ConnectedSocket() socket: Socket) {
-    if (this.lobby.join_queue(this.nsp, socket)) console.log('방 만들어짐');
+  @SubscribeMessage('leave_queue')
+  handleLeaveEvent(@ConnectedSocket() client: Socket) {
+    this.queueService.leaveQueue(client);
   }
 
-  @WS.SubscribeMessage('quit_queue')
-  handleQuitQueueEvent(@WS.ConnectedSocket() socket: Socket) {
-    this.lobby.quit_queue(socket);
-  }
+  /** GAME */
 
-  /*=========================*/
-  /*                         */
-  /*        In  Game         */
-  /*                         */
-  /*=========================*/
-
-  @WS.SubscribeMessage('ready')
-  handlePlayerReady(
-    @WS.ConnectedSocket() socket: Socket,
-    @WS.MessageBody() roomId: string,
+  @SubscribeMessage('ready')
+  handleReadyEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() matchInfo: MatchDto,
   ) {
-    this.ingame.handlePlayerReady(this.nsp, roomId, socket.id);
+    this.gameService.ready(this.server, client, matchInfo);
   }
 
-  @WS.SubscribeMessage('quit_game')
-  handleQuitGame(@WS.ConnectedSocket() socket: Socket) {
-    this.ingame.quitGame(this.nsp, socket.id);
-  }
-
-  @WS.SubscribeMessage('keypress')
+  @SubscribeMessage('keypress')
   handleKeyPressed(
-    @WS.ConnectedSocket() socket: Socket,
-    @WS.MessageBody() payload: any,
+    @ConnectedSocket() client: Socket,
+    @MessageBody() gameInfo: GamePlayDto,
   ) {
-    const roomId: string = payload[0];
-    const keyCode: string = payload[1];
-    this.ingame.handleKeyPressed(roomId, socket.id, keyCode);
+    this.gameService.handleKeyPressed(client, gameInfo);
   }
 
-  @WS.SubscribeMessage('keyrelease')
+  @SubscribeMessage('keyrelease')
   handleKeyReleased(
-    @WS.ConnectedSocket() socket: Socket,
-    @WS.MessageBody() payload: any,
+    @ConnectedSocket() client: Socket,
+    @MessageBody() gameInfo: GamePlayDto,
   ) {
-    const roomId: string = payload[0];
-    const keyCode: string = payload[1];
-    this.ingame.handleKeyReleased(roomId, socket.id, keyCode);
+    this.gameService.handleKeyReleased(client, gameInfo);
+  }
+
+  @SubscribeMessage('watch')
+  handleWatchEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userId: number,
+  ) {
+    this.gameService.watch(client, userId);
   }
 }

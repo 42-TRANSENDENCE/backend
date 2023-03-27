@@ -1,0 +1,16 @@
+export const ARROW_UP = 'ArrowUp';
+export const ARROW_DOWN = 'ArrowDown';
+export const TABLE_LEFT = -600;
+export const TABLE_RIGHT = 600;
+export const TABLE_TOP = -400; // aspect_ratio : 2/3
+export const TABLE_BOTTOM = 400;
+export const BALL_RAD = 30;
+export const PADDLE_H = 160; //
+export const PADDLE_W = 24;
+export const PADDLE_L = 40;
+export const PADDLE_R = 40;
+export const WIN_SCORE = 3;
+export const PADDLE_SPEED = 10;
+export const BALL_VEL_INIT_X = 4;
+export const BALL_VEL_INIT_Y = 3;
+export const ACCEL_RATIO = 1.1;
