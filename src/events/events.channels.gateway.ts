@@ -11,7 +11,7 @@ import {
 // import { ChannelsGateway } from './events.channels.gateway';
 import { Server, Socket, Namespace } from 'socket.io';
 import { ChannelsService } from 'src/channels/channels.service';
-import { onlineMap } from './onlineMaps';
+// import { onlineMap } from './onlineMaps';
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
@@ -63,8 +63,8 @@ export class ChannelsGateway implements OnGatewayConnection, OnGatewayDisconnect
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
     const newNamespace = socket.nsp;
-      delete onlineMap[socket.nsp.name][socket.id];
-      newNamespace.emit('onlineList', Object.values(onlineMap[socket.nsp.name]));
+      // delete onlineMap[socket.nsp.name][socket.id];
+      // newNamespace.emit('onlineList', Object.values(onlineMap[socket.nsp.name]));
   }
 
   // @SubscribeMessage('create-room')

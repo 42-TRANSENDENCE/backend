@@ -31,8 +31,8 @@ export class ChannelMember {
    * 1 : M 관계 설정
    * @ManyToOne 
    * 여기서 Many 는 채널 이고 One이 멤버 이다. 
-   */
-    @ManyToOne(() => Channels)
-    @JoinColumn({ name: "ChannelId" })
-    channelMember: ChannelMember;
+//    */
+//     @ManyToOne(() => Channels)
+//     @JoinColumn({ name: "ChannelId" })
+//     channelMember: ChannelMember;
 }
