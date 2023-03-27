@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
@@ -7,6 +11,7 @@ import { ChannelMember } from 'src/channels/channelcember.entity';
 import { ChannelsGateway } from 'src/events/events.channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
+import { NotFoundError } from 'rxjs';
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -31,7 +36,7 @@ export class ChannelsService {
     const saltRounds = 10;
     const channel = this.channelsRepository.create({
       title: title,
-      password: password,
+      password,
       owner: myId,
     });
     if (password) {
@@ -59,25 +64,23 @@ export class ChannelsService {
   }
 
   async userEnterChannel(channel_id: number, password: string, user: User) {
-    const curChannel = await this.channelsRepository.findOne({
-      where: { id: channel_id },
+    const curChannel = await this.channelsRepository.findOneBy({
+      id: channel_id,
     });
-    if (curChannel) {
-      if (curChannel.private)
-        return this.userEnterPrivateChannel(
-          channel_id,
-          password,
-          user,
-          curChannel,
-        );
-      else
-        return this.userEnterPublicChannel(
-          channel_id,
-          password,
-          user,
-          curChannel,
-        );
-    } else throw new UnauthorizedException('Plz Enter Exist Room');
+
+    if (!curChannel) {
+      throw new NotFoundException('Plz Enter Exist Room');
+    }
+
+    if (curChannel.private) {
+      return this.userEnterPrivateChannel(
+        channel_id,
+        password,
+        user,
+        curChannel,
+      );
+    }
+    return this.userEnterPublicChannel(channel_id, password, user, curChannel);
   }
 
   async userEnterPrivateChannel(
@@ -93,20 +96,17 @@ export class ChannelsService {
     // .where('id = :channel_id', {channel_id})
     // .getOne();
     if (password) {
-      this.logger.log(`channel password: ${(await curChannel).password}`);
+      this.logger.log(`channel password: ${curChannel.password}`);
       const inputPasswordMatches = await bcrypt.compare(
         password,
-        (
-          await curChannel
-        ).password,
+        curChannel.password,
       );
       this.logger.log(inputPasswordMatches);
       if (!inputPasswordMatches) {
         throw new UnauthorizedException('Invalid password');
-      } else {
-        // 맞으면 소켓 연결하고 디비에 추가 채널멤버에 .
-        this.logger.log('suceccses');
       }
+      // 맞으면 소켓 연결하고 디비에 추가 채널멤버에 .
+      this.logger.log('Enter room : success');
     } else {
       // 비번방인데 비밀번호 입력 안 했을때
       throw new UnauthorizedException('Invalid password');
