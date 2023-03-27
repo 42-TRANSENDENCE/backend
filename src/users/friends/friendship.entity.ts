@@ -2,8 +2,8 @@ import { User } from 'src/users/users.entity';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 export enum FriendStatus {
-  PENDING,
-  APPROVED,
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
 }
 
 @Entity()
