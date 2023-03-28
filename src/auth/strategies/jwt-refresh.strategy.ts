@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from 'src/users/users.service';
-import { TokenPayload } from '../token-payload.interface';
+import { JwtTokenPayload } from '../interface/jwt-token-payload.interface';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -28,12 +28,16 @@ export class JwtRefreshStrategy extends PassportStrategy(
     });
   }
 
-  async validate(req: Request, payload: TokenPayload) {
+  async validate(req: Request, payload: JwtTokenPayload) {
     const refreshToken = req.cookies?.Refresh;
-    this.logger.debug(`requested refresh token : ${refreshToken}`);
-    return this.userService.getUserIfRefreshTokenValid(
+    this.logger.debug(`refresh token : ${refreshToken}`);
+    const user = this.userService.getUserIfValidRefreshToken(
       refreshToken,
       payload.id,
     );
+    if (!user) {
+      throw new UnauthorizedException('올바르지 않은 refesh token입니다.');
+    }
+    return user;
   }
 }

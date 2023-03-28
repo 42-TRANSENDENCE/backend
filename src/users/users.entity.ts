@@ -1,6 +1,8 @@
 import { Exclude } from 'class-transformer';
 import { ChannelMember } from 'src/channels/channelmember.entity';
 import { Column, Entity, PrimaryColumn, ManyToOne } from 'typeorm';
+import { GameHistory } from 'src/game/history/history.entity';
+import { Friendship } from 'src/users/friends/friendship.entity';
 
 export enum UserStatus {
   ONLINE = 'ONLINE',
@@ -8,12 +10,19 @@ export enum UserStatus {
   INGAME = 'INGAME',
 }
 
-@Entity({ name: 'user'})
+export enum Achievement {
+  FIRST_LOGIN = 'FIRST_LOGIN',
+  FIRST_GAME = 'FIRST_GAME',
+  FIRST_FREINDSHIP = 'FIRST_FRIENDSHIP',
+  WIN_TEN_GAME = 'WIN_TEN_GAME',
+}
+
+@Entity({ name: 'user' })
 export class User {
   @PrimaryColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column({ unique: true, type: 'varchar', length: 15 })
   nickname: string;
 
   @Column({
@@ -41,7 +50,12 @@ export class User {
   @Column({ default: false })
   isTwoFactorAuthenticationEnabled: boolean;
 
-  @ManyToOne(() => ChannelMember, (channelmember) => channelmember.users)
-  channelMember: User
-}
+  @Column({ type: 'enum', enum: Achievement })
+  acheivements: Achievement[];
 
+  friends: Friendship[];
+
+  histories: GameHistory[];
+  @ManyToOne(() => ChannelMember, (channelmember) => channelmember.users)
+  channelMember: User;
+}

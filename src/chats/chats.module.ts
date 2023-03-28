@@ -7,8 +7,8 @@ import { Chats } from 'src/chats/chats.entity';
 import { EventsModule } from 'src/events/events.module';
 import { Channels } from 'src/channels/channels.entity';
 @Module({
-  imports: [TypeOrmModule.forFeature([Chats, User, Channels]) , EventsModule],
+  imports: [TypeOrmModule.forFeature([Chats, User, Channels]), EventsModule],
   providers: [ChatsService],
-  controllers: [ChatsController]
+  controllers: [ChatsController],
 })
 export class ChatsModule {}

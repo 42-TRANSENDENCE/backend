@@ -9,6 +9,8 @@ export const mockedConfigService = {
         return 'test refresh token';
       case 'JWT_REFRESH_TOKEN_EXPIRATION_TIME':
         return '7200';
+      case 'FRONTEND_URL':
+        'front_url';
     }
   },
 };

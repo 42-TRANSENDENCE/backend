@@ -1,38 +1,38 @@
-import { Socket } from "socket.io";
+import { Player } from './player/player.interface';
 
-export interface Vector2D {
-    x: number,
-    y: number
-};
-
-interface Ball {
-    pos : Vector2D;
-    vel : Vector2D;
-};
-
-export enum State {
-    WAIT,
-    START,
-    INGAME,
-    END
-};
-
-interface Player {
-    socketid: Socket;
-    username: string;
-    y_pos : number;
+export enum GameMode {
+  NORMAL = 'NORMAL',
+  SPECIAL = 'SPECIAL',
 }
 
-export interface Gameinfo {
-    score: Array<number>;
-    state: State;
-    ball: Ball;
-    p1 : Player;
-    p2 : Player;
+export enum GameType {
+  PRACTICE = 'PRACTICE',
+  RANK = 'RANK',
 }
 
-export interface Roominfo {
-    roomid : string;
-    gameinfo : Gameinfo;
-    watchers : Array<string>;
-};
+export interface GameData {
+  ballPos: { x: number; y: number };
+  ballVel: { x: number; y: number };
+  paddlePos: { p1: number; p2: number };
+  score: { p1: number; p2: number };
+  upPressed: { p1: boolean; p2: boolean };
+  downPressed: { p1: boolean; p2: boolean };
+}
+
+export interface Game {
+  gameId: string;
+  intervalId: ReturnType<typeof setInterval> | null;
+  isReady: { p1: boolean; p2: boolean };
+  players: { p1: Player; p2: Player };
+  spectators: Array<Player>;
+  data: GameData;
+  startTime: Date;
+  endTime?: Date;
+  type: GameType;
+  mode: GameMode;
+}
+
+export interface GamePlayDto {
+  roomId: string;
+  keyCode: string;
+}

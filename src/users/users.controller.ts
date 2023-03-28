@@ -5,12 +5,12 @@ import {
   Delete,
   FileTypeValidator,
   Get,
+  Header,
   MaxFileSizeValidator,
+  Param,
   ParseFilePipe,
-  Post,
+  Patch,
   Put,
-  Req,
-  Res,
   StreamableFile,
   UploadedFile,
   UseGuards,
@@ -19,80 +19,68 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBadRequestResponse,
-  ApiBearerAuth,
   ApiBody,
   ApiConsumes,
-  ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Response } from 'express';
-import { FourtyTwoGuard } from 'src/auth/guards/fourty-two.guard';
+import { User } from 'src/auth/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
-import { CreateUserDto } from './dto/users.dto';
-import { User } from './users.entity';
+import { FriendsService } from 'src/users/friends/friends.service';
+import { ModifyUserDto } from './dto/users.dto';
+import { userAvatarApiBody } from './users.constants';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
-  constructor(private readonly userService: UsersService) {}
+  constructor(
+    private readonly userService: UsersService,
+    private readonly friendsService: FriendsService,
+  ) {}
 
   @Get()
   @UseGuards(JwtTwoFactorGuard)
-  async getUserInfo(@Req() req) {
-    const user: User = req.user;
+  @ApiOperation({ summary: '로그인한 user 정보 반환' })
+  async getUserInfo(@User() user) {
     return user;
   }
 
+  @Get('search/:nickname')
+  @UseGuards(JwtTwoFactorGuard)
+  @ApiOperation({ summary: '닉네임으로 유저 정보 검색' })
+  getUserByNickname(@Param('nickname') nickname: string) {
+    return this.userService.getByNickname(nickname);
+  }
+
+  // TODO: avatar type 저장
   @Get('avatar')
   @ApiOperation({ summary: '사용자 아바타 이미지 반환 (byte array)' })
   @UseGuards(JwtTwoFactorGuard)
-  async getUserAvatar(@Req() req, @Res({ passthrough: true }) res: Response) {
-    const avatar = await this.userService.getUserAvatar(req.user.id);
-
-    res.set({
-      'Content-Type': 'image/*',
-      'Content-Disposition': 'inline',
-    });
-
+  @Header('Content-Type', 'image/*')
+  @Header('Content-Disposition', 'inline')
+  async getUserAvatar(@User() user) {
+    const avatar = await this.userService.getUserAvatar(user.id);
     return new StreamableFile(avatar);
-  }
-
-  @Post('signup')
-  @UseGuards(FourtyTwoGuard)
-  @ApiOperation({
-    summary: '회원가입',
-    description:
-      '회원 가입 기능. avatar는 기본으로 42 이미지를 기반으로 생성됨',
-  })
-  @ApiCreatedResponse({ description: '회원가입 성공' })
-  @ApiBadRequestResponse({ description: '이미 존재하는 닉네임입니다.' })
-  @ApiBody({ type: CreateUserDto })
-  @ApiBearerAuth('42-token')
-  signUp(@Body() createUserDto: CreateUserDto, @Req() req): any {
-    const { id, image } = req.user;
-    const { link } = image;
-    return this.userService.signUp(createUserDto, id, link);
   }
 
   @Put('avatar')
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(JwtTwoFactorGuard)
+  @Header('Content-Type', 'image/*')
+  @Header('Content-Disposition', 'inline')
   @ApiOperation({
-    summary: '사용자 아바타 변경 기능 (3MB Limit, jpeg, bmp, jpg, png) ',
+    summary: '사용자 아바타 변경 (3MB Limit, jpeg, bmp, jpg, png) ',
   })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: 'File upload',
-    schema: {
-      type: 'object',
-      properties: { file: { type: 'string', format: 'binary' } },
-    },
+  @ApiBody(userAvatarApiBody)
+  @ApiOkResponse({
+    description: '사용자 아바타 변경 완료. 변경한 이미지 데이터 반환',
   })
-  updateUserAvatar(
-    @Req() req,
+  async updateUserAvatar(
+    @User() user,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -105,12 +93,24 @@ export class UsersController {
     )
     file: Express.Multer.File,
   ) {
-    return this.userService.updateUserAvatar(req.user.id, file.buffer);
+    return new StreamableFile(
+      await this.userService.updateUserAvatar(user.id, file.buffer),
+    );
   }
 
   @Delete()
   @UseGuards(JwtTwoFactorGuard)
-  deleteUser(@Req() req) {
-    return this.userService.deleteUser(req.user.id);
+  @ApiOperation({ summary: '사용자 삭제', description: '회원 탈퇴' })
+  deleteUser(@User() user) {
+    return this.userService.deleteUser(user.id);
+  }
+
+  @Patch('nickname')
+  @UseGuards(JwtTwoFactorGuard)
+  @ApiOperation({ summary: 'nickname 변경' })
+  @ApiOkResponse({ description: '변경 완료' })
+  @ApiBadRequestResponse({ description: '변경 실패. 메세지에 실패 이유 포함' })
+  modifyNickname(@User() user, @Body() modifyUserDto: ModifyUserDto) {
+    return this.userService.modifyNickname(user, modifyUserDto.nickname);
   }
 }
