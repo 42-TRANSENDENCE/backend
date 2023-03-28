@@ -7,17 +7,24 @@ import {
   WebSocketGateway,
   WebSocketServer,
   MessageBody,
+  OnGatewayInit,
 } from '@nestjs/websockets';
+// import { ChannelsGateway } from './events.channels.gateway';
 import { Server, Socket, Namespace } from 'socket.io';
-// import { ChannelsService } from 'src/channels/channels.service';
+import { Channels } from 'src/channels/channels.entity';
+import { ChannelsService } from 'src/channels/channels.service';
 
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
 // }
-
+// FRONTEND_URL="http://localhost:5173"
+const originUrl = process.env.FRONTEND_URL;
 @WebSocketGateway({
-  namespace: 'channel',
+  namespace: 'channelchat',
+  cors: {
+    origin: originUrl,
+  },
 })
 export class ChannelsGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -27,12 +34,8 @@ export class ChannelsGateway
 
   @WebSocketServer() nsp: Namespace;
   server: Server;
-
+  // 클라이언트가, 프론트가 나한테 보내는 이벤트.
   afterInit() {
-    this.nsp.adapter.on('create-room', (room) => {
-      this.logger.log(`"Room:${room}"이 생성되었습니다.`);
-    });
-
     this.nsp.adapter.on('join-room', (room, id) => {
       this.logger.log(`"Socket:${id}"이 "Room:${room}"에 참여하였습니다.`);
     });
@@ -49,25 +52,39 @@ export class ChannelsGateway
   }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
-    console.log('TEST ---------------- get connection');
+    this.logger.log('TEST ---------------- get connection');
     this.logger.log(`${socket.id} 소켓 연결`);
-
-    // socket.broadcast.emit('message', {
-    //   message: `${socket.id}가 들어왔습니다.`,
-    // });
+    socket.broadcast.emit('message', {
+      message: `${socket.id}가 들어왔습니다.`,
+    });
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 
-  @SubscribeMessage('create-room')
-  handleCreateRoom(
+  @SubscribeMessage('message')
+  handleMessage(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() roomName: string,
+    @MessageBody() message: string,
   ) {
-    this.logger.log('<-------create-room------>');
-    this.logger.log(`TEST : ${socket.id} :  ${roomName}`);
-    return { success: true };
+    socket.broadcast.emit('message', { username: socket.id, message });
+    return { username: socket.id, message };
   }
+
+  async EmitChannelInfo(channelReturned) {
+    return this.nsp.emit('newRoom', channelReturned);
+  }
+  // @SubscribeMessage('newRoom')
+  // async handleCreateRoom(
+  //   @ConnectedSocket() socket: Socket,
+  //   @MessageBody() Channel: Channels,
+  // ) {
+  //   // this.logger.log(`TEST : ${socket.id} : `);
+  //   return { Channel };
+  // }
 }
+// socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
+// createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
+// this.nsp.emit('create-room', roomName); // 대기실 방 생성
+// return { success: true, payload: roomName };

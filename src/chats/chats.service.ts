@@ -15,10 +15,11 @@ export class ChatsService {
     @InjectRepository(User) private usersRepository: Repository<User>, // private readonly eventsGateway: EventGateway,
   ) {}
 
-  async getChats(url: string, myId: number) {
+  async getChats(channelId: number, myId: number) {
     return this.usersRepository.createQueryBuilder('user').getMany();
   }
-  async createChats(url: string, content: string, id: number, myId: number) {
+
+  async createChats(content: string, id: number, myId: number) {
     // consts
     // const chat = new Chats();
     // chat.SenderId = myId;
