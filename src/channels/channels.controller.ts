@@ -9,7 +9,7 @@ import { Socket } from 'socket.io';
 import { Response } from 'express';
 
 @ApiTags('CHANNEL')
-@Controller('/')
+@Controller('/room')
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
 

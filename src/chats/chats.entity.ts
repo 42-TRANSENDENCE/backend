@@ -9,7 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 
-@Index('UserId', ['UserId'], {})
+@Index('UserId', ['id'], {})
 @Index('ChannelId', ['ChannelId'], {})
 @Entity()
 export class Chats {

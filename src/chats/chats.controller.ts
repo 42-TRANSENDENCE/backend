@@ -26,6 +26,6 @@ export class ChatsController {
     @Users() user: User,
   ) {
     // this.chatsService.createChats(chat,id,user)
-    return this.chatsService.sendChatToChannel(id, chat, user);
+    // return this.chatsService.sendChatToChannel(id, chat, user);
   }
 }

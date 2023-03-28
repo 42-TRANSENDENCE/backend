@@ -119,7 +119,7 @@ export class ChannelsService {
   }
 
   async userEnterPublicChannel(
-    channel_id: number,
+    channelId: number,
     password: string,
     user: User,
     curChannel: Channels,
@@ -134,7 +134,7 @@ export class ChannelsService {
     if (!isInUser) {
       const cm = this.channelMemberRepository.create({
         UserId: 1, // user.id
-        ChannelId: channel_id,
+        ChannelId: channelId,
       });
       this.channelMemberRepository.save(cm);
     }
