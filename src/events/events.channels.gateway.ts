@@ -71,14 +71,17 @@ export class ChannelsGateway
     return { username: socket.id, message };
   }
 
-  @SubscribeMessage('newRoom')
-  async handleCreateRoom(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() Channel: Channels,
-  ) {
-    this.logger.log(`TEST : ${socket.id} : `);
-    return { Channel };
+  async EmitChannelInfo(channelReturned) {
+    return this.nsp.emit('newRoom', channelReturned);
   }
+  // @SubscribeMessage('newRoom')
+  // async handleCreateRoom(
+  //   @ConnectedSocket() socket: Socket,
+  //   @MessageBody() Channel: Channels,
+  // ) {
+  //   // this.logger.log(`TEST : ${socket.id} : `);
+  //   return { Channel };
+  // }
 }
 // socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
 // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가

@@ -47,7 +47,8 @@ export class ChannelsService {
     }
     // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
     const channelReturned = await this.channelsRepository.save(channel);
-    this.channelsGateway.nsp.emit('newRoom', channelReturned);
+    this.channelsGateway.EmitChannelInfo(channelReturned);
+    // this.channelsGateway.nsp.emit('newRoom', channelReturned);
     const channelMember = this.channelMemberRepository.create({
       UserId: myId,
       ChannelId: channelReturned.id,
@@ -74,7 +75,7 @@ export class ChannelsService {
     // .where('id = :channel_id', {channel_id})
     // .getOne();
     if (password) {
-      console.log(curChannel.password);
+      this.logger.log(`channel password : ${curChannel.password}`);
       const inputPasswordMatches = await bcrypt.compare(
         password,
         curChannel.password,
