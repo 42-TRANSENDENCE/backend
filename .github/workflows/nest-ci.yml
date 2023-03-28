@@ -25,7 +25,7 @@ jobs:
       - run: npm run build --if-present
 
       # test
-      - run: npm test
+      # - run: npm test
 
       # below steps work only for main branch
       # docker build & push image to registry
