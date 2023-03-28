@@ -14,9 +14,10 @@ describe('FriendsService', () => {
       id: faker.datatype.number(),
       nickname: faker.name.firstName(),
       avatar: new Uint8Array([]),
-      status: UserStatus.OFFLINE,
       isTwoFactorAuthenticationEnabled: false,
       friends: [],
+      histories: [],
+      acheivements: [],
     };
     return user;
   }
@@ -62,9 +63,10 @@ describe('FriendsService', () => {
     id: 42,
     nickname: 'test',
     avatar: new Uint8Array([]),
-    status: UserStatus.OFFLINE,
     isTwoFactorAuthenticationEnabled: false,
     friends: [],
+    histories: [],
+    acheivements: [],
   };
 
   const tempUser1 = createRandomUser();

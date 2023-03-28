@@ -56,8 +56,9 @@ describe('AuthController', () => {
     nickname: 'test user',
     avatar: new Uint8Array([]),
     isTwoFactorAuthenticationEnabled: false,
-    status: UserStatus.OFFLINE,
     friends: [],
+    histories: [],
+    acheivements: [],
   };
 
   const mockedFourtyTwoUser = {
