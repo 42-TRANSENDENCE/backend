@@ -18,11 +18,12 @@ import { ChannelsService } from 'src/channels/channels.service';
 //   roomName: string;
 //   message: string;
 // }
-
+// FRONTEND_URL="http://localhost:5173"
+const originUrl = process.env.FRONTEND_URL;
 @WebSocketGateway({
   namespace: 'channelchat',
   cors: {
-    origin: ['http://localhost:3000'],
+    origin: originUrl,
   },
 })
 export class ChannelsGateway
