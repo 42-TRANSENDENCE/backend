@@ -1,6 +1,7 @@
 import { Exclude } from 'class-transformer';
+import { GameHistory } from 'src/game/history/history.entity';
 import { Friendship } from 'src/users/friends/friendship.entity';
-import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 export enum UserStatus {
   ONLINE = 'ONLINE',
@@ -8,12 +9,19 @@ export enum UserStatus {
   INGAME = 'INGAME',
 }
 
+export enum Achievement {
+  FIRST_LOGIN = 'FIRST_LOGIN',
+  FIRST_GAME = 'FIRST_GAME',
+  FIRST_FREINDSHIP = 'FIRST_FRIENDSHIP',
+  WIN_TEN_GAME = 'WIN_TEN_GAME',
+}
+
 @Entity({ name: 'user' })
 export class User {
   @PrimaryColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column({ unique: true, type: 'varchar', length: 15 })
   nickname: string;
 
   @Column({
@@ -41,6 +49,10 @@ export class User {
   @Column({ default: false })
   isTwoFactorAuthenticationEnabled: boolean;
 
-  @OneToMany(() => Friendship, (friends) => friends.user)
+  @Column({ type: 'enum', enum: Achievement })
+  acheivements: Achievement[];
+
   friends: Friendship[];
+
+  histories: GameHistory[];
 }
