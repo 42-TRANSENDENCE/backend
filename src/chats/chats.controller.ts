@@ -14,8 +14,8 @@ export class ChatsController {
     description: '',
   })
   @Get(':channelId/chat') // @User user:Users
-  async getChats(@Param('channelId') channel_id, @Users() user: User) {
-    return this.chatsService.getChats(channel_id, 1);
+  async getChats(@Param('channelId') channelId, @Users() user: User) {
+    return this.chatsService.getChats(channelId, 1);
   }
 
   // @ApiOperation({ summary: 특정 채팅방  가져오기})

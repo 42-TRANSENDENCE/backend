@@ -12,6 +12,7 @@ import { ChannelMember } from './channelcember.entity';
 import { ChannelsGateway } from 'src/events/events.channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
+import { returnStatusMessage } from './channel.interface';
 
 @Injectable()
 export class ChannelsService {
@@ -69,7 +70,7 @@ export class ChannelsService {
     password: string,
     user: User,
     curChannel: Channels,
-  ): Promise<{ message: string; status: number }> {
+  ): Promise<returnStatusMessage> {
     // 맞으면 채팅방 멤버에추가 해줘야한다. -> channel member entitiy 에 insert 하는거 추가 해야함.
     // const curChannel = await this.channelsRepository.createQueryBuilder()
     // .where('id = :channel_id', {channel_id})
