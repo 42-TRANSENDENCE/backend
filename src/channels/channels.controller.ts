@@ -6,8 +6,9 @@ import { Users } from 'src/common/decorators/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
 import { Response } from 'express';
+
 @ApiTags('CHANNEL')
-@Controller('room')
+@Controller('/room')
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
 
@@ -31,10 +32,15 @@ export class ChannelsController {
     return this.channelsService.createChannels(body.title, body.password, 2);
   }
 
-  @ApiOperation({ summary: '채팅방 정보 가져오기: [멤버, 밴리스트, private]' })
+  @ApiOperation({
+    summary: '채팅방 정보 가져오기: [{ 멤버 }, { 밴리스트 }, private]',
+  })
   @Get(':channelId')
-  async getChannelMembers(@Param('channelId') channelId: number) {
-    return this.channelsService.getChannelMembers(channelId);
+  async getChannelInfo(@Param('channelId') channelId: number) {
+    const result = await this.channelsService.getChannelInfo(channelId);
+    // banMember 도 추가
+    // private 인지 알러면 채팅방 에 쿼리로 접근해서 알아와야 하는데.
+    return result;
   }
 
   @ApiOperation({ summary: '채팅방 입장' })
@@ -53,5 +59,15 @@ export class ChannelsController {
     return res
       .status(result.status)
       .send({ statusCode: result.status, message: result.message });
+  }
+
+  @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌' })
+  @Post(':roomid/admin/:userid') // body 엔 아무것도 안 옴
+  async ownerGiveAdmin(
+    @Param('roomid') channelId: number,
+    @Param('userid') toUserId: number,
+    @Users() user: User,
+  ) {
+    return this.channelsService.ownerGiveAdmin(channelId, toUserId, user);
   }
 }

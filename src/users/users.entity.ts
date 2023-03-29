@@ -1,7 +1,8 @@
 import { Exclude } from 'class-transformer';
+import { ChannelMember } from 'src/channels/channelmember.entity';
+import { Column, Entity, PrimaryColumn, ManyToOne } from 'typeorm';
 import { GameHistory } from 'src/game/history/history.entity';
 import { Friendship } from 'src/users/friends/friendship.entity';
-import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 export enum UserStatus {
   ONLINE = 'ONLINE',
@@ -55,4 +56,7 @@ export class User {
   friends: Friendship[];
 
   histories: GameHistory[];
+
+  @ManyToOne(() => ChannelMember, (channelmember) => channelmember.users)
+  channelMember: User;
 }
