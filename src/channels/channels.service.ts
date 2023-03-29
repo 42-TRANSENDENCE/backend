@@ -19,6 +19,7 @@ import { Logger } from '@nestjs/common';
 import { response } from 'express';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
+import { WsException } from '@nestjs/websockets';
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -190,6 +191,7 @@ export class ChannelsService {
   }
 
   // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
+  // 이거 내가 try catch로 예외처리 해놓음
   async userExitChannel(
     socket: Socket,
     roomId: string,
@@ -200,6 +202,7 @@ export class ChannelsService {
     // 채팅방 오너가 나가면 채팅방 삭제.
     const curChannel = await this.findById(+roomId);
     // 근데 만약 그 채널에 없는 사람이 leave-room 이벤트 보내는 경우도 생각.
+    if (!curChannel) throw new WsException('Check the room number');
     if (curChannel.owner === userId) {
       // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
       // this.logger.log('is this herererererer');

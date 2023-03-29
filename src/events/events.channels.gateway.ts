@@ -1,4 +1,10 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   ConnectedSocket,
@@ -9,6 +15,7 @@ import {
   WebSocketServer,
   MessageBody,
   OnGatewayInit,
+  WsException,
 } from '@nestjs/websockets';
 
 import { Chats } from 'src/chats/chats.entity';
@@ -16,6 +23,7 @@ import { Server, Socket, Namespace } from 'socket.io';
 import { Channels } from 'src/channels/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
 import { Repository } from 'typeorm';
+import { leaveDto } from './\bdto/leave.dto';
 // import { ChannelsGateway } from './events.channels.gateway';
 
 // interface MessagePayload {
@@ -121,13 +129,19 @@ export class ChannelsGateway
   @SubscribeMessage('leave-room')
   handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
-    // TODO : DTO 로 바꾸기
-    @MessageBody('roomId') roomId: string,
-    @MessageBody('userId') userId: number,
+    @MessageBody() leaveDto: leaveDto,
   ) {
     //소켓 연결 끊기 **
-    socket.leave(roomId);
-    console.log(`Client ${socket.id} left room ${roomId}`);
-    this.ChannelsService.userExitChannel(socket, roomId, userId);
+    //roomId,userId가 없을때 예외 처리
+    if (!leaveDto.roomId || !leaveDto.userId)
+      throw new WsException('There is no user or roomId here');
+    // 해당 방에대해 소켓 연결 끊는부분 연결하고 테스트를 해봐야 할듯.!!!!!
+    socket.leave(leaveDto.roomId);
+    this.logger.log(`Client ${socket.id} left room ${leaveDto.roomId}`);
+    this.ChannelsService.userExitChannel(
+      socket,
+      leaveDto.roomId,
+      leaveDto.userId,
+    );
   }
 }
