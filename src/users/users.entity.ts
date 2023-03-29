@@ -56,6 +56,7 @@ export class User {
   friends: Friendship[];
 
   histories: GameHistory[];
+
   @ManyToOne(() => ChannelMember, (channelmember) => channelmember.users)
   channelMember: User;
 }

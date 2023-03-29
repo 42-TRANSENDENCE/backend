@@ -7,15 +7,26 @@ import { UsersService } from '../users.service';
 import { Friendship, FriendStatus } from './friendship.entity';
 import { FriendsService } from './friends.service';
 import { requestNotFoundErr } from './friends.constants';
+import { Users } from 'src/common/decorators/user.decorator';
 
 describe('FriendsService', () => {
   function createRandomUser(): User {
     const user: User = {
+      // id: faker.datatype.number(),
+      // nickname: faker.name.firstName(),
+      // avatar: new Uint8Array([]),
+      // status: UserStatus.OFFLINE,
+      // isTwoFactorAuthenticationEnabled: false,
+      // friends: null,
+      // // channelMember: [],
       id: faker.datatype.number(),
-      nickname: faker.name.firstName(),
-      avatar: new Uint8Array([]),
+      nickname: 'john',
+      avatar: new Uint8Array([0, 1, 2]),
       status: UserStatus.OFFLINE,
       isTwoFactorAuthenticationEnabled: false,
+      acheivements: [],
+      histories: [],
+      channelMember: null,
       friends: [],
     };
     return user;
@@ -59,11 +70,21 @@ describe('FriendsService', () => {
   });
 
   const mockedUser: User = {
-    id: 42,
-    nickname: 'test',
-    avatar: new Uint8Array([]),
+    // id: 42,
+    // nickname: 'test',
+    // avatar: new Uint8Array([]),
+    // status: UserStatus.OFFLINE,
+    // isTwoFactorAuthenticationEnabled: false,
+    // // channelMember: null,
+    // friends: [],
+    id: faker.datatype.number(),
+    nickname: 'john',
+    avatar: new Uint8Array([0, 1, 2]),
     status: UserStatus.OFFLINE,
     isTwoFactorAuthenticationEnabled: false,
+    acheivements: [],
+    histories: [],
+    channelMember: null,
     friends: [],
   };
 
