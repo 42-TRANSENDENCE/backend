@@ -35,10 +35,7 @@ export class ChannelsService {
   private logger = new Logger(ChannelsService.name);
 
   async findById(id: number) {
-    return this.channelsRepository.findOne({ where: { id } });
-  }
-  async findByIdMember(id: number) {
-    return this.channelMemberRepository.findOne({ where: { id } });
+    return this.channelsRepository.findOneBy({ id });
   }
 
   async getChannels() {
