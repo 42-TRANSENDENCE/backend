@@ -3,6 +3,7 @@ import {
   NotFoundException,
   UnauthorizedException,
   Res,
+  MethodNotAllowedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -167,12 +168,21 @@ export class ChannelsService {
 
   // 내가 이 채팅방에 owner 권한이 있는지
   // 없으면  cut 있으면  admin 권한을  toUserid 에게 준다.
-  async ownerGiveAdmin(channelId: number, toUserid: number, user: User) {
+  async ownerGiveAdmin(channelId: number, toUserId: number, user: User) {
+    const isInUser = await this.channelMemberRepository
+      .createQueryBuilder('channel_member')
+      .where('channel_member.UserId = :userId', { userId: toUserId })
+      .getOne();
+    if (!isInUser)
+      throw new NotFoundException(`In this room ${toUserId} is not exsit`);
     const curChannel = await this.findById(channelId);
+    if (curChannel.owner == toUserId)
+      throw new MethodNotAllowedException('Owner could not downgrade admin');
     // 채팅방의 Owner가 현재 명령한  userid와 일치 할때  근데 지금은  user가 연동이 안 되어 있닌까
     // if(user.id == curChannel.owner)
+    // owner 가 admin을 자기 자신한테 주면 그냥 owner되게 하기
     {
-      curChannel.admin = toUserid;
+      curChannel.admin = toUserId;
       this.channelsRepository.save(curChannel);
     }
   }
