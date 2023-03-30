@@ -18,12 +18,12 @@ import {
   WsException,
 } from '@nestjs/websockets';
 
-import { Chats } from 'src/chats/chats.entity';
+import { Chats } from '../chats/chats.entity';
 import { Server, Socket, Namespace } from 'socket.io';
 import { Channels } from 'src/channels/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
 import { Repository } from 'typeorm';
-import { leaveDto } from './\bdto/leave.dto';
+import { leaveDto } from './dto/leave.dto';
 // import { ChannelsGateway } from './events.channels.gateway';
 
 // interface MessagePayload {

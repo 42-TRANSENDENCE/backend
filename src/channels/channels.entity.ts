@@ -7,7 +7,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ChannelMember } from './channelmember.entity';
-import { Chats } from 'src/chats/chats.entity';
+import { Chats } from './chats/chats.entity';
 // import { ChannelMember } from './channelcember.entity';
 
 @Entity()
