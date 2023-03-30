@@ -12,6 +12,8 @@ import { DatabaseModule } from './database/database.module';
 import { GameModule } from './game/game.module';
 import { EventsModules } from './channels/events.module';
 import { EventsModule } from './events/events.module';
+import { RateLimitMiddleware } from './ratelimit/rateLimitMiddleware';
+import { MiddlewareConsumer } from '@nestjs/common/interfaces';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -53,4 +55,8 @@ import { EventsModule } from './events/events.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RateLimitMiddleware).forRoutes('*');
+  }
+}
