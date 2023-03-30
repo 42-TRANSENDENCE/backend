@@ -7,7 +7,6 @@ import { UsersService } from '../users.service';
 import { Friendship, FriendStatus } from './friendship.entity';
 import { FriendsService } from './friends.service';
 import { requestNotFoundErr } from './friends.constants';
-import { Users } from 'src/common/decorators/user.decorator';
 
 describe('FriendsService', () => {
   function createRandomUser(): User {
