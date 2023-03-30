@@ -13,7 +13,10 @@ import {
 
 import { Chats } from './chats/chats.entity';
 import { Server, Socket, Namespace } from 'socket.io';
-import { ChannelsService } from './channels.service';
+import { Channels } from 'src/channels/channels.entity';
+import { ChannelsService } from 'src/channels/channels.service';
+import { Repository } from 'typeorm';
+import { leaveDto } from './dto/leave.dto';
 // import { ChannelsGateway } from './events.channels.gateway';
 
 // interface MessagePayload {
@@ -32,6 +35,10 @@ const originUrl = process.env.FRONTEND_URL;
 export class ChannelsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
+  constructor(
+    @Inject(forwardRef(() => ChannelsService))
+    private readonly channelsService: ChannelsService,
+  ) {}
   private logger = new Logger(ChannelsGateway.name);
 
   @WebSocketServer() nsp: Namespace;
@@ -111,34 +118,34 @@ export class ChannelsGateway
   async EmitChannelInfo(channelReturned) {
     return this.nsp.emit('newRoom', channelReturned);
   }
-  // @SubscribeMessage('newRoom')
-  // async handleCreateRoom(
-  //   @ConnectedSocket() socket: Socket,
-  //   @MessageBody() Channel: Channels,
-  // ) {
-  //   // this.logger.log(`TEST : ${socket.id} : `);
-  //   return { Channel };
-  // }
+  @SubscribeMessage('newRoom')
+  async handleCreateRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() Channel: Channels,
+  ) {
+    // this.logger.log(`TEST : ${socket.id} : `);
+    return { Channel };
+  }
   // socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
   // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
   // this.nsp.emit('create-room', roomName); // 대기실 방 생성
   // return { success: true, payload: roomName };
-  //   @SubscribeMessage('leave-room')
-  //   handleLeaveRoom(
-  //     @ConnectedSocket() socket: Socket,
-  //     @MessageBody() leaveDto: leaveDto,
-  //   ) {
-  //     //소켓 연결 끊기 **
-  //     //roomId,userId가 없을때 예외 처리
-  //     if (!leaveDto.roomId || !leaveDto.userId)
-  //       throw new WsException('There is no user or roomId here');
-  //     // 해당 방에대해 소켓 연결 끊는부분 연결하고 테스트를 해봐야 할듯.!!!!!
-  //     socket.leave(leaveDto.roomId);
-  //     this.logger.log(`Client ${socket.id} left room ${leaveDto.roomId}`);
-  //     this.ChannelsService.userExitChannel(
-  //       socket,
-  //       leaveDto.roomId,
-  //       leaveDto.userId,
-  //     );
-  //   }
+  @SubscribeMessage('leave-room')
+  handleLeaveRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() leaveDto: leaveDto,
+  ) {
+    //소켓 연결 끊기 **
+    //roomId,userId가 없을때 예외 처리
+    if (!leaveDto.roomId || !leaveDto.userId)
+      throw new WsException('There is no user or roomId here');
+    // 해당 방에대해 소켓 연결 끊는부분 연결하고 테스트를 해봐야 할듯.!!!!!
+    socket.leave(leaveDto.roomId);
+    this.logger.log(`Client ${socket.id} left room ${leaveDto.roomId}`);
+    this.channelsService.userExitChannel(
+      socket,
+      leaveDto.roomId,
+      leaveDto.userId,
+    );
+  }
 }
