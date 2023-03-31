@@ -7,8 +7,8 @@ import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
 import { Response } from 'express';
 
-@ApiTags('CHANNEL')
-@Controller('/room')
+@ApiTags('CHAT')
+@Controller('/channels')
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
 
@@ -62,9 +62,9 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌' })
-  @Post(':roomid/admin/:userid') // body 엔 아무것도 안 옴
+  @Post(':channelid/admin/:userid') // body 엔 아무것도 안 옴
   async ownerGiveAdmin(
-    @Param('roomid') channelId: number,
+    @Param('channelid') channelId: number,
     @Param('userid') toUserId: number,
     @Users() user: User,
   ) {
@@ -73,9 +73,9 @@ export class ChannelsController {
 
   //TODO: 권한 설정으로 깔끔하게 처리 해야함.
   @ApiOperation({ summary: 'Ban 요청' })
-  @Post(':roomId/ban/:userId')
+  @Post(':channelid/ban/:userId')
   async postBanInChannel(
-    @Param('roomId') channelId: number,
+    @Param('channelid') channelId: number,
     @Param('userId') userId: number,
     @Users() user: User,
   ) {
@@ -83,9 +83,9 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: 'Kick 요청' })
-  @Post(':roomId/kick/:userId')
+  @Post(':channelid/kick/:userId')
   async postKickInChannel(
-    @Param('roomId') channelId: number,
+    @Param('channelid') channelId: number,
     @Param('userId') userId: number,
     @Users() user: User,
   ) {
@@ -94,9 +94,9 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: 'mute 요청' })
-  @Post(':roomId/mute/:userId')
+  @Post(':channelid/mute/:userId')
   async postMuteInChannel(
-    @Param('roomId') channelId: number,
+    @Param('channelid') channelId: number,
     @Param('userId') userId: number,
     @Users() user: User,
   ) {

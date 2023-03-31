@@ -5,22 +5,22 @@ import { Users } from 'src/channels/common/decorators/user.decorator';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('CHAT')
-@Controller('/room')
+@Controller('/channles')
 export class ChatsController {
   constructor(private chatsService: ChatsService) {}
 
   @ApiOperation({
     summary: '채팅방 에 해당하는 대화 내용 모두 가져오기',
   })
-  @Get(':channelId/chat')
-  async getChats(@Param('channelId') channelId, @Users() user: User) {
+  @Get(':channelid/chat')
+  async getChats(@Param('channelid') channelId, @Users() user: User) {
     return this.chatsService.getChats(channelId, 1);
   }
 
   @ApiOperation({ summary: '해당 채팅방에 채팅 전송' })
-  @Post(':channelId/chat')
+  @Post(':channelid/chat')
   async sendChatToChannel(
-    @Param('channelId') id: number, // ParseIntPipe
+    @Param('channelid') id: number, // ParseIntPipe
     @Body('chat') chat: string,
     @Users() user: User,
   ) {
