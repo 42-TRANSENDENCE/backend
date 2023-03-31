@@ -33,8 +33,8 @@ export class Chats {
   @Column()
   senderId: number;
 
-  @Column()
-  receiverId: number;
+  @Column({ nullable: true })
+  receiverId?: number;
 
   // @ManyToOne(() => User, (users) => users.ChannelChats, {
   //     onDelete: 'SET NULL',

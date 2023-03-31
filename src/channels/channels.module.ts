@@ -9,20 +9,12 @@ import { EventsModule } from './events.module';
 import { Chats } from './chats/chats.entity';
 import { forwardRef } from '@nestjs/common';
 import { ChannelBanMember } from './channelbanmember.entity';
-import { ChannelMuteMember } from './channelmutemember.entity';
 import { ChatsService } from './chats/chats.service';
 import { ChatsModule } from './chats/chats.module';
 @Module({
   imports: [
-    // BullModule.registerQueue({name:'channelRedis'}),
     CacheModule.register(),
-    TypeOrmModule.forFeature([
-      Channels,
-      User,
-      ChannelMember,
-      ChannelBanMember,
-      ChannelMuteMember,
-    ]),
+    TypeOrmModule.forFeature([Channels, User, ChannelMember, ChannelBanMember]),
     forwardRef(() => ChatsModule),
     forwardRef(() => EventsModule),
   ],

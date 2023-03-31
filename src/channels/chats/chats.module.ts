@@ -6,13 +6,10 @@ import { User } from 'src/users/users.entity';
 import { Chats } from 'src/channels/chats/chats.entity';
 import { EventsModule } from 'src/channels/events.module';
 import { Channels } from 'src/channels/channels.entity';
-import { ChannelMuteMember } from 'src/channels/channelmutemember.entity';
 import { ChannelsModule } from 'src/channels/channels.module';
-import { ChannelsService } from '../channels.service';
-import { ChannelsGateway } from '../events.chats.gateway';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Chats, User, Channels, ChannelMuteMember]),
+    TypeOrmModule.forFeature([Chats, User, Channels]),
     EventsModule,
     forwardRef(() => ChannelsModule),
     CacheModule.register(),

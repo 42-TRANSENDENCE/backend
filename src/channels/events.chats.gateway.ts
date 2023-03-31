@@ -120,6 +120,7 @@ export class ChannelsGateway
   }
   async sendEmitMessage(sendChat: Chats) {
     // 이부분 해당 방에 해당하는 broadcast로 하는걸로 수정하자 테스트 하면서
+    // 방 넘버 가지고 소켓아이디 알아내서 to로 에밋 하고 broadcast해줘야함.
     return this.nsp.emit('meesage', sendChat);
   }
   async EmitChannelInfo(channelReturned) {
