@@ -282,7 +282,6 @@ export class ChannelsService {
     const ban = await this.channelBanMemberRepository.findOne({
       where: { channelId: channelId, userId: userId },
     });
-    // console.log(ban.ChannelId)
     if (ban) {
       this.logger.log(
         `check time : ${Number(ban.expiresAt) - Number(new Date(Date.now()))}`,

@@ -20,12 +20,10 @@ import {
 
 import { Chats } from './chats/chats.entity';
 import { Server, Socket, Namespace } from 'socket.io';
-import { Channels } from 'src/channels/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
-import { Repository } from 'typeorm';
 import { leaveDto } from './dto/leave.dto';
-// import { ChannelsGateway } from './events.channels.gateway';
-
+// import { Channels } from 'src/channels/channels.entity';
+// import { Repository } from 'typeorm';
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
@@ -126,18 +124,7 @@ export class ChannelsGateway
   async EmitChannelInfo(channelReturned) {
     return this.nsp.emit('newRoom', channelReturned);
   }
-  @SubscribeMessage('newRoom')
-  async handleCreateRoom(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() Channel: Channels,
-  ) {
-    // this.logger.log(`TEST : ${socket.id} : `);
-    return { Channel };
-  }
-  // socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
-  // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
-  // this.nsp.emit('create-room', roomName); // 대기실 방 생성
-  // return { success: true, payload: roomName };
+
   @SubscribeMessage('leave-room')
   handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
