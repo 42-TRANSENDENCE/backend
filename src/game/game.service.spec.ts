@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FriendsService } from 'src/users/friends/friends.service';
 import { GameService } from './game.service';
 import { HistoryService } from './history/history.service';
-import { PlayerService } from './player/player.service';
+import { ClientService } from '../events/client/client.service';
 
 describe('GameService', () => {
   let gameService: GameService;
@@ -12,7 +12,7 @@ describe('GameService', () => {
       providers: [
         GameService,
         { provide: FriendsService, useValue: {} },
-        { provide: PlayerService, useValue: {} },
+        { provide: ClientService, useValue: {} },
         { provide: HistoryService, useValue: {} },
       ],
     }).compile();

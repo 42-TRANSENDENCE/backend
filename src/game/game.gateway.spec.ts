@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
-import { LobbyService } from './lobby/lobby.service';
-import { QueueService } from './queue/queue.service';
+import { LobbyService } from '../events/lobby/lobby.service';
+import { QueueService } from '../events/queue/queue.service';
 
 describe('GameGateway', () => {
   let gameGateway: GameGateway;
