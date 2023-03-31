@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Namespace, Socket } from 'socket.io';
-import { GameMode, GameType } from '../game.interface';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { Server, Socket } from 'socket.io';
+import { GameMode, GameType } from '../../game/game.interface';
 import { MatchDto, QueueDto } from '../lobby/lobby.interface';
-import { Player, PlayerStatus } from '../player/player.interface';
+import { PongClient, ClientStatus } from '../client/client.interface';
 import { v4 as uuidv4 } from 'uuid';
-import { PlayerService } from '../player/player.service';
-import { GameService } from '../game.service';
+import { ClientService } from '../client/client.service';
+import { GameService } from '../../game/game.service';
 
 @Injectable()
 export class QueueService {
@@ -14,11 +14,11 @@ export class QueueService {
   private specialGameQueue: string[] = [];
 
   constructor(
-    private readonly playerService: PlayerService,
+    private readonly playerService: ClientService,
     private readonly gameService: GameService,
   ) {}
 
-  joinQueue(server: Namespace, client: Socket, data: QueueDto): boolean {
+  joinQueue(server: Server, client: Socket, data: QueueDto) {
     const queue =
       data.mode === GameMode.NORMAL
         ? this.normalGameQueue
@@ -30,9 +30,7 @@ export class QueueService {
 
     if (queue.length > 1) {
       this.matchMaking(server, queue, data.mode);
-      return true;
     }
-    return false;
   }
 
   leaveQueue(client: Socket) {
@@ -55,31 +53,26 @@ export class QueueService {
   }
 
   // ! Match Making System
-  private matchMaking(server: Namespace, queue: string[], mode: GameMode) {
-    const player1: Player = this.playerService.get(queue.shift());
-    const player2: Player = this.playerService.get(queue.shift());
-
-    const p1: Socket = server.sockets.get(player1.id);
-    const p2: Socket = server.sockets.get(player2.id);
+  private matchMaking(server: Server, queue: string[], mode: GameMode) {
+    const pongClient1: PongClient = this.playerService.get(queue.shift());
+    const pongClient2: PongClient = this.playerService.get(queue.shift());
 
     const roomId = `game_${uuidv4()}`;
-    p1.join(roomId);
-    player1.room = roomId;
-    player1.status = PlayerStatus.INGAME;
-    p2.join(roomId);
-    player2.room = roomId;
-    player2.status = PlayerStatus.INGAME;
+    pongClient1.room = roomId;
+    pongClient1.status = ClientStatus.INGAME;
+    pongClient2.room = roomId;
+    pongClient2.status = ClientStatus.INGAME;
 
     const matchInfo: MatchDto = {
-      p1: player1,
-      p2: player2,
+      p1: pongClient1,
+      p2: pongClient2,
       roomId,
       mode,
     };
     server.to(roomId).emit('match_maked', matchInfo);
 
     this.logger.log(
-      `match maked : ${player1.user.nickname} vs ${player2.user.nickname}`,
+      `match maked : ${pongClient1.user.nickname} vs ${pongClient2.user.nickname}`,
     );
     this.logger.log(`remaining users : ${queue.length}`);
 

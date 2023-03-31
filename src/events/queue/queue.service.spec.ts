@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GameService } from '../game.service';
-import { PlayerService } from '../player/player.service';
+import { GameService } from '../../game/game.service';
+import { ClientService } from '../client/client.service';
 import { QueueService } from './queue.service';
 
 describe('QueueService', () => {
@@ -10,7 +10,7 @@ describe('QueueService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         QueueService,
-        { provide: PlayerService, useValue: {} },
+        { provide: ClientService, useValue: {} },
         { provide: GameService, useValue: {} },
       ],
     }).compile();
