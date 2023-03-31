@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelcember.entity';
-import { ChannelsGateway } from 'src/events/events.channels.gateway';
+import { ChannelsGateway } from 'src/channels/channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 
