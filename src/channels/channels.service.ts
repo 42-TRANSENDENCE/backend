@@ -363,7 +363,7 @@ export class ChannelsService {
       .createQueryBuilder('channel_mute_member')
       .where('channel_mute_member.UserId = :userId', { userId: userId })
       .getOne();
-    console.log(isInUser);
+    this.logger.log(isInUser);
     if (!isInUser) {
       const cm = this.channelMuteMemberRepository.create({
         UserId: userId,
