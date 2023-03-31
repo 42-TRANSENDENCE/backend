@@ -1,55 +1,54 @@
-import { User } from "src/users/users.entity";
-import { 
-    CreateDateColumn,
-    Entity,
-    UpdateDateColumn ,
-    Column,
-    ManyToOne,
-    OneToMany,
-    PrimaryColumnCannotBeNullableError,
-    PrimaryGeneratedColumn,
-    JoinColumn,
-} from "typeorm";
-import { Channels } from './channels.entity'
+import { User } from 'src/users/users.entity';
+import {
+  CreateDateColumn,
+  Entity,
+  UpdateDateColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  PrimaryColumnCannotBeNullableError,
+  PrimaryGeneratedColumn,
+  JoinColumn,
+} from 'typeorm';
+import { Channels } from './channels.entity';
 
 @Entity()
 export class ChannelMuteMember {
-    @PrimaryGeneratedColumn()
-    id:number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 
-    @Column({ primary: true })
-    ChannelId: number;
-  
-    @Column({ primary: true })
-    UserId: number;
+  @Column({ primary: true })
+  ChannelId: number;
 
-    @Column({
-        type: 'timestamp',
-        nullable : true, 
-        // default: () => "'0'"
-    })
-    expiresAt: Date;
-    // @Column({ array: true, default: '{}' })
-    // channelMember: string[];
-    /**
+  @Column({ primary: true })
+  UserId: number;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    // default: () => "'0'"
+  })
+  expiresAt: Date;
+  // @Column({ array: true, default: '{}' })
+  // channelMember: string[];
+  /**
    * 1 : M 관계 설정
-   * @ManyToOne 
-   * 여기서 Many 는 채널 이고 One이 멤버 이다. 
+   * @ManyToOne
+   * 여기서 Many 는 채널 이고 One이 멤버 이다.
    */
-    // @ManyToOne(() => Channels)
-    // @JoinColumn({name: "ChannelId"})
-    // channelMember: ChannelMember;
+  // @ManyToOne(() => Channels)
+  // @JoinColumn({name: "ChannelId"})
+  // channelMember: ChannelMember;
 
-    // @OneToMany(() => User, (user) => user.channelBanMember)
-    // users: User[]
+  // @OneToMany(() => User, (user) => user.channelBanMember)
+  // users: User[]
 
-    // @ManyToOne(() => Channels, (channelBanMember) => channelBanMember.ChannelBanMembers)
-    // Channel: Channels
-
+  // @ManyToOne(() => Channels, (channelBanMember) => channelBanMember.ChannelBanMembers)
+  // Channel: Channels
 }
