@@ -198,12 +198,12 @@ export class ChannelsService {
   }
 
   // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
-  async userExitChannel(socket: Socket, roomId: string, userId: number) {
+  async userExitChannel(socket: Socket, channelId: string, userId: number) {
     // 이러면 내가 무슨 user 인지 알수 있나 .. ?
-    // roomId  가 채널의 id 이겠지 ?
+    // channelId  가 채널의 id 이겠지 ?
     // 채팅방 오너가 나가면 채팅방 삭제.
     try {
-      const curChannel = await this.findById(+roomId);
+      const curChannel = await this.findById(+channelId);
       // 근데 만약 그 채널에 없는 사람이 leave-room 이벤트 보내는 경우도 생각.
       this.logger.log(`curChannel : ${curChannel}`);
       if (!curChannel) {
@@ -212,8 +212,8 @@ export class ChannelsService {
 
       if (curChannel.owner === userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
-        this.channelMemberRepository.delete({ channelId: +roomId });
-        this.channelsRepository.delete({ id: +roomId });
+        this.channelMemberRepository.delete({ channelId: +channelId });
+        this.channelsRepository.delete({ id: +channelId });
       } else {
         // 멤버에서만 delete
         //TODO:채널 안의 멤버 가 존재 하는지 안 하는지 쿼리
@@ -222,13 +222,13 @@ export class ChannelsService {
           .createQueryBuilder('channel_member')
           .where('channel_member.UserId = :userId', { userId: userId }) // 1 -> user.id
           .getOne();
-        // const curChannelMembers = await this.findById(+roomId)
+        // const curChannelMembers = await this.findById(+channelId)
         if (!curChannelMembers)
           throw new NotFoundException('Member in this Channel does not exist!');
         else
           this.channelMemberRepository.delete({
             userId: userId,
-            channelId: +roomId,
+            channelId: +channelId,
           });
       }
     } catch (error) {
@@ -301,11 +301,11 @@ export class ChannelsService {
   }
 
   async addToKicklist(
-    roomId: number,
+    channelId: number,
     userId: number,
     ttl: number,
   ): Promise<void> {
-    const key = `chatroom:${roomId}:kicklist`;
+    const key = `chatroom:${channelId}:kicklist`;
     const kicklist = (await this.cacheManager.get<number[]>(key)) || [];
     if (!kicklist.includes(userId)) {
       kicklist.push(userId);
@@ -315,11 +315,11 @@ export class ChannelsService {
   }
 
   async addToMutelist(
-    roomId: number,
+    channelId: number,
     userId: number,
     ttl: number,
   ): Promise<void> {
-    const key = `chatroom:${roomId}:mutelist`;
+    const key = `chatroom:${channelId}:mutelist`;
     const mutelist = (await this.cacheManager.get<number[]>(key)) || [];
 
     if (!mutelist.includes(userId)) {
@@ -329,8 +329,8 @@ export class ChannelsService {
     this.logger.log(`check mutelist : ${mutelist}`);
   }
 
-  async getMutelist(roomId: number): Promise<number[]> {
-    const key = `chatroom:${roomId}:mutelist`;
+  async getMutelist(channelId: number): Promise<number[]> {
+    const key = `chatroom:${channelId}:mutelist`;
     const mutelist = (await this.cacheManager.get<number[]>(key)) || [];
     return mutelist;
   }
