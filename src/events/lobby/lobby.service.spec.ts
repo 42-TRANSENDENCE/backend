@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FriendsService } from 'src/users/friends/friends.service';
-import { GameService } from '../game.service';
-import { PlayerService } from '../player/player.service';
+import { GameService } from '../../game/game.service';
+import { ClientService } from '../client/client.service';
 import { LobbyService } from './lobby.service';
 
 describe('LobbyService', () => {
@@ -9,9 +9,9 @@ describe('LobbyService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [LobbyService, PlayerService, FriendsService, GameService],
+      providers: [LobbyService, ClientService, FriendsService, GameService],
     })
-      .overrideProvider(PlayerService)
+      .overrideProvider(ClientService)
       .useValue({})
       .overrideProvider(FriendsService)
       .useValue({})

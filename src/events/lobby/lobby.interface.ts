@@ -1,5 +1,5 @@
-import { GameMode } from '../game.interface';
-import { Player } from '../player/player.interface';
+import { GameMode } from '../../game/game.interface';
+import { PongClient } from '../client/client.interface';
 
 export interface CreateFriendlyMatchDto {
   to: number;
@@ -7,15 +7,15 @@ export interface CreateFriendlyMatchDto {
 }
 
 export interface InvitationDto {
-  from: Player;
-  to: Player;
+  from: PongClient;
+  to: PongClient;
   mode: GameMode;
   roomId: string;
 }
 
 export interface MatchDto {
-  p1: Player;
-  p2: Player;
+  p1: PongClient;
+  p2: PongClient;
   roomId: string;
   mode: GameMode;
 }
