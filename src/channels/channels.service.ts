@@ -13,11 +13,11 @@ import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelmember.entity';
+import { ChannelsGateway } from './events.chats.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
-import { ChannelsGateway } from './events.chats.gateway';
 import { ChannelBanMember } from './channelbanmember.entity';
 import { ChannelMuteMember } from './channelmutemember.entity';
 
@@ -63,8 +63,8 @@ export class ChannelsService {
     const channelReturned = await this.channelsRepository.save(channel);
     this.channelsGateway.EmitChannelInfo(channelReturned);
     const channelMember = this.channelMemberRepository.create({
-      UserId: myId,
-      ChannelId: channelReturned.id,
+      userId: myId,
+      channelId: channelReturned.id,
     });
     await this.channelMemberRepository.save(channelMember);
   }
@@ -82,7 +82,7 @@ export class ChannelsService {
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
   async getChannelMembers(channelId: number) {
     return this.channelMemberRepository.find({
-      where: { ChannelId: channelId },
+      where: { channelId: channelId },
     });
   }
 
@@ -109,13 +109,13 @@ export class ChannelsService {
         //이미 채널id에 해당하는 멤버가 있으면 추가 ㄴㄴ!
         const isInUser = await this.channelMemberRepository
           .createQueryBuilder('channel_member')
-          .where('channel_member.UserId = :userId', { userId: 1 })
+          .where('channel_member.userId = :userId', { userId: 1 })
           .getOne();
         // console.log(isInUser)
         if (!isInUser) {
           const cm = this.channelMemberRepository.create({
-            UserId: 1, // user.id
-            ChannelId: channelId,
+            userId: 1, // user.id
+            channelId: channelId,
           });
           this.channelMemberRepository.save(cm);
         }
@@ -135,7 +135,7 @@ export class ChannelsService {
     password: string,
     user: User,
     curChannel: Channels,
-  ): Promise<{ message: string; status: number }> {
+  ): Promise<returnStatusMessage> {
     // 공개방은 무조건 소켓 연결 근데 + 밴 리스트 !! 는 나중에
     // this.channelsGateway.nsp.emit('join-room');
     const isInUser = await this.channelMemberRepository
@@ -145,8 +145,8 @@ export class ChannelsService {
     // console.log(isInUser)
     if (!isInUser) {
       const cm = this.channelMemberRepository.create({
-        UserId: 1, // user.id
-        ChannelId: channelId,
+        userId: 1, // user.id
+        channelId: channelId,
       });
       this.channelMemberRepository.save(cm);
     }
@@ -212,7 +212,7 @@ export class ChannelsService {
 
       if (curChannel.owner === userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
-        this.channelMemberRepository.delete({ ChannelId: +roomId });
+        this.channelMemberRepository.delete({ channelId: +roomId });
         this.channelsRepository.delete({ id: +roomId });
       } else {
         // 멤버에서만 delete
@@ -227,8 +227,8 @@ export class ChannelsService {
           throw new NotFoundException('Member in this Channel does not exist!');
         else
           this.channelMemberRepository.delete({
-            UserId: userId,
-            ChannelId: +roomId,
+            userId: userId,
+            channelId: +roomId,
           });
       }
     } catch (error) {
@@ -252,8 +252,8 @@ export class ChannelsService {
     console.log(isInUser);
     if (!isInUser) {
       const cm = this.channelBanMemberRepository.create({
-        UserId: userId, // user.id
-        ChannelId: channelId,
+        userId: userId, // user.id
+        channelId: channelId,
         expiresAt: new Date('9999-12-31T23:59:59.999Z'),
       });
       this.channelBanMemberRepository.save(cm);
@@ -271,8 +271,8 @@ export class ChannelsService {
     console.log(isInUser);
     if (!isInUser) {
       const cm = this.channelBanMemberRepository.create({
-        UserId: userId, // user.id
-        ChannelId: channelId,
+        userId: userId, // user.id
+        channelId: channelId,
         expiresAt: new Date(Date.now() + 10 * 1000),
       });
       this.channelBanMemberRepository.save(cm);
@@ -283,7 +283,7 @@ export class ChannelsService {
 
   async isBanned(channelId: number, userId: number): Promise<boolean> {
     const ban = await this.channelBanMemberRepository.findOne({
-      where: { ChannelId: channelId, UserId: userId },
+      where: { channelId: channelId, userId: userId },
     });
     // console.log(ban.ChannelId)
     if (ban) {
@@ -291,8 +291,8 @@ export class ChannelsService {
       if (Number(ban.expiresAt) - Number(new Date(Date.now())) > 0) return true;
       else {
         this.channelBanMemberRepository.delete({
-          UserId: userId,
-          ChannelId: channelId,
+          userId: userId,
+          channelId: channelId,
         });
         return false;
       }

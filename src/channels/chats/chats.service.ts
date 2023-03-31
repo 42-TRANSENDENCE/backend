@@ -9,9 +9,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chats } from './chats.entity';
 import { User } from 'src/users/users.entity';
-import { Channels } from 'src/channels/channels.entity';
 import { ChannelsGateway } from 'src/channels/events.chats.gateway';
-import { ChannelMuteMember } from 'src/channels/channelmutemember.entity';
+import { Channels } from 'src/channels/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
 import { Cache } from 'cache-manager';
 
@@ -35,13 +34,13 @@ export class ChatsService {
   ) {}
 
   async getChats(channelId: number, myId: number) {
-    return this.chatsRepository.find({ where: { ChannelId: channelId } });
+    return this.chatsRepository.find({ where: { channelId: channelId } });
   }
 
   async createChats(content: string, id: number, myId: number) {
     const chat = this.chatsRepository.create({
       id: myId,
-      SenderId: id,
+      senderId: id,
       content: content,
     });
     const saveChat = await this.chatsRepository.save(chat);
@@ -70,8 +69,8 @@ export class ChatsService {
       }
     }
     const chats = this.chatsRepository.create({
-      SenderId: 2, //user.id,
-      ChannelId: roomId,
+      senderId: 2, //user.id,
+      channelId: roomId,
       content: chat,
     });
     const saveChat = await this.chatsRepository.save(chats);

@@ -22,10 +22,10 @@ export class ChannelMember {
   updatedAt: Date;
 
   @Column({ primary: true })
-  ChannelId: number;
+  channelId: number;
 
   @Column({ primary: true })
-  UserId: number;
+  userId: number;
   /**
    * 1 : M 관계 설정
    * @ManyToOne
