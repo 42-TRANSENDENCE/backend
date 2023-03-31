@@ -17,7 +17,6 @@ export class ChatsController {
     return this.chatsService.getChats(channelId, 1);
   }
 
-  // 보내기전에 디비랑 연결 하는 부분 아직 안 함
   @ApiOperation({ summary: '해당 채팅방에 채팅 전송' })
   @Post(':channelId/chat')
   async sendChatToChannel(

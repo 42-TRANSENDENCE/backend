@@ -24,15 +24,14 @@ export class ChannelBanMember {
   updatedAt: Date;
 
   @Column({ primary: true })
-  ChannelId: number;
+  channelId: number;
 
   @Column({ primary: true })
-  UserId: number;
+  userId: number;
 
   @Column({
     type: 'timestamp',
     nullable: true,
-    // default: () => "'0'"
   })
   expiresAt: Date;
   // @Column({ array: true, default: '{}' })

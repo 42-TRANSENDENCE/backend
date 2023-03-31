@@ -73,7 +73,7 @@ export class ChannelsController {
 
   //TODO: 권한 설정으로 깔끔하게 처리 해야함.
   @ApiOperation({ summary: 'Ban 요청' })
-  @Post('/room/:roomId/ban/:userId')
+  @Post(':roomId/ban/:userId')
   async postBanInChannel(
     @Param('roomId') channelId: number,
     @Param('userId') userId: number,
@@ -83,7 +83,7 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: 'Kick 요청' })
-  @Post('/room/:roomId/kick/:userId')
+  @Post(':roomId/kick/:userId')
   async postKickInChannel(
     @Param('roomId') channelId: number,
     @Param('userId') userId: number,
@@ -94,7 +94,7 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: 'mute 요청' })
-  @Post('/room/:roomId/mute/:userId')
+  @Post(':roomId/mute/:userId')
   async postMuteInChannel(
     @Param('roomId') channelId: number,
     @Param('userId') userId: number,

@@ -9,8 +9,8 @@ import {
   JoinColumn,
 } from 'typeorm';
 
-@Index('UserId', ['id'], {})
-@Index('ChannelId', ['ChannelId'], {})
+@Index('userId', ['id'], {})
+@Index('channelId', ['channelId'], {})
 @Entity()
 export class Chats {
   @PrimaryGeneratedColumn()
@@ -18,9 +18,8 @@ export class Chats {
 
   @Column('varchar', {
     length: 100,
-    nullable: true,
   })
-  content?: string;
+  content: string;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -28,14 +27,14 @@ export class Chats {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ nullable: true })
-  ChannelId?: number;
+  @Column()
+  channelId: number;
 
-  @Column({ nullable: true })
-  SenderId?: number;
+  @Column()
+  senderId: number;
 
-  @Column({ nullable: true })
-  ReceiverId?: number;
+  @Column()
+  receiverId: number;
 
   // @ManyToOne(() => User, (users) => users.ChannelChats, {
   //     onDelete: 'SET NULL',

@@ -4,12 +4,12 @@ import { ChatsController } from './chats.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
 import { Chats } from 'src/channels/chats/chats.entity';
-import { EventsModule } from 'src/channels/events/events.module';
+import { EventsModule } from 'src/channels/events.module';
 import { Channels } from 'src/channels/channels.entity';
 import { ChannelMuteMember } from 'src/channels/channelmutemember.entity';
 import { ChannelsModule } from 'src/channels/channels.module';
 import { ChannelsService } from '../channels.service';
-import { ChannelsGateway } from '../events/events.channels.gateway';
+import { ChannelsGateway } from '../events.chats.gateway';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Chats, User, Channels, ChannelMuteMember]),

@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Channels } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelmember.entity';
-import { EventsModule } from './events/events.module';
+import { EventsModule } from './events.module';
 import { Chats } from './chats/chats.entity';
 import { forwardRef } from '@nestjs/common';
 import { ChannelBanMember } from './channelbanmember.entity';
