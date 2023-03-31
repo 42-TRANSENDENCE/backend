@@ -198,7 +198,8 @@ export class GameService {
       this.historyService.save(history);
 
       server.in(game.gameId).socketsLeave(game.gameId);
-
+      server.sockets.get(game.players.p1.id).disconnect();
+      server.sockets.get(game.players.p2.id).disconnect();
       this.games.delete(game.gameId);
     }
   }
