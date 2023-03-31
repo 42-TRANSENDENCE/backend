@@ -19,7 +19,6 @@ import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
 import { ChannelBanMember } from './channelbanmember.entity';
-import { ChannelMuteMember } from './channelmutemember.entity';
 
 import { Cache } from 'cache-manager';
 @Injectable()
@@ -31,8 +30,6 @@ export class ChannelsService {
     private channelMemberRepository: Repository<ChannelMember>,
     @InjectRepository(ChannelBanMember)
     private channelBanMemberRepository: Repository<ChannelBanMember>,
-    @InjectRepository(ChannelMuteMember)
-    private channelMuteMemberRepository: Repository<ChannelMuteMember>,
 
     @Inject(forwardRef(() => ChannelsGateway))
     private readonly channelsGateway: ChannelsGateway,
@@ -249,7 +246,7 @@ export class ChannelsService {
       .createQueryBuilder('channel_ban_member')
       .where('channel_ban_member.UserId = :userId', { userId: userId }) // 1 -> user.id
       .getOne();
-    console.log(isInUser);
+    this.logger.log(`in this room banned in user : ${isInUser}`);
     if (!isInUser) {
       const cm = this.channelBanMemberRepository.create({
         userId: userId, // user.id
@@ -268,7 +265,7 @@ export class ChannelsService {
       .createQueryBuilder('channel_ban_member')
       .where('channel_ban_member.UserId = :userId', { userId: userId })
       .getOne();
-    console.log(isInUser);
+    this.logger.log(`in this room kicked in user : ${isInUser}`);
     if (!isInUser) {
       const cm = this.channelBanMemberRepository.create({
         userId: userId, // user.id
@@ -287,7 +284,9 @@ export class ChannelsService {
     });
     // console.log(ban.ChannelId)
     if (ban) {
-      console.log(Number(ban.expiresAt) - Number(new Date(Date.now())));
+      this.logger.log(
+        `check time : ${Number(ban.expiresAt) - Number(new Date(Date.now()))}`,
+      );
       if (Number(ban.expiresAt) - Number(new Date(Date.now())) > 0) return true;
       else {
         this.channelBanMemberRepository.delete({
@@ -310,7 +309,7 @@ export class ChannelsService {
       kicklist.push(userId);
       await this.cacheManager.set(key, kicklist, 50000);
     }
-    console.log(kicklist);
+    this.logger.log(`check kicklist : ${kicklist}`);
   }
 
   async addToMutelist(
@@ -325,47 +324,12 @@ export class ChannelsService {
       mutelist.push(userId);
       await this.cacheManager.set(key, mutelist, 50000);
     }
-
-    console.log(mutelist);
+    this.logger.log(`check mutelist : ${mutelist}`);
   }
+
   async getMutelist(roomId: number): Promise<number[]> {
     const key = `chatroom:${roomId}:mutelist`;
     const mutelist = (await this.cacheManager.get<number[]>(key)) || [];
     return mutelist;
-  }
-  async isMutted(channelId: number, userId: number): Promise<boolean> {
-    const ban = await this.channelMuteMemberRepository.findOne({
-      where: { ChannelId: channelId, UserId: userId },
-    });
-    // console.log(ban.ChannelId)
-    if (ban) {
-      console.log(Number(ban.expiresAt) - Number(new Date(Date.now())));
-      if (Number(ban.expiresAt) - Number(new Date(Date.now())) > 0) return true;
-      else {
-        this.channelMuteMemberRepository.delete({
-          UserId: userId,
-          ChannelId: channelId,
-        });
-        return false;
-      }
-    } else return false;
-  }
-
-  // mute 요청 는 그냥 채팅 못 치게 막으면 된다.
-  // TODO: 권한 설정해서 Owner, admin이 이거 요청할시에 컷 해야함 if 문말고 깔끔하게 !
-  async postMuteInChannel(channelId: number, userId: number, user: User) {
-    const isInUser = await this.channelMuteMemberRepository
-      .createQueryBuilder('channel_mute_member')
-      .where('channel_mute_member.UserId = :userId', { userId: userId })
-      .getOne();
-    console.log(isInUser);
-    if (!isInUser) {
-      const cm = this.channelMuteMemberRepository.create({
-        UserId: userId,
-        ChannelId: channelId,
-        expiresAt: new Date(Date.now() + 100 * 1000),
-      });
-      this.channelMuteMemberRepository.save(cm);
-    }
   }
 }
