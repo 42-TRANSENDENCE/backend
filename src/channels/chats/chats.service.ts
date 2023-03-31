@@ -4,6 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
   CACHE_MANAGER,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -35,7 +36,7 @@ export class ChatsService {
     private readonly channelsGateway: ChannelsGateway,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
-
+  private logger = new Logger(ChatsService.name);
   async getChats(channelId: number, myId: number) {
     return this.chatsRepository.find({ where: { channelId: channelId } });
   }
@@ -65,7 +66,7 @@ export class ChatsService {
   async sendChatToChannel(roomId: number, chat: string, user: User) {
     const mutelist = await this.channelsService.getMutelist(roomId);
     // console.log(await this.channelsService.isMutted(roomId, 2));
-    console.log(`this is chatsservice ${mutelist}`);
+    this.logger.log(`this is chatsservice ${mutelist}`);
     for (const userId of mutelist) {
       if (userId == 1) {
         throw new UnauthorizedException('YOU ARE MUTED');
