@@ -1,25 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from 'src/auth/auth.service';
 import { User } from 'src/users/users.entity';
-import { Player, PlayerStatus } from './player.interface';
-import { PlayerService } from './player.service';
+import { PongClient, ClientStatus } from './client.interface';
+import { ClientService } from './client.service';
 
 const mockedAuthService = {
   getUserFromAuthenticationToken: jest.fn(),
 };
 
-describe('PlayerService', () => {
-  let playerService: PlayerService;
+describe('ClientService', () => {
+  let playerService: ClientService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        PlayerService,
+        ClientService,
         { provide: AuthService, useValue: mockedAuthService },
       ],
     }).compile();
 
-    playerService = module.get<PlayerService>(PlayerService);
+    playerService = module.get<ClientService>(ClientService);
   });
 
   it('should be defined', () => {
@@ -38,10 +38,10 @@ describe('PlayerService', () => {
 
   const socketId = '4242';
 
-  const mockedPlayer: Player = {
+  const mockedPlayer: PongClient = {
     id: socketId,
     user: mockedUser,
-    status: PlayerStatus.ONLINE,
+    status: ClientStatus.ONLINE,
   };
 
   describe('add', () => {
