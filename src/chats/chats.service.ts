@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Chats } from './chats.entity';
 import { User } from 'src/users/users.entity';
 import { Channels } from 'src/channels/channels.entity';
-import { ChannelsGateway } from 'src/channels/channels.gateway';
+import { ChannelsGateway } from 'src/channels/chats.gateway';
 
 // function getKeyByValue(object, value) {
 //   return Object.keys(object).find((key) => object[key] === value);
