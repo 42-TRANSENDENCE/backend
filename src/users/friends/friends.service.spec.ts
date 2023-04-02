@@ -16,7 +16,8 @@ describe('FriendsService', () => {
       avatar: new Uint8Array([]),
       isTwoFactorAuthenticationEnabled: false,
       achievements: [],
-      histories: [],
+      wins: [],
+      loses: [],
       channelMember: null,
       friends: [],
     };
@@ -66,9 +67,10 @@ describe('FriendsService', () => {
     avatar: new Uint8Array([0, 1, 2]),
     isTwoFactorAuthenticationEnabled: false,
     achievements: [],
-    histories: [],
     channelMember: null,
     friends: [],
+    wins: [],
+    loses: [],
   };
 
   const tempUser1 = createRandomUser();
