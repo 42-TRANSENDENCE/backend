@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { User, UserStatus } from '../users.entity';
+import { User } from '../users.entity';
 import { UsersService } from '../users.service';
 import { Friendship, FriendStatus } from './friendship.entity';
 import { FriendsService } from './friends.service';
@@ -12,17 +12,9 @@ import { Users } from 'src/common/decorators/user.decorator';
 describe('FriendsService', () => {
   function createRandomUser(): User {
     const user: User = {
-      // id: faker.datatype.number(),
-      // nickname: faker.name.firstName(),
-      // avatar: new Uint8Array([]),
-      // status: UserStatus.OFFLINE,
-      // isTwoFactorAuthenticationEnabled: false,
-      // friends: null,
-      // // channelMember: [],
       id: faker.datatype.number(),
-      nickname: 'john',
-      avatar: new Uint8Array([0, 1, 2]),
-      status: UserStatus.OFFLINE,
+      nickname: faker.name.firstName(),
+      avatar: new Uint8Array([]),
       isTwoFactorAuthenticationEnabled: false,
       acheivements: [],
       histories: [],
@@ -70,17 +62,9 @@ describe('FriendsService', () => {
   });
 
   const mockedUser: User = {
-    // id: 42,
-    // nickname: 'test',
-    // avatar: new Uint8Array([]),
-    // status: UserStatus.OFFLINE,
-    // isTwoFactorAuthenticationEnabled: false,
-    // // channelMember: null,
-    // friends: [],
     id: faker.datatype.number(),
     nickname: 'john',
     avatar: new Uint8Array([0, 1, 2]),
-    status: UserStatus.OFFLINE,
     isTwoFactorAuthenticationEnabled: false,
     acheivements: [],
     histories: [],

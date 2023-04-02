@@ -1,4 +1,4 @@
-import { Player } from './player/player.interface';
+import { PongClient } from 'src/events/client/client.interface';
 
 export enum GameMode {
   NORMAL = 'NORMAL',
@@ -23,8 +23,8 @@ export interface Game {
   gameId: string;
   intervalId: ReturnType<typeof setInterval> | null;
   isReady: { p1: boolean; p2: boolean };
-  players: { p1: Player; p2: Player };
-  spectators: Array<Player>;
+  players: { p1: PongClient; p2: PongClient };
+  spectators: Array<PongClient>;
   data: GameData;
   startTime: Date;
   endTime?: Date;

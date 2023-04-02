@@ -1,9 +1,7 @@
 import {
-  HttpCode,
   Injectable,
   UnauthorizedException,
   NotFoundException,
-  Res,
   Inject,
   forwardRef,
   MethodNotAllowedException,
@@ -13,20 +11,16 @@ import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelmember.entity';
-import { ChannelsGateway } from 'src/events/events.channels.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
-import { response } from 'express';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
-import { WsException } from '@nestjs/websockets';
+import { ChannelsGateway } from './channels.gateway';
 @Injectable()
 export class ChannelsService {
   constructor(
     @InjectRepository(Channels)
     private channelsRepository: Repository<Channels>,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
     @InjectRepository(ChannelMember)
     private channelMemberRepository: Repository<ChannelMember>,
     @Inject(forwardRef(() => ChannelsGateway))

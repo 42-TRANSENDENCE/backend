@@ -56,7 +56,6 @@ describe('AuthController', () => {
     id: faker.datatype.number(),
     nickname: 'john',
     avatar: new Uint8Array([0, 1, 2]),
-    status: UserStatus.OFFLINE,
     isTwoFactorAuthenticationEnabled: false,
     acheivements: [],
     histories: [],

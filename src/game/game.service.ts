@@ -1,5 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { WsException } from '@nestjs/websockets';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { Namespace, Socket } from 'socket.io';
 import {
   ACCEL_RATIO,
@@ -20,22 +19,22 @@ import {
   WIN_SCORE,
 } from './game.constants';
 import { Game, GameData, GamePlayDto, GameType } from './game.interface';
-import { MatchDto } from './lobby/lobby.interface';
-import { Player } from './player/player.interface';
-import { FriendsService } from 'src/users/friends/friends.service';
-import { PlayerService } from './player/player.service';
+import { MatchDto } from '../events/lobby/lobby.interface';
 import { HistoryService } from './history/history.service';
+import { ClientStatus, PongClient } from 'src/events/client/client.interface';
+import { WsException } from '@nestjs/websockets';
+import { ClientService } from 'src/events/client/client.service';
+import { FriendsService } from 'src/users/friends/friends.service';
 
 @Injectable()
 export class GameService {
   private logger: Logger = new Logger(GameService.name);
-  // gameID로 게임을 관리하는 자료.
   private games: Map<string, Game> = new Map();
 
   constructor(
-    private readonly friendsService: FriendsService,
-    private readonly playerService: PlayerService,
     private readonly historyService: HistoryService,
+    private readonly clientService: ClientService,
+    private readonly friendsService: FriendsService,
   ) {}
 
   init(matchInfo: MatchDto, type: GameType): void {
@@ -62,6 +61,12 @@ export class GameService {
 
   ready(server: Namespace, client: Socket, matchInfo: MatchDto) {
     const game = this.games.get(matchInfo.roomId);
+    if (!game) {
+      throw new WsException('잘못된 게임 준비 요청입니다.');
+    }
+    const clientSocket = server.sockets.get(client.id);
+    clientSocket.join(game.gameId);
+
     if (game) {
       if (client.id === game.players.p1.id) {
         game.isReady.p1 = true;
@@ -76,6 +81,28 @@ export class GameService {
       server.to(matchInfo.roomId).emit('game_start', game.players.p1);
       this.__game_start(server, game);
     }
+  }
+
+  watch(client: Socket, userId: number) {
+    const watcher = this.clientService.get(client.id);
+    const gamePlayer = this.clientService.getByUserId(userId);
+
+    if (
+      !watcher ||
+      !gamePlayer ||
+      !this.friendsService.isFriend(watcher.user, gamePlayer.user) ||
+      gamePlayer.status !== ClientStatus.INGAME ||
+      watcher.status !== ClientStatus.ONLINE
+    ) {
+      throw new WsException('잘못된 관전 요청입니다.');
+    }
+
+    const gameId = this.__find_game(userId);
+    if (!gameId) {
+      throw new WsException('게임을 찾을 수 없습니다.');
+    }
+    this.games.get(gameId).spectators.push(watcher);
+    client.join(gameId);
   }
 
   handleKeyPressed(client: Socket, gameInfo: GamePlayDto): void {
@@ -112,25 +139,6 @@ export class GameService {
     }
   }
 
-  watch(client: Socket, userId: number) {
-    const watcher = this.playerService.get(client.id);
-    const gamePlayer = this.playerService.getByUserId(userId);
-
-    if (
-      !watcher ||
-      !this.friendsService.isFriend(watcher.user, gamePlayer.user)
-    ) {
-      throw new WsException('잘못된 요청입니다.');
-    }
-
-    const gameId = this.__find_game(userId);
-    if (!gameId) {
-      throw new WsException('게임을 찾을 수 없습니다.');
-    }
-
-    client.join(gameId);
-  }
-
   private __find_game(userId: number): string | null {
     const values = this.games.values();
     for (const value of values) {
@@ -144,32 +152,30 @@ export class GameService {
     return null;
   }
 
-  // ? 언제 quit game이 호출되는가? (소켓 연결이 끊겼을때)
   quitGame(server: Namespace, client: Socket): void {
-    const player = this.playerService.get(client.id);
-    const game = this.games.get(player.room);
-
+    const pongClient = this.clientService.get(client.id);
+    if (!pongClient) {
+      return;
+    }
+    const game = this.games.get(pongClient.room);
     if (!game) {
       return;
     }
-    // 2. 해당 게임에서 나가는 플레이어의 점수를 -1로 바꾼다.
-    if (game.players.p1.id === player.id) {
+
+    if (game.players.p1.id === pongClient.id) {
       game.data.score.p1 = -1;
-    } else if (game.players.p2.id === player.id) {
+    } else if (game.players.p2.id === pongClient.id) {
       game.data.score.p2 = -1;
     }
 
-    // 3. 점수를 업데이트한다.
     server.to(game.gameId).emit('update_score', game.data.score);
 
-    // 4. game_over이벤트를 전송한다. (승자는 안 나간 플레이어)
-    if (game.players.p1.id === player.id) {
+    if (game.players.p1.id === pongClient.id) {
       server.to(game.gameId).emit('game_over', game.players.p2);
-    } else if (game.players.p2.id === player.id) {
+    } else if (game.players.p2.id === pongClient.id) {
       server.to(game.gameId).emit('game_over', game.players.p1);
     }
 
-    // 5. __stop_game호출한다.
     this.__game_end(server, game);
   }
 
@@ -192,7 +198,8 @@ export class GameService {
       this.historyService.save(history);
 
       server.in(game.gameId).socketsLeave(game.gameId);
-
+      server.sockets.get(game.players.p1.id).disconnect();
+      server.sockets.get(game.players.p2.id).disconnect();
       this.games.delete(game.gameId);
     }
   }
@@ -272,7 +279,7 @@ export class GameService {
       vel.y = -vel.y;
   }
 
-  private __paddle_collision(player: Player, game: Game): void {
+  private __paddle_collision(player: PongClient, game: Game): void {
     let center;
     const vel = game.data.ballVel;
     const ball = game.data.ballPos;

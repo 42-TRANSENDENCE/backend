@@ -1,11 +1,4 @@
-import {
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { forwardRef, Inject, Logger } from '@nestjs/common';
 import {
   ConnectedSocket,
   OnGatewayConnection,
@@ -20,10 +13,7 @@ import {
 
 import { Chats } from 'src/chats/chats.entity';
 import { Server, Socket, Namespace } from 'socket.io';
-import { Channels } from 'src/channels/channels.entity';
-import { ChannelsService } from 'src/channels/channels.service';
-import { Repository } from 'typeorm';
-import { leaveDto } from './\bdto/leave.dto';
+import { ChannelsService } from './channels.service';
 // import { ChannelsGateway } from './events.channels.gateway';
 
 // interface MessagePayload {
@@ -42,10 +32,6 @@ const originUrl = process.env.FRONTEND_URL;
 export class ChannelsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(
-    @Inject(forwardRef(() => ChannelsService))
-    private readonly ChannelsService: ChannelsService,
-  ) {}
   private logger = new Logger(ChannelsGateway.name);
 
   @WebSocketServer() nsp: Namespace;
@@ -82,7 +68,7 @@ export class ChannelsGateway
 
   getClientsInRoom(roomName: string) {
     // const room = this.server.sockets.adapter.rooms.get(roomName);
-    const room = this.nsp.adapter.rooms.get(roomName)
+    const room = this.nsp.adapter.rooms.get(roomName);
     if (room) {
       return room.size;
     } else {
@@ -100,7 +86,7 @@ export class ChannelsGateway
     // socket.emit('message',{message: `${socket.id} 가 들어왔다 Well Done ! `})
 
     // 잘 보내지나 확인용
-    this.logger.log(`소켓에 연결된 사람수 : ${this.getClientsInRoom(roomId)}`)
+    this.logger.log(`소켓에 연결된 사람수 : ${this.getClientsInRoom(roomId)}`);
     this.nsp.to(roomId).emit('message', {
       message: `${socket.id} 가 ${roomId} 에 들어왔다 Well Done ! `,
     });
@@ -137,22 +123,22 @@ export class ChannelsGateway
   // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
   // this.nsp.emit('create-room', roomName); // 대기실 방 생성
   // return { success: true, payload: roomName };
-  @SubscribeMessage('leave-room')
-  handleLeaveRoom(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() leaveDto: leaveDto,
-  ) {
-    //소켓 연결 끊기 **
-    //roomId,userId가 없을때 예외 처리
-    if (!leaveDto.roomId || !leaveDto.userId)
-      throw new WsException('There is no user or roomId here');
-    // 해당 방에대해 소켓 연결 끊는부분 연결하고 테스트를 해봐야 할듯.!!!!!
-    socket.leave(leaveDto.roomId);
-    this.logger.log(`Client ${socket.id} left room ${leaveDto.roomId}`);
-    this.ChannelsService.userExitChannel(
-      socket,
-      leaveDto.roomId,
-      leaveDto.userId,
-    );
-  }
+  //   @SubscribeMessage('leave-room')
+  //   handleLeaveRoom(
+  //     @ConnectedSocket() socket: Socket,
+  //     @MessageBody() leaveDto: leaveDto,
+  //   ) {
+  //     //소켓 연결 끊기 **
+  //     //roomId,userId가 없을때 예외 처리
+  //     if (!leaveDto.roomId || !leaveDto.userId)
+  //       throw new WsException('There is no user or roomId here');
+  //     // 해당 방에대해 소켓 연결 끊는부분 연결하고 테스트를 해봐야 할듯.!!!!!
+  //     socket.leave(leaveDto.roomId);
+  //     this.logger.log(`Client ${socket.id} left room ${leaveDto.roomId}`);
+  //     this.ChannelsService.userExitChannel(
+  //       socket,
+  //       leaveDto.roomId,
+  //       leaveDto.userId,
+  //     );
+  //   }
 }

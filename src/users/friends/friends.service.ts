@@ -39,7 +39,7 @@ export class FriendsService {
         friends.add(friendship.otherUser);
       }
     });
-    this.logger.debug(`${user.nickname}'s friends: ${friends}`);
+    this.logger.debug(`${user.nickname}'s friend: ${friends.size}`);
     return friends;
   }
 

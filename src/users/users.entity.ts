@@ -32,13 +32,6 @@ export class User {
   @Exclude()
   avatar: Uint8Array;
 
-  @Column({
-    type: 'enum',
-    enum: UserStatus,
-    default: UserStatus.OFFLINE,
-  })
-  status: UserStatus;
-
   @Column({ nullable: true })
   @Exclude()
   hashedRefreshToken?: string;

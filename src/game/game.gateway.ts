@@ -13,16 +13,7 @@ import { Namespace } from 'socket.io';
 import { Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { GamePlayDto } from './game.interface';
-import {
-  CreateFriendlyMatchDto,
-  InvitationDto,
-  MatchDto,
-  QueueDto,
-} from './lobby/lobby.interface';
-import { Player, PlayerStatus } from './player/player.interface';
-import { LobbyService } from './lobby/lobby.service';
-import { PlayerService } from './player/player.service';
-import { QueueService } from './queue/queue.service';
+import { MatchDto } from '../events/lobby/lobby.interface';
 
 @WebSocketGateway({ namespace: '/game' })
 export class GameGateway
@@ -32,77 +23,30 @@ export class GameGateway
 
   @WebSocketServer() server: Namespace;
 
-  constructor(
-    private readonly playerService: PlayerService,
-    private readonly lobbyService: LobbyService,
-    private readonly gameService: GameService,
-    private readonly queueService: QueueService,
-  ) {}
+  constructor(private readonly gameService: GameService) {}
 
   afterInit() {
     this.logger.log(`Game Gateway created`);
   }
 
-  async handleConnection(@ConnectedSocket() client: Socket) {
-    const user = await this.playerService.getUserFromClient(client);
-    if (!user) {
-      client.disconnect(true);
-      return;
-    }
-    const player: Player = {
-      id: client.id,
-      user,
-      status: PlayerStatus.WAITING,
-    };
-    this.playerService.add(player);
-    this.logger.log(`${user.nickname} connected. client id : ${client.id}`);
+  handleConnection(@ConnectedSocket() client: Socket) {
+    this.logger.log(`client: ${client.id} connected`);
   }
 
   handleDisconnect(@ConnectedSocket() client: Socket) {
-    const player = this.playerService.get(client.id);
-    this.logger.log(`${player.user.nickname} disconnected.`);
-    this.playerService.delete(player);
-    this.queueService.leaveQueue(client);
+    this.logger.log(`client: ${client.id} disconnected`);
     this.gameService.quitGame(this.server, client);
   }
 
-  /** Lobby */
-
-  @SubscribeMessage('invite')
-  handleInviteEvent(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() matchInfo: CreateFriendlyMatchDto,
-  ): void {
-    this.lobbyService.invite(this.server, client, matchInfo);
-  }
-
-  @SubscribeMessage('refuse')
-  handleRefuseEvent(@MessageBody() invitation: InvitationDto) {
-    this.lobbyService.refuse(this.server, invitation);
-  }
-
-  @SubscribeMessage('accept')
-  handleAccept(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() invitaton: InvitationDto,
-  ) {
-    this.lobbyService.accept(this.server, client, invitaton);
-  }
-
-  @SubscribeMessage('join_queue')
-  handleJoinEvent(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: QueueDto,
-  ) {
-    this.queueService.joinQueue(this.server, client, data);
-  }
-
-  @SubscribeMessage('leave_queue')
-  handleLeaveEvent(@ConnectedSocket() client: Socket) {
-    this.queueService.leaveQueue(client);
-  }
-
   /** GAME */
+
+  @SubscribeMessage('watch')
+  handleWatchEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userId: number,
+  ) {
+    this.gameService.watch(client, userId);
+  }
 
   @SubscribeMessage('ready')
   handleReadyEvent(
@@ -126,13 +70,5 @@ export class GameGateway
     @MessageBody() gameInfo: GamePlayDto,
   ) {
     this.gameService.handleKeyReleased(client, gameInfo);
-  }
-
-  @SubscribeMessage('watch')
-  handleWatchEvent(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() userId: number,
-  ) {
-    this.gameService.watch(client, userId);
   }
 }

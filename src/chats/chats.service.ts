@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chats } from './chats.entity';
 import { User } from 'src/users/users.entity';
-import { ChannelsGateway } from 'src/events/events.channels.gateway';
 import { Channels } from 'src/channels/channels.entity';
+import { ChannelsGateway } from 'src/channels/channels.gateway';
 
 // function getKeyByValue(object, value) {
 //   return Object.keys(object).find((key) => object[key] === value);
@@ -14,9 +14,6 @@ import { Channels } from 'src/channels/channels.entity';
 export class ChatsService {
   constructor(
     @InjectRepository(Chats) private chatsRepository: Repository<Chats>,
-    @InjectRepository(User) private usersRepository: Repository<User>,
-    @InjectRepository(Channels)
-    private channelsRepository: Repository<Channels>,
     private readonly channelsGateway: ChannelsGateway,
   ) {}
 
