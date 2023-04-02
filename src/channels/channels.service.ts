@@ -21,8 +21,6 @@ export class ChannelsService {
   constructor(
     @InjectRepository(Channels)
     private channelsRepository: Repository<Channels>,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
     @InjectRepository(ChannelMember)
     private channelMemberRepository: Repository<ChannelMember>,
     @Inject(forwardRef(() => ChannelsGateway))
