@@ -1,17 +1,15 @@
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 import { FriendsService } from 'src/users/friends/friends.service';
 import { Server, Socket } from 'socket.io';
-import {
-  CreateFriendlyMatchDto,
-  InvitationDto,
-  MatchDto,
-} from './lobby.interface';
 import { GameService } from '../../game/game.service';
 import { GameType } from '../../game/game.interface';
 import { v4 as uuidv4 } from 'uuid';
 import { ClientStatus } from '../client/client.interface';
 import { ClientService } from '../client/client.service';
+import { CreateFriendlyMatchDto } from '../dto/create-friendly-match.dto';
+import { InvitationDto } from '../dto/invitation.dto';
+import { MatchDto } from '../dto/match.dto';
 
 @Injectable()
 export class LobbyService {
