@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Namespace, Socket } from 'socket.io';
 import {
   ACCEL_RATIO,

@@ -57,10 +57,11 @@ describe('AuthController', () => {
     nickname: 'john',
     avatar: new Uint8Array([0, 1, 2]),
     isTwoFactorAuthenticationEnabled: false,
-    acheivements: [],
-    histories: [],
+    achievements: [],
     channelMember: null,
     friends: [],
+    wins: [],
+    loses: [],
   };
 
   const mockedFourtyTwoUser = {

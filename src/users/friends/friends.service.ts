@@ -1,10 +1,12 @@
 import {
   BadRequestException,
   ClassSerializerInterceptor,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
   UseInterceptors,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
@@ -25,6 +27,7 @@ export class FriendsService {
   constructor(
     @InjectRepository(Friendship)
     private readonly friendsRepository: Repository<Friendship>,
+    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
   ) {}
 
@@ -132,7 +135,7 @@ export class FriendsService {
   }
 
   async isFriend(user: User, otherUser: User): Promise<boolean> {
-    const friendship = this.friendsRepository.findOne({
+    const friendship = await this.friendsRepository.findOne({
       where: [
         {
           userId: user.id,
