@@ -30,7 +30,7 @@ export class LobbyService {
     if (!otherPlayer || otherPlayer.status !== ClientStatus.ONLINE) {
       throw new WsException('현재 게임 초대를 받을 수 없습니다.');
     } else {
-      if (!this.friendsService.isFriend(player.user, otherPlayer.user)) {
+      if (!this.friendsService.isFriend(player.user.id, otherPlayer.user.id)) {
         throw new WsException(
           '친구가 아닌 상대에게 게임 초대를 보낼 수 없습니다.',
         );

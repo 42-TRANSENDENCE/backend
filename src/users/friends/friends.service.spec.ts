@@ -3,10 +3,10 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from '../users.entity';
-import { UsersService } from '../users.service';
 import { Friendship, FriendStatus } from './friendship.entity';
 import { FriendsService } from './friends.service';
 import { requestNotFoundErr } from './friends.constants';
+import { FriendsRepository } from './friends.repository';
 
 describe('FriendsService', () => {
   function createRandomUser(): User {
@@ -18,23 +18,25 @@ describe('FriendsService', () => {
       achievements: [],
       wins: [],
       loses: [],
-      channelMember: null,
       friends: [],
+      channelMember: null,
     };
     return user;
   }
 
   const mockedFriendshipRepository = {
-    find: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    findOne: jest.fn(),
+    findApproved: jest.fn(),
+    findOneApproved: jest.fn(),
+    findPendingRequests: jest.fn(),
+    findOnePendingRequest: jest.fn(),
+    findReceived: jest.fn(),
+    findOneByIds: jest.fn(),
     remove: jest.fn(),
+    save: jest.fn(),
   };
 
-  const mockedUsersService = {
-    getById: jest.fn(),
-    getUserByIdWithBlocked: jest.fn(),
+  const mockedUserRepository = {
+    findOneBy: jest.fn(),
   };
 
   let friendsService: FriendsService;
@@ -44,13 +46,10 @@ describe('FriendsService', () => {
       providers: [
         FriendsService,
         {
-          provide: getRepositoryToken(Friendship),
+          provide: FriendsRepository,
           useValue: mockedFriendshipRepository,
         },
-        {
-          provide: UsersService,
-          useValue: mockedUsersService,
-        },
+        { provide: getRepositoryToken(User), useValue: mockedUserRepository },
       ],
     }).compile();
 
@@ -61,18 +60,7 @@ describe('FriendsService', () => {
     expect(friendsService).toBeDefined();
   });
 
-  const mockedUser: User = {
-    id: faker.datatype.number(),
-    nickname: 'john',
-    avatar: new Uint8Array([0, 1, 2]),
-    isTwoFactorAuthenticationEnabled: false,
-    achievements: [],
-    channelMember: null,
-    friends: [],
-    wins: [],
-    loses: [],
-  };
-
+  const mockedUser = createRandomUser();
   const tempUser1 = createRandomUser();
   const tempUser2 = createRandomUser();
   const tempUser3 = createRandomUser();
@@ -84,6 +72,7 @@ describe('FriendsService', () => {
     otherUser: tempUser1,
     status: FriendStatus.APPROVED,
   };
+
   const friendship2: Friendship = {
     userId: mockedUser.id,
     user: mockedUser,
@@ -91,6 +80,7 @@ describe('FriendsService', () => {
     otherUser: tempUser2,
     status: FriendStatus.APPROVED,
   };
+
   const friendship3: Friendship = {
     userId: mockedUser.id,
     user: mockedUser,
@@ -101,17 +91,16 @@ describe('FriendsService', () => {
 
   describe('getAllFriends', () => {
     beforeEach(() => {
-      mockedFriendshipRepository.find.mockReturnValueOnce([
+      mockedFriendshipRepository.findApproved.mockReturnValueOnce([
         friendship1,
         friendship2,
       ]);
     });
 
     it('should return friends', async () => {
-      mockedUsersService.getUserByIdWithBlocked.mockReturnValueOnce(mockedUser);
       const result = await friendsService.getAllFriends(mockedUser);
 
-      expect(result.size).toEqual(2);
+      expect(result.length).toEqual(2);
       expect(result).toContain(tempUser1);
       expect(result).toContain(tempUser2);
     });
@@ -119,7 +108,9 @@ describe('FriendsService', () => {
 
   describe('getPendingRequests', () => {
     beforeEach(() => {
-      mockedFriendshipRepository.find.mockReturnValueOnce([friendship3]);
+      mockedFriendshipRepository.findPendingRequests.mockReturnValueOnce([
+        friendship3,
+      ]);
     });
 
     it('should return not accepted frienship', async () => {
@@ -131,13 +122,15 @@ describe('FriendsService', () => {
     });
   });
 
-  describe('deleteRequestedFriendship', () => {
+  describe('deleteRequest', () => {
     it('should delete friendship which status is PENDING', async () => {
-      mockedFriendshipRepository.findOne.mockReturnValueOnce(friendship3);
+      mockedFriendshipRepository.findOnePendingRequest.mockReturnValueOnce(
+        friendship3,
+      );
       mockedFriendshipRepository.remove.mockReturnValueOnce(friendship3);
 
-      const result = await friendsService.deleteRequestedFriendship(
-        mockedUser,
+      const result = await friendsService.deleteRequest(
+        mockedUser.id,
         tempUser3.id,
       );
 
@@ -145,12 +138,11 @@ describe('FriendsService', () => {
     });
 
     it('should throw NotFoundError when friendship does not exist', async () => {
-      mockedFriendshipRepository.findOne.mockReturnValue(undefined);
+      mockedFriendshipRepository.findOnePendingRequest.mockReturnValueOnce(
+        undefined,
+      );
       try {
-        await friendsService.deleteRequestedFriendship(
-          mockedUser,
-          tempUser3.id + 4242,
-        );
+        await friendsService.deleteRequest(mockedUser.id, tempUser3.id + 4242);
       } catch (e) {
         expect(e).toBeInstanceOf(NotFoundException);
         expect(e.message).toBe(requestNotFoundErr);
@@ -160,21 +152,27 @@ describe('FriendsService', () => {
 
   describe('approveFriendship', () => {
     it('should approve friendship request', async () => {
-      mockedFriendshipRepository.findOne.mockReturnValueOnce(friendship3);
+      mockedFriendshipRepository.findOnePendingRequest.mockReturnValueOnce(
+        friendship3,
+      );
+
       const clone = JSON.parse(JSON.stringify(friendship3));
       clone.status = FriendStatus.APPROVED;
       mockedFriendshipRepository.save.mockReturnValueOnce(clone);
       const result = await friendsService.approveFriendship(
-        tempUser3,
+        tempUser3.id,
         mockedUser.id,
       );
       expect(result.status).toEqual(FriendStatus.APPROVED);
     });
 
     it('should throw NotFoundException if friendship does not exist', async () => {
-      mockedFriendshipRepository.findOne.mockReturnValueOnce(undefined);
+      mockedFriendshipRepository.findOnePendingRequest.mockReturnValueOnce(
+        undefined,
+      );
+
       try {
-        await friendsService.approveFriendship(mockedUser, tempUser3.id);
+        await friendsService.approveFriendship(mockedUser.id, tempUser3.id);
       } catch (e) {
         expect(e).toBeInstanceOf(NotFoundException);
         expect(e.message).toBe(requestNotFoundErr);

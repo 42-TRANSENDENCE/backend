@@ -88,7 +88,7 @@ export class EventGateway
   @SubscribeMessage('friends_status')
   async handleFriendsStatus(@ConnectedSocket() client: Socket) {
     const user = await this.clientService.getUserFromClient(client);
-    const friends: Set<User> = await this.friendsService.getAllFriends(user);
+    const friends: User[] = await this.friendsService.getAllFriends(user);
     const friendsWithStatus: Set<UserWithStaus> = new Set();
 
     friends.forEach((friend) => {

@@ -90,7 +90,7 @@ export class GameService {
     if (
       !watcher ||
       !gamePlayer ||
-      !this.friendsService.isFriend(watcher.user, gamePlayer.user) ||
+      !this.friendsService.isFriend(watcher.user.id, gamePlayer.user.id) ||
       gamePlayer.status !== ClientStatus.INGAME ||
       watcher.status !== ClientStatus.ONLINE
     ) {
