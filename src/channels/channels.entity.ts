@@ -26,8 +26,8 @@ export class Channels {
   @Column({ nullable: true })
   private?: boolean;
 
-  @Column('varchar', { length: 1000, default: '' })
-  password: string;
+  @Column('varchar', { length: 1000, nullable: true })
+  password?: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -7,4 +7,4 @@ import { forwardRef } from '@nestjs/common';
   providers: [ChannelsGateway],
   exports: [ChannelsGateway],
 })
-export class EventsModule {}
+export class EventsModules {}

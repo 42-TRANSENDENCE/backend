@@ -2,7 +2,7 @@ import { Controller, Get, Param, Post, Body, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChannelsService } from './channels.service';
 import { User } from 'src/users/users.entity';
-import { Users } from 'src/common/decorators/user.decorator';
+import { Users } from './common/decorators/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
 import { Response } from 'express';

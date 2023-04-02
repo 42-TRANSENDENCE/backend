@@ -10,7 +10,7 @@ import { ChannelsGateway } from './events.chats.gateway';
 import { ChannelBanMember } from './channelbanmember.entity';
 import { ChannelMuteMember } from './channelmutemember.entity';
 import { forwardRef } from '@nestjs/common';
-import { EventsModule } from './events.module';
+import { EventsModules } from './events.module';
 
 @Module({
   imports: [
@@ -22,9 +22,9 @@ import { EventsModule } from './events.module';
       ChannelMuteMember,
       Chats,
     ]),
-    forwardRef(() => EventsModule),
+    forwardRef(() => EventsModules),
   ],
-  providers: [ChannelsService],
+  providers: [ChannelsService, ChannelsGateway],
   controllers: [ChannelsController],
   exports: [ChannelsService, ChannelsGateway],
 })

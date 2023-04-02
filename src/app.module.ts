@@ -6,12 +6,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { ChatsModule } from './chats/chats.module';
+import { ChatsModule } from './channels/chats/chats.module';
 import { ChannelsModule } from './channels/channels.module';
 import { DatabaseModule } from './database/database.module';
 import { GameModule } from './game/game.module';
+import { EventsModules } from './channels/events.module';
 import { EventsModule } from './events/events.module';
-
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -39,6 +39,7 @@ import { EventsModule } from './events/events.module';
     UsersModule,
     ChatsModule,
     ChannelsModule,
+    EventsModules,
     EventsModule,
     GameModule,
   ],
