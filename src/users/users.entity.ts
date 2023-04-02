@@ -1,20 +1,14 @@
 import { Exclude } from 'class-transformer';
 import { ChannelMember } from 'src/channels/channelmember.entity';
-import { Column, Entity, PrimaryColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, PrimaryColumn, ManyToOne, ManyToMany } from 'typeorm';
 import { GameHistory } from 'src/game/history/history.entity';
 import { Friendship } from 'src/users/friends/friendship.entity';
+import { Achievement } from 'src/achievement/achievement.entity';
 
 export enum UserStatus {
   ONLINE = 'ONLINE',
   OFFLINE = 'OFFLINE',
   INGAME = 'INGAME',
-}
-
-export enum Achievement {
-  FIRST_LOGIN = 'FIRST_LOGIN',
-  FIRST_GAME = 'FIRST_GAME',
-  FIRST_FREINDSHIP = 'FIRST_FRIENDSHIP',
-  WIN_TEN_GAME = 'WIN_TEN_GAME',
 }
 
 @Entity({ name: 'user' })
@@ -43,8 +37,8 @@ export class User {
   @Column({ default: false })
   isTwoFactorAuthenticationEnabled: boolean;
 
-  @Column({ type: 'enum', enum: Achievement })
-  acheivements: Achievement[];
+  @ManyToMany(() => Achievement)
+  achievement: Achievement[];
 
   friends: Friendship[];
 
