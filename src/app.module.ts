@@ -55,8 +55,4 @@ import { MiddlewareConsumer } from '@nestjs/common/interfaces';
     },
   ],
 })
-export class AppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RateLimitMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}
