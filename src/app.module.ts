@@ -1,17 +1,19 @@
-import { Module, ValidationPipe } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { CacheModule, Module, ValidationPipe } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import * as Joi from 'joi';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { ChatsModule } from './chats/chats.module';
+import { ChatsModule } from './channels/chats/chats.module';
 import { ChannelsModule } from './channels/channels.module';
 import { DatabaseModule } from './database/database.module';
 import { GameModule } from './game/game.module';
+import { EventsModules } from './channels/events.module';
 import { EventsModule } from './events/events.module';
-
+import { RateLimitMiddleware } from './ratelimit/rateLimitMiddleware';
+import { MiddlewareConsumer } from '@nestjs/common/interfaces';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -39,8 +41,10 @@ import { EventsModule } from './events/events.module';
     UsersModule,
     ChatsModule,
     ChannelsModule,
+    EventsModules,
     EventsModule,
     GameModule,
+    CacheModule.register(),
   ],
   controllers: [AppController],
   providers: [
@@ -51,4 +55,8 @@ import { EventsModule } from './events/events.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RateLimitMiddleware).forRoutes('*');
+  }
+}

@@ -2,13 +2,13 @@ import { Controller, Get, Param, Post, Body, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChannelsService } from './channels.service';
 import { User } from 'src/users/users.entity';
-import { Users } from 'src/common/decorators/user.decorator';
+import { Users } from './common/decorators/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
 import { Response } from 'express';
 
-@ApiTags('CHANNEL')
-@Controller('/room')
+@ApiTags('CHAT')
+@Controller('/channels')
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
 
@@ -62,12 +62,44 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌' })
-  @Post(':roomid/admin/:userid') // body 엔 아무것도 안 옴
+  @Post(':channelid/admin/:userid') // body 엔 아무것도 안 옴
   async ownerGiveAdmin(
-    @Param('roomid') channelId: number,
+    @Param('channelid') channelId: number,
     @Param('userid') toUserId: number,
     @Users() user: User,
   ) {
     return this.channelsService.ownerGiveAdmin(channelId, toUserId, user);
+  }
+
+  //TODO: 권한 설정으로 깔끔하게 처리 해야함.
+  @ApiOperation({ summary: 'Ban 요청' })
+  @Post(':channelid/ban/:userId')
+  async postBanInChannel(
+    @Param('channelid') channelId: number,
+    @Param('userId') userId: number,
+    @Users() user: User,
+  ) {
+    return this.channelsService.postBanInChannel(channelId, userId, user);
+  }
+
+  @ApiOperation({ summary: 'Kick 요청' })
+  @Post(':channelid/kick/:userId')
+  async postKickInChannel(
+    @Param('channelid') channelId: number,
+    @Param('userId') userId: number,
+    @Users() user: User,
+  ) {
+    // return this.channelsService.postKickInChannel(channelId, userId, user)
+    return this.channelsService.addToKicklist(channelId, userId, 3000);
+  }
+
+  @ApiOperation({ summary: 'mute 요청' })
+  @Post(':channelid/mute/:userId')
+  async postMuteInChannel(
+    @Param('channelid') channelId: number,
+    @Param('userId') userId: number,
+    @Users() user: User,
+  ) {
+    return this.channelsService.addToMutelist(channelId, userId, 3000);
   }
 }

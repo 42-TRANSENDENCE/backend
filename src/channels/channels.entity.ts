@@ -7,8 +7,6 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ChannelMember } from './channelmember.entity';
-import { Chats } from 'src/chats/chats.entity';
-// import { ChannelMember } from './channelcember.entity';
 
 @Entity()
 export class Channels {
@@ -27,8 +25,8 @@ export class Channels {
   @Column({ nullable: true })
   private?: boolean;
 
-  @Column('varchar', { length: 1000, default: '' })
-  password: string;
+  @Column('varchar', { length: 1000, nullable: true })
+  password?: string;
 
   @CreateDateColumn()
   createdAt: Date;

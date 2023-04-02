@@ -1,9 +1,11 @@
 import {
   Injectable,
-  UnauthorizedException,
-  NotFoundException,
+  Res,
   Inject,
   forwardRef,
+  CACHE_MANAGER,
+  UnauthorizedException,
+  NotFoundException,
   MethodNotAllowedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,11 +13,14 @@ import { Repository } from 'typeorm';
 import { Channels } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelmember.entity';
+import { ChannelsGateway } from './events.chats.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
-import { ChannelsGateway } from './channels.gateway';
+import { ChannelBanMember } from './channelbanmember.entity';
+
+import { Cache } from 'cache-manager';
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -23,8 +28,12 @@ export class ChannelsService {
     private channelsRepository: Repository<Channels>,
     @InjectRepository(ChannelMember)
     private channelMemberRepository: Repository<ChannelMember>,
+    @InjectRepository(ChannelBanMember)
+    private channelBanMemberRepository: Repository<ChannelBanMember>,
+
     @Inject(forwardRef(() => ChannelsGateway))
     private readonly channelsGateway: ChannelsGateway,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
   private logger = new Logger(ChannelsService.name);
 
@@ -51,8 +60,8 @@ export class ChannelsService {
     const channelReturned = await this.channelsRepository.save(channel);
     this.channelsGateway.EmitChannelInfo(channelReturned);
     const channelMember = this.channelMemberRepository.create({
-      UserId: myId,
-      ChannelId: channelReturned.id,
+      userId: myId,
+      channelId: channelReturned.id,
     });
     await this.channelMemberRepository.save(channelMember);
   }
@@ -70,7 +79,7 @@ export class ChannelsService {
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
   async getChannelMembers(channelId: number) {
     return this.channelMemberRepository.find({
-      where: { ChannelId: channelId },
+      where: { channelId: channelId },
     });
   }
 
@@ -97,13 +106,13 @@ export class ChannelsService {
         //이미 채널id에 해당하는 멤버가 있으면 추가 ㄴㄴ!
         const isInUser = await this.channelMemberRepository
           .createQueryBuilder('channel_member')
-          .where('channel_member.UserId = :userId', { userId: 1 })
+          .where('channel_member.userId = :userId', { userId: 1 })
           .getOne();
         // console.log(isInUser)
         if (!isInUser) {
           const cm = this.channelMemberRepository.create({
-            UserId: 1, // user.id
-            ChannelId: channelId,
+            userId: 1, // user.id
+            channelId: channelId,
           });
           this.channelMemberRepository.save(cm);
         }
@@ -123,7 +132,7 @@ export class ChannelsService {
     password: string,
     user: User,
     curChannel: Channels,
-  ): Promise<{ message: string; status: number }> {
+  ): Promise<returnStatusMessage> {
     // 공개방은 무조건 소켓 연결 근데 + 밴 리스트 !! 는 나중에
     // this.channelsGateway.nsp.emit('join-room');
     const isInUser = await this.channelMemberRepository
@@ -133,8 +142,8 @@ export class ChannelsService {
     // console.log(isInUser)
     if (!isInUser) {
       const cm = this.channelMemberRepository.create({
-        UserId: 1, // user.id
-        ChannelId: channelId,
+        userId: 1, // user.id
+        channelId: channelId,
       });
       this.channelMemberRepository.save(cm);
     }
@@ -149,6 +158,9 @@ export class ChannelsService {
     const curChannel = await this.channelsRepository.findOneBy({
       id: channelId,
     });
+    this.logger.log(await this.isBanned(channelId, 100)); // user.id 와 연결해야함
+    if (await this.isBanned(channelId, 4))
+      throw new UnauthorizedException('YOU ARE BANNED');
     if (!curChannel) throw new NotFoundException('Plz Enter Exist Room');
     if (curChannel.private)
       return this.userEnterPrivateChannel(
@@ -170,6 +182,7 @@ export class ChannelsService {
     if (!isInUser)
       throw new NotFoundException(`In this room ${toUserId} is not exsit`);
     const curChannel = await this.findById(channelId);
+    if (!curChannel) throw new NotFoundException(`${channelId} is not exsit`);
     if (curChannel.owner == toUserId)
       throw new MethodNotAllowedException('Owner could not downgrade admin');
     // 채팅방의 Owner가 현재 명령한  userid와 일치 할때  근데 지금은  user가 연동이 안 되어 있닌까
@@ -196,7 +209,7 @@ export class ChannelsService {
 
       if (curChannel.owner === userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
-        this.channelMemberRepository.delete({ ChannelId: +roomId });
+        this.channelMemberRepository.delete({ channelId: +roomId });
         this.channelsRepository.delete({ id: +roomId });
       } else {
         // 멤버에서만 delete
@@ -211,8 +224,8 @@ export class ChannelsService {
           throw new NotFoundException('Member in this Channel does not exist!');
         else
           this.channelMemberRepository.delete({
-            UserId: userId,
-            ChannelId: +roomId,
+            userId: userId,
+            channelId: +roomId,
           });
       }
     } catch (error) {
@@ -224,5 +237,98 @@ export class ChannelsService {
         this.logger.log('userExitChannel: Unexpected error:', error);
       }
     }
+  }
+
+  // TODO: 권한 설정해서 Owner, admin이 이거 요청할시에 컷 해야함 if 문말고 깔끔하게 !
+  // Ban Post요청
+  async postBanInChannel(channelId: number, userId: number, user: User) {
+    const isInUser = await this.channelBanMemberRepository
+      .createQueryBuilder('channel_ban_member')
+      .where('channel_ban_member.UserId = :userId', { userId: userId }) // 1 -> user.id
+      .getOne();
+    this.logger.log(`in this room banned in user : ${isInUser}`);
+    if (!isInUser) {
+      const cm = this.channelBanMemberRepository.create({
+        userId: userId, // user.id
+        channelId: channelId,
+        expiresAt: new Date('9999-12-31T23:59:59.999Z'),
+      });
+      this.channelBanMemberRepository.save(cm);
+    }
+    // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
+    // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
+  }
+
+  // Kick Post 요청 : 일단 얘는 10 초 kick  이다 . Banlist에 10 초로 넣어 놓자
+  async postKickInChannel(channelId: number, userId: number, user: User) {
+    const isInUser = await this.channelBanMemberRepository
+      .createQueryBuilder('channel_ban_member')
+      .where('channel_ban_member.UserId = :userId', { userId: userId })
+      .getOne();
+    this.logger.log(`in this room kicked in user : ${isInUser}`);
+    if (!isInUser) {
+      const cm = this.channelBanMemberRepository.create({
+        userId: userId, // user.id
+        channelId: channelId,
+        expiresAt: new Date(Date.now() + 10 * 1000),
+      });
+      this.channelBanMemberRepository.save(cm);
+    }
+    // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
+    // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
+  }
+
+  async isBanned(channelId: number, userId: number): Promise<boolean> {
+    const ban = await this.channelBanMemberRepository.findOne({
+      where: { channelId: channelId, userId: userId },
+    });
+    if (ban) {
+      this.logger.log(
+        `check time : ${Number(ban.expiresAt) - Number(new Date(Date.now()))}`,
+      );
+      if (Number(ban.expiresAt) - Number(new Date(Date.now())) > 0) return true;
+      else {
+        this.channelBanMemberRepository.delete({
+          userId: userId,
+          channelId: channelId,
+        });
+        return false;
+      }
+    } else return false;
+  }
+
+  async addToKicklist(
+    roomId: number,
+    userId: number,
+    ttl: number,
+  ): Promise<void> {
+    const key = `chatroom:${roomId}:kicklist`;
+    const kicklist = (await this.cacheManager.get<number[]>(key)) || [];
+    if (!kicklist.includes(userId)) {
+      kicklist.push(userId);
+      await this.cacheManager.set(key, kicklist, 50000);
+    }
+    this.logger.log(`check kicklist : ${kicklist}`);
+  }
+
+  async addToMutelist(
+    roomId: number,
+    userId: number,
+    ttl: number,
+  ): Promise<void> {
+    const key = `chatroom:${roomId}:mutelist`;
+    const mutelist = (await this.cacheManager.get<number[]>(key)) || [];
+
+    if (!mutelist.includes(userId)) {
+      mutelist.push(userId);
+      await this.cacheManager.set(key, mutelist, 50000);
+    }
+    this.logger.log(`check mutelist : ${mutelist}`);
+  }
+
+  async getMutelist(roomId: number): Promise<number[]> {
+    const key = `chatroom:${roomId}:mutelist`;
+    const mutelist = (await this.cacheManager.get<number[]>(key)) || [];
+    return mutelist;
   }
 }

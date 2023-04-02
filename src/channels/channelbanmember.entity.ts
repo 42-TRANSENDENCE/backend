@@ -6,12 +6,14 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  PrimaryColumnCannotBeNullableError,
   PrimaryGeneratedColumn,
+  JoinColumn,
 } from 'typeorm';
 import { Channels } from './channels.entity';
 
 @Entity()
-export class ChannelMember {
+export class ChannelBanMember {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -26,6 +28,15 @@ export class ChannelMember {
 
   @Column({ primary: true })
   userId: number;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    // default: () => "'0'"
+  })
+  expiresAt: Date;
+  // @Column({ array: true, default: '{}' })
+  // channelMember: string[];
   /**
    * 1 : M 관계 설정
    * @ManyToOne
@@ -34,9 +45,10 @@ export class ChannelMember {
   // @ManyToOne(() => Channels)
   // @JoinColumn({name: "ChannelId"})
   // channelMember: ChannelMember;
-  @OneToMany(() => User, (user) => user.channelMember)
-  users: User[];
 
-  @ManyToOne(() => Channels, (channelMember) => channelMember.ChannelMembers)
-  Channel: Channels;
+  // @OneToMany(() => User, (user) => user.channelBanMember)
+  // users: User[]
+
+  // @ManyToOne(() => Channels, (channelBanMember) => channelBanMember.ChannelBanMembers)
+  // Channel: Channels
 }
