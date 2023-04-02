@@ -51,8 +51,8 @@ export class UsersController {
   @Get('search/:nickname')
   @UseGuards(JwtTwoFactorGuard)
   @ApiOperation({ summary: '닉네임으로 유저 정보 검색' })
-  getUserByNickname(@Param('nickname') nickname: string) {
-    return this.userService.getByNickname(nickname);
+  getUserByNickname(@User() user, @Param('nickname') nickname: string) {
+    return this.userService.getByNickname(user, nickname);
   }
 
   // TODO: avatar type 저장

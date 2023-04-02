@@ -12,6 +12,6 @@ export class Achievement {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ type: 'enum', enum: Title })
   title: Title;
 }

@@ -1,6 +1,13 @@
 import { Exclude } from 'class-transformer';
 import { ChannelMember } from 'src/channels/channelmember.entity';
-import { Column, Entity, PrimaryColumn, ManyToOne, ManyToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryColumn,
+  ManyToOne,
+  ManyToMany,
+  JoinTable,
+} from 'typeorm';
 import { GameHistory } from 'src/game/history/history.entity';
 import { Friendship } from 'src/users/friends/friendship.entity';
 import { Achievement } from 'src/achievement/achievement.entity';
@@ -38,7 +45,8 @@ export class User {
   isTwoFactorAuthenticationEnabled: boolean;
 
   @ManyToMany(() => Achievement)
-  achievement: Achievement[];
+  @JoinTable()
+  achievements: Achievement[];
 
   friends: Friendship[];
 
