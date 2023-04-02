@@ -7,6 +7,7 @@ import { UsersService } from '../users.service';
 import { Friendship, FriendStatus } from './friendship.entity';
 import { FriendsService } from './friends.service';
 import { requestNotFoundErr } from './friends.constants';
+import { Users } from 'src/common/decorators/user.decorator';
 
 describe('FriendsService', () => {
   function createRandomUser(): User {
@@ -15,9 +16,10 @@ describe('FriendsService', () => {
       nickname: faker.name.firstName(),
       avatar: new Uint8Array([]),
       isTwoFactorAuthenticationEnabled: false,
-      friends: [],
-      histories: [],
       acheivements: [],
+      histories: [],
+      channelMember: null,
+      friends: [],
     };
     return user;
   }
@@ -60,13 +62,14 @@ describe('FriendsService', () => {
   });
 
   const mockedUser: User = {
-    id: 42,
-    nickname: 'test',
-    avatar: new Uint8Array([]),
+    id: faker.datatype.number(),
+    nickname: 'john',
+    avatar: new Uint8Array([0, 1, 2]),
     isTwoFactorAuthenticationEnabled: false,
-    friends: [],
-    histories: [],
     acheivements: [],
+    histories: [],
+    channelMember: null,
+    friends: [],
   };
 
   const tempUser1 = createRandomUser();

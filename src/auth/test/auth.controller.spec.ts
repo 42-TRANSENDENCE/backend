@@ -9,6 +9,7 @@ import { User, UserStatus } from 'src/users/users.entity';
 import { NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from 'src/users/dto/users.dto';
 import { LoginService } from '../login.service';
+import { faker } from '@faker-js/faker';
 
 const mockedAuthService = {
   getCookieWithJwtAccessToken: jest.fn(),
@@ -52,13 +53,14 @@ describe('AuthController', () => {
   });
 
   const mockedUser: User = {
-    id: 42,
-    nickname: 'test user',
-    avatar: new Uint8Array([]),
+    id: faker.datatype.number(),
+    nickname: 'john',
+    avatar: new Uint8Array([0, 1, 2]),
     isTwoFactorAuthenticationEnabled: false,
-    friends: [],
-    histories: [],
     acheivements: [],
+    histories: [],
+    channelMember: null,
+    friends: [],
   };
 
   const mockedFourtyTwoUser = {
