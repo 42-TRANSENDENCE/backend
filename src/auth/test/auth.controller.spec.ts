@@ -57,7 +57,7 @@ describe('AuthController', () => {
     nickname: 'john',
     avatar: new Uint8Array([0, 1, 2]),
     isTwoFactorAuthenticationEnabled: false,
-    acheivements: [],
+    achievements: [],
     histories: [],
     channelMember: null,
     friends: [],

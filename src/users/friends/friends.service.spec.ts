@@ -7,7 +7,6 @@ import { UsersService } from '../users.service';
 import { Friendship, FriendStatus } from './friendship.entity';
 import { FriendsService } from './friends.service';
 import { requestNotFoundErr } from './friends.constants';
-import { Users } from 'src/common/decorators/user.decorator';
 
 describe('FriendsService', () => {
   function createRandomUser(): User {
@@ -16,7 +15,7 @@ describe('FriendsService', () => {
       nickname: faker.name.firstName(),
       avatar: new Uint8Array([]),
       isTwoFactorAuthenticationEnabled: false,
-      acheivements: [],
+      achievements: [],
       histories: [],
       channelMember: null,
       friends: [],
@@ -66,7 +65,7 @@ describe('FriendsService', () => {
     nickname: 'john',
     avatar: new Uint8Array([0, 1, 2]),
     isTwoFactorAuthenticationEnabled: false,
-    acheivements: [],
+    achievements: [],
     histories: [],
     channelMember: null,
     friends: [],
