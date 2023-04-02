@@ -7,6 +7,7 @@ import {
   ManyToOne,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { GameHistory } from 'src/game/history/history.entity';
 import { Friendship } from 'src/users/friends/friendship.entity';
@@ -50,7 +51,11 @@ export class User {
 
   friends: Friendship[];
 
-  histories: GameHistory[];
+  @OneToMany(() => GameHistory, (gamehistory) => gamehistory.winner)
+  wins: GameHistory[];
+
+  @OneToMany(() => GameHistory, (gamehistory) => gamehistory.loser)
+  loses: GameHistory[];
 
   @ManyToOne(() => ChannelMember, (channelmember) => channelmember.users)
   channelMember: User;

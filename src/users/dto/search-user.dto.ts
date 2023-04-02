@@ -16,4 +16,10 @@ export class SearchUserDto {
 
   @ApiProperty()
   isFriend: boolean;
+
+  @ApiProperty()
+  win: number;
+
+  @ApiProperty()
+  lose: number;
 }

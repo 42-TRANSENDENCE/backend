@@ -33,7 +33,7 @@ export class UsersService {
   async getByNickname(user: User, nickname: string): Promise<SearchUserDto> {
     const found = await this.userRepository.findOne({
       where: { nickname },
-      relations: { achievements: true },
+      relations: { achievements: true, wins: true, loses: true },
     });
     if (!found) {
       this.logger.error(`user: ${nickname} not exists`);
@@ -45,6 +45,8 @@ export class UsersService {
       avatar: found.avatar,
       achievement: found.achievements.map((achievement) => achievement.title),
       isFriend: await this.friendsService.isFriend(user, found),
+      win: found.wins.length,
+      lose: found.loses.length,
     };
     return response;
   }

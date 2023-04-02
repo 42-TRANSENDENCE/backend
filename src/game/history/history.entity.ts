@@ -6,10 +6,10 @@ export class GameHistory {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
-  @ManyToOne(() => User, (user) => user.histories, { onDelete: 'SET NULL' })
+  @ManyToOne(() => User, (user) => user.wins, { onDelete: 'SET NULL' })
   winner: User;
 
-  @ManyToOne(() => User, (user) => user.histories, { onDelete: 'SET NULL' })
+  @ManyToOne(() => User, (user) => user.loses, { onDelete: 'SET NULL' })
   loser: User;
 
   @Column({ type: 'smallint' })
