@@ -10,7 +10,7 @@ export class RateLimitMiddleware implements NestMiddleware {
     // Initialize a rate limiter that allows up to 10 requests per second
     this.limiter = new RateLimiterMemory({
       points: 1, // number of points
-      duration: 1, // per second
+      duration: 5, // per second
     });
   }
 
