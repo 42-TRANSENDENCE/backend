@@ -58,6 +58,9 @@ export class FriendsService {
   }
 
   async requestFriendship(user: User, id: number): Promise<Friendship> {
+    if (user.id === id) {
+      throw new BadRequestException('본인에게 친구 요청은 불가능합니다.');
+    }
     const otherUser = await this.userRepository.findOneBy({ id });
     if (!otherUser) {
       throw new NotFoundException(userNotFoundErr);
