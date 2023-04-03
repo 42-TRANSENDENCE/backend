@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
   UseGuards,
@@ -90,8 +91,8 @@ export class FriendsController {
     description: '받은 친구 요청 수락',
   })
   @ApiNotFoundResponse({ description: '친구 요청 정보 없음' })
-  approveFriendship(@User() user, @Param('id') id: number) {
-    return this.friendsService.approveFriendship(user, id);
+  approveFriendship(@User() user, @Param('id', ParseIntPipe) id: number) {
+    return this.friendsService.approveFriendship(user.id, id);
   }
 
   @Delete(':id')
