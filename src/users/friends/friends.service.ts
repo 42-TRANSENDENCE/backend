@@ -32,7 +32,7 @@ export class FriendsService {
   async getAllFriends(user: User): Promise<User[]> {
     const friendships = await this.friendsRepository.findApproved(user.id);
     const friends: User[] = friendships.map((friendship) => {
-      if (friendship.user === user) {
+      if (friendship.user.id === user.id) {
         return friendship.otherUser;
       }
       return friendship.user;
