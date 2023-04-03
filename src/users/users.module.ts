@@ -7,10 +7,11 @@ import { HttpModule } from '@nestjs/axios';
 import { FriendsService } from './friends/friends.service';
 import { FriendsController } from './friends/friends.controller';
 import { Friendship } from './friends/friendship.entity';
+import { FriendsRepository } from './friends/friends.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Friendship]), HttpModule],
-  providers: [UsersService, FriendsService],
+  providers: [UsersService, FriendsService, FriendsRepository],
   controllers: [UsersController, FriendsController],
   exports: [UsersService, FriendsService],
 })

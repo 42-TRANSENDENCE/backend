@@ -31,7 +31,6 @@ export class FriendsController {
   @ApiOperation({
     summary: '모든 친구 조회',
   })
-  @ApiNotFoundResponse({ description: '사용자 정보 없음' })
   getAllFriends(@User() user) {
     return this.friendsService.getAllFriends(user);
   }
@@ -72,8 +71,17 @@ export class FriendsController {
   @ApiNotFoundResponse({
     description: '친구 요청 정보 없음',
   })
-  deleteRequestedFriendship(@User() user, @Param('id') id: number) {
-    return this.friendsService.deleteRequestedFriendship(user, id);
+  deleteRequest(@User() user, @Param('id') id: number) {
+    return this.friendsService.deleteRequest(user.id, id);
+  }
+
+  @Delete('received/:id')
+  @ApiOperation({
+    summary: '친구 요청 거절',
+    description: '받은 친구 요청 삭제',
+  })
+  deleteReceived(@User() user, @Param('id') id: number) {
+    return this.friendsService.deleteRequest(id, user.id);
   }
 
   @Put('approve/:id')

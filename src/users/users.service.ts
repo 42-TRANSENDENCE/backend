@@ -44,7 +44,7 @@ export class UsersService {
       nickname: found.nickname,
       avatar: found.avatar,
       achievement: found.achievements.map((achievement) => achievement.title),
-      isFriend: await this.friendsService.isFriend(user, found),
+      isFriend: await this.friendsService.isFriend(user.id, found.id),
       win: found.wins.length,
       lose: found.loses.length,
     };

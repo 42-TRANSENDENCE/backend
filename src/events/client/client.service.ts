@@ -63,7 +63,7 @@ export class ClientService {
   notifyToFriends(
     server: Server,
     user: User,
-    friends: Set<User>,
+    friends: User[],
     status: ClientStatus,
   ) {
     friends.forEach((friend) => {
