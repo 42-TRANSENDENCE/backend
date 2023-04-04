@@ -31,8 +31,8 @@ async function bootstrap() {
     .addCookieAuth('Authentication', authenticationCookie)
     .addCookieAuth('Refresh', refreshCookie)
     .addTag('auth', '인증 API')
-    .addTag('users', '사용자 API')
     .addTag('2fa', '2차 인증 API')
+    .addTag('users', '사용자 API')
     .addTag('users/friends', '친구 API')
     .build();
 
