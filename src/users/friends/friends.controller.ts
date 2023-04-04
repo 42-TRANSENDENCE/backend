@@ -20,7 +20,7 @@ import {
 import { User } from 'src/auth/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
 import { FriendsService } from './friends.service';
-import { UserResponse } from '../dto/user-response.dto';
+import { FriendResponseDto } from '../dto/friend-response.dto';
 
 @Controller('users/friends')
 @UseGuards(JwtTwoFactorGuard)
@@ -32,11 +32,12 @@ export class FriendsController {
 
   @Get()
   @ApiOperation({ summary: '모든 친구 조회' })
-  @ApiOkResponse({ type: [UserResponse] })
-  async getAllFriends(@User() user): Promise<UserResponse[]> {
-    return (await this.friendsService.getAllFriends(user)).map(
-      (friend) => new UserResponse(friend),
-    );
+  @ApiOkResponse({ type: [FriendResponseDto] })
+  async getAllFriends(@User() user): Promise<FriendResponseDto[]> {
+    const friends = await this.friendsService.getAllFriends(user);
+    return friends.map((friend) => {
+      return new FriendResponseDto(friend);
+    });
   }
 
   @Get('pending')
@@ -44,10 +45,10 @@ export class FriendsController {
     summary: '보낸 친구 요청 조회',
     description: '보낸 친구요청을 아직 수락하지 않은 사용자들을 반환',
   })
-  @ApiOkResponse({ type: [UserResponse] })
-  async getPendingRequests(@User() user): Promise<UserResponse[]> {
+  @ApiOkResponse({ type: [FriendResponseDto] })
+  async getPendingRequests(@User() user): Promise<FriendResponseDto[]> {
     return (await this.friendsService.getPendingRequests(user)).map(
-      (pendingRequest) => new UserResponse(pendingRequest),
+      (pendingRequest) => new FriendResponseDto(pendingRequest),
     );
   }
 
@@ -56,10 +57,10 @@ export class FriendsController {
     summary: '받은 친구 요청 조회',
     description: '나에게 친구 요청을 보낸 사용자들을 반환',
   })
-  @ApiOkResponse({ type: [UserResponse] })
-  async receivedRequest(@User() user): Promise<UserResponse[]> {
+  @ApiOkResponse({ type: [FriendResponseDto] })
+  async receivedRequest(@User() user): Promise<FriendResponseDto[]> {
     return (await this.friendsService.getReceivedFriendships(user)).map(
-      (receivedRequest) => new UserResponse(receivedRequest),
+      (receivedRequest) => new FriendResponseDto(receivedRequest),
     );
   }
 
