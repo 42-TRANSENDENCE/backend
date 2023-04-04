@@ -69,7 +69,9 @@ export class QueueService {
       roomId,
       mode,
     };
-    server.to(roomId).emit('match_maked', matchInfo);
+    // server.to(roomId).emit('match_maked', matchInfo);
+    server.to(pongClient1.id).emit('match_maked', matchInfo);
+    server.to(pongClient2.id).emit('match_maked', matchInfo);
 
     this.logger.log(
       `match maked : ${pongClient1.user.nickname} vs ${pongClient2.user.nickname}`,
