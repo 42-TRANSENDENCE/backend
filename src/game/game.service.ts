@@ -310,18 +310,37 @@ export class GameService {
     const right = center.x + PADDLE_W / 2 + BALL_RAD;
 
     if (left <= ball.x && ball.x <= right && top <= ball.y && ball.y <= bot)
-      game.data.ballVel = { x: -vel.x, y: vel.y };
+    {
+      game.data.ballVel = {x: -vel.x, y: vel.y };
+      game.data.ballPos.x = (player === game.players.p1)
+                              ? (right + 1) : (left - 1); 
+    }
     else if (
-      this.__circle_collision(
-        { x: ball.x, y: ball.y, rad: BALL_RAD },
-        { x: center.x, y: top, rad: rad },
-      ) ||
-      this.__circle_collision(
-        { x: ball.x, y: ball.y, rad: BALL_RAD },
-        { x: center.x, y: bot, rad: rad },
+      this.__circle_collision({x: ball.x, y: ball.y}, {x: center.x, y: top})
       )
+    {
+      game.data.ballVel = {x: -vel.x, y: -vel.y };
+      
+      const vector = { x : game.data.ballPos.x = center.x,
+                       y : game.data.ballPos.y - top };
+      const R_ratio : number = (Math.sqrt(vector.x**2 + vector.y**2)) / (BALL_RAD + PADDLE_W/2);
+      game.data.ballPos.x = center.x - vector.x * R_ratio;
+      game.data.ballPos.y = top - vector.y * R_ratio;
+      game.data.ballPos.x += (game.data.ballPos.x < 0) ? (1) : (-1); 
+    }
+    else if (
+      this.__circle_collision({x: ball.x, y: ball.y},{x: center.x, y: bot})
     )
-      game.data.ballVel = { x: -vel.x, y: -vel.y };
+    {
+      game.data.ballVel = {x: -vel.x, y: -vel.y };
+      
+      const vector = { x : game.data.ballPos.x = center.x,
+                       y : game.data.ballPos.y - bot };
+      const R_ratio : number =  (BALL_RAD + PADDLE_W/2) / (Math.sqrt(vector.x**2 + vector.y**2));
+      game.data.ballPos.x = center.x - vector.x * R_ratio;
+      game.data.ballPos.y = bot - vector.y * R_ratio;
+      game.data.ballPos.x += (game.data.ballPos.x < 0) ? (1) : (-1);
+    }
     else return;
 
     game.data.ballVel.x *= ACCEL_RATIO;
@@ -329,10 +348,10 @@ export class GameService {
   }
 
   private __circle_collision(
-    c1: { x: number; y: number; rad: number },
-    c2: { x: number; y: number; rad: number },
+    c1: {x: number; y: number},
+    c2: {x: number; y: number},
   ): boolean {
-    if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2 <= (c1.rad + c2.rad) ** 2)
+    if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2 <= (BALL_RAD + PADDLE_W/2) ** 2)
       return true;
     return false;
   }
