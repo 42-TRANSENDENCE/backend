@@ -42,7 +42,7 @@ export class GameService {
       gameId: matchInfo.roomId,
       intervalId: null,
       isReady: { p1: false, p2: false },
-      players : {p1 : null, p2 :null },
+      players : {p1 : null, p2 : null },
       users: { p1: matchInfo.p1, p2: matchInfo.p2 },
       spectators: [],
       data: {
@@ -65,39 +65,38 @@ export class GameService {
     if (!game) {
       throw new WsException('잘못된 게임 준비 요청입니다.');
     }
-    // 이거뭐지?
-    // const clientSocket = server.sockets.get(client.id);
-    // clientSocket.join(game.gameId);
-    // client.join(game.gameId);가 되어야 할 듯.
-
     this.logger.log(
+      // users : 로그인된 사람의 전체 소켓. players : 게임 플레이어의 game_nsp socket.
       `
       Client : ${client.id}
       Game found : 
+        User  1 : ${game.users.p1.id}
         player1 : ${game.players.p1.id}
+        User  2 : ${game.users.p2.id}
         player2 : ${game.players.p2.id}
         room ID : ${game.gameId}
       `
     )
-    if (clientId === game.players.p1.id) {
+
+    if (clientId === game.users.p1.id) {
       this.logger.log('player 1 READY');
       game.isReady.p1 = true;
-      game.players.p1
+      game.players.p1 = client;
       client.join(roomId);
-    } else if (client.id === game.players.p2.id) {
+    } else if (client.id === game.users.p2.id) {
       this.logger.log('player 2 READY');
       game.isReady.p2 = true;
+      game.players.p1 = client;
       client.join(roomId);
     }
     this.logger.log(
       `room: ${roomId} ready status : ${game.isReady}`,
     );
 
-      if (game.isReady.p1 && game.isReady.p2) {
+    if (game.isReady.p1 && game.isReady.p2) {
       server.to(roomId).emit('game_start', game.players);
       this.__game_start(server, game);
     }
-
   }
 
   watch(client: Socket, userId: number) {
@@ -296,7 +295,7 @@ export class GameService {
       vel.y = -vel.y;
   }
 
-  private __paddle_collision(player: PongClient, game: Game): void {
+  private __paddle_collision(player: Socket, game: Game): void {
     let center;
     const vel = game.data.ballVel;
     const ball = game.data.ballPos;
