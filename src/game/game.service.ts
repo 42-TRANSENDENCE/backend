@@ -18,7 +18,7 @@ import {
   TABLE_TOP,
   WIN_SCORE,
 } from './game.constants';
-import { Game, GameData, GamePlayDto, GameType } from './game.interface';
+import { Game, GameData, GameMode, GamePlayDto, GameType, ReadyDto } from './game.interface';
 import { HistoryService } from './history/history.service';
 import { ClientStatus, PongClient } from 'src/events/client/client.interface';
 import { WsException } from '@nestjs/websockets';
