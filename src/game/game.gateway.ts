@@ -51,9 +51,9 @@ export class GameGateway
   @SubscribeMessage('ready')
   handleReadyEvent(
     @ConnectedSocket() client: Socket,
-    @MessageBody() matchInfo: MatchDto,
+    @MessageBody() roomId: string,
   ) {
-    this.gameService.ready(this.server, client, matchInfo);
+    this.gameService.ready(this.server, client, roomId);
   }
 
   @SubscribeMessage('keypress')
