@@ -12,7 +12,7 @@ import {
 import { Namespace } from 'socket.io';
 import { Socket } from 'socket.io';
 import { GameService } from './game.service';
-import { GamePlayDto } from './game.interface';
+import { GamePlayDto, ReadyDto } from './game.interface';
 import { MatchDto } from 'src/events/dto/match.dto';
 
 @WebSocketGateway({ namespace: '/game' })
@@ -48,13 +48,12 @@ export class GameGateway
     this.gameService.watch(client, userId);
   }
 
-  // TODO : 임시로 이렇게 하고 이후에 DTO만들게요.
   @SubscribeMessage('ready')
   handleReadyEvent(
-    @ConnectedSocket() game_socket: Socket,
-    @MessageBody() temp : any
+    @ConnectedSocket() client: Socket,
+    @MessageBody() readyInfo : ReadyDto,
   ) {
-    this.gameService.ready(this.server, game_socket, temp.clientId, temp.roomId);
+    this.gameService.ready(this.server, client, readyInfo);
   }
 
   @SubscribeMessage('keypress')

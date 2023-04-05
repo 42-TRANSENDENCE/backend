@@ -38,3 +38,8 @@ export interface GamePlayDto {
   roomId: string;
   keyCode: string;
 }
+
+export interface ReadyDto {
+  userId : string;
+  roomId : string;
+}
