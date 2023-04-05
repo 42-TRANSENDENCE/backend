@@ -1,11 +1,12 @@
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { GameMode, GameType } from '../../game/game.interface';
-import { MatchDto, QueueDto } from '../lobby/lobby.interface';
 import { PongClient, ClientStatus } from '../client/client.interface';
 import { v4 as uuidv4 } from 'uuid';
 import { ClientService } from '../client/client.service';
 import { GameService } from '../../game/game.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { QueueDto } from '../dto/queue.dto';
+import { MatchDto } from '../dto/match.dto';
 
 @Injectable()
 export class QueueService {

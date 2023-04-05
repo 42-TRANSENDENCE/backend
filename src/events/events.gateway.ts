@@ -10,17 +10,15 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import {
-  CreateFriendlyMatchDto,
-  InvitationDto,
-  QueueDto,
-} from 'src/events/lobby/lobby.interface';
 import { LobbyService } from 'src/events/lobby/lobby.service';
 import { PongClient, ClientStatus } from 'src/events/client/client.interface';
 import { ClientService } from 'src/events/client/client.service';
 import { FriendsService } from 'src/users/friends/friends.service';
 import { User } from 'src/users/users.entity';
 import { QueueService } from './queue/queue.service';
+import { CreateFriendlyMatchDto } from './dto/create-friendly-match.dto';
+import { InvitationDto } from './dto/invitation.dto';
+import { QueueDto } from './dto/queue.dto';
 
 export interface UserWithStaus extends User {
   status: ClientStatus;
@@ -52,11 +50,7 @@ export class EventGateway
       client.disconnect(true);
       return;
     }
-    const pongClient: PongClient = {
-      id: client.id,
-      user,
-      status: ClientStatus.ONLINE,
-    };
+    const pongClient = new PongClient(client, user);
     if (!this.clientService.add(pongClient)) {
       client.disconnect(true);
       return;

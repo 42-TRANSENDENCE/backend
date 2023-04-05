@@ -13,7 +13,7 @@ import { Namespace } from 'socket.io';
 import { Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { GamePlayDto } from './game.interface';
-import { MatchDto } from '../events/lobby/lobby.interface';
+import { MatchDto } from 'src/events/dto/match.dto';
 
 @WebSocketGateway({ namespace: '/game' })
 export class GameGateway

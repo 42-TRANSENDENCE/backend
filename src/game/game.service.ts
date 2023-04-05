@@ -19,12 +19,12 @@ import {
   WIN_SCORE,
 } from './game.constants';
 import { Game, GameData, GamePlayDto, GameType } from './game.interface';
-import { MatchDto } from '../events/lobby/lobby.interface';
 import { HistoryService } from './history/history.service';
 import { ClientStatus, PongClient } from 'src/events/client/client.interface';
 import { WsException } from '@nestjs/websockets';
 import { ClientService } from 'src/events/client/client.service';
 import { FriendsService } from 'src/users/friends/friends.service';
+import { MatchDto } from 'src/events/dto/match.dto';
 
 @Injectable()
 export class GameService {
