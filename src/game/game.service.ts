@@ -209,6 +209,8 @@ export class GameService {
     this.__score_check(server, game);
     this.__collid_check(game);
     this.__keyboard_check(game);
+    if (game.mode == GameMode.SPECIAL)
+      this.__apply_gravity(game.data);
 
     server.to(game.gameId).emit('update_game', {
       ballPos: game.data.ballPos,
@@ -224,15 +226,21 @@ export class GameService {
     if (pos.x <= TABLE_LEFT + BALL_RAD) {
       score.p2 += 1;
       server.to(game.gameId).emit('update_score', score);
+      if (game.mode == GameMode.SPECIAL)
+        game.data.paddleSize.p2 -= (PADDLE_H/(WIN_SCORE+1));
+
       if (score.p2 >= WIN_SCORE) {
-        server.to(game.gameId).emit('game_over', game.players.p2);
+        server.to(game.gameId).emit('game_over', game.players.p2.id);
         this.__game_end(server, game);
       }
     } else if (pos.x >= TABLE_RIGHT - BALL_RAD) {
       score.p1 += 1;
       server.to(game.gameId).emit('update_score', score);
+      if (game.mode == GameMode.SPECIAL)
+        game.data.paddleSize.p1 -= (PADDLE_H/(WIN_SCORE+1));
+ 
       if (score.p1 >= WIN_SCORE) {
-        server.to(game.gameId).emit('game_over', game.players.p1);
+        server.to(game.gameId).emit('game_over', game.players.p1.id);
         this.__game_end(server, game);
       }
     }
@@ -323,5 +331,14 @@ export class GameService {
     if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2 <= (c1.rad + c2.rad) ** 2)
       return true;
     return false;
+  }
+
+  private __apply_gravity (gameData: GameData)
+  {
+    const yPos : number = gameData.ballPos.y;
+    if (yPos > TABLE_BOTTOM * 0.2 )
+      gameData.ballVel.y += 0.2;
+    else if (yPos < TABLE_TOP * 0.2)
+      gameData.ballVel.y -= 0.2;
   }
 }
