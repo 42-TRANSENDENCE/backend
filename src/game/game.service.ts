@@ -159,8 +159,8 @@ export class GameService {
     const values = this.games.values();
     for (const value of values) {
       if (
-        value.players.p1.user.id === userId ||
-        value.players.p2.user.id === userId
+        value.users.p1.user.id === userId ||
+        value.users.p2.user.id === userId
       ) {
         return value.gameId;
       }
