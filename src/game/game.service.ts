@@ -61,8 +61,11 @@ export class GameService {
     this.games.set(matchInfo.roomId, game);
   }
 
-  ready(server: Namespace, gameClient: Socket, clientId: string, roomId: string) {
+  ready(server: Namespace, gameClient: Socket, readyInfo : ReadyDto) : void {
+    const clientId : string = readyInfo.userId;
+    const roomId : string = readyInfo.roomId;
     const game = this.games.get(roomId);
+
     if (!game) {
       throw new WsException('잘못된 게임 준비 요청입니다.');
     }
@@ -75,12 +78,12 @@ export class GameService {
     } else if (clientId === game.users.p2.id) {
       this.logger.log('player 2 READY');
       game.isReady.p2 = true;
-      game.players.p1 = gameClient;
+      game.players.p2 = gameClient;
       gameClient.join(roomId);
     }
 
     if (game.isReady.p1 && game.isReady.p2) {
-      server.to(roomId).emit('game_start', game.players);
+      server.to(roomId).emit('game_start', game.players.p1.id, game.users.p1.user.nickname, game.users.p2.user.nickname);
       this.__game_start(server, game);
     }
   }
