@@ -42,7 +42,8 @@ export class GameService {
       gameId: matchInfo.roomId,
       intervalId: null,
       isReady: { p1: false, p2: false },
-      players: { p1: matchInfo.p1, p2: matchInfo.p2 },
+      players : {p1 : null, p2 :null },
+      users: { p1: matchInfo.p1, p2: matchInfo.p2 },
       spectators: [],
       data: {
         ballPos: { x: 0, y: 0 },
@@ -59,13 +60,15 @@ export class GameService {
     this.games.set(matchInfo.roomId, game);
   }
 
-  ready(server: Namespace, client: Socket, roomId: string) {
+  ready(server: Namespace, client: Socket, clientId: string, roomId: string) {
     const game = this.games.get(roomId);
     if (!game) {
       throw new WsException('잘못된 게임 준비 요청입니다.');
     }
-    const clientSocket = server.sockets.get(client.id);
-    clientSocket.join(game.gameId);
+    // 이거뭐지?
+    // const clientSocket = server.sockets.get(client.id);
+    // clientSocket.join(game.gameId);
+    // client.join(game.gameId);가 되어야 할 듯.
 
     this.logger.log(
       `
@@ -76,12 +79,15 @@ export class GameService {
         room ID : ${game.gameId}
       `
     )
-    if (client.id === game.players.p1.id) {
+    if (clientId === game.players.p1.id) {
       this.logger.log('player 1 READY');
       game.isReady.p1 = true;
+      game.players.p1
+      client.join(roomId);
     } else if (client.id === game.players.p2.id) {
       this.logger.log('player 2 READY');
       game.isReady.p2 = true;
+      client.join(roomId);
     }
     this.logger.log(
       `room: ${roomId} ready status : ${game.isReady}`,
