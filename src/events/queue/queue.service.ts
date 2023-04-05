@@ -77,6 +77,7 @@ export class QueueService {
     this.logger.log(
       `match maked : ${pongClient1.user.nickname} vs ${pongClient2.user.nickname}`,
     );
+    this.logger.log(`game_room ID : ${roomId}`);
     this.logger.log(`remaining users : ${queue.length}`);
 
     this.gameService.init(matchInfo, GameType.RANK);

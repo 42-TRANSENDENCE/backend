@@ -60,7 +60,7 @@ export class GameService {
     this.games.set(matchInfo.roomId, game);
   }
 
-  ready(server: Namespace, client: Socket, clientId: string, roomId: string) {
+  ready(server: Namespace, gameClient: Socket, clientId: string, roomId: string) {
     const game = this.games.get(roomId);
     if (!game) {
       throw new WsException('잘못된 게임 준비 요청입니다.');
@@ -68,7 +68,7 @@ export class GameService {
     this.logger.log(
       // users : 로그인된 사람의 전체 소켓. players : 게임 플레이어의 game_nsp socket.
       `
-      Client : ${client.id}
+      Client : ${gameClient.id}
       Game found : 
         User  1 : ${game.users.p1.id}
         player1 : ${game.players.p1.id}
@@ -81,13 +81,13 @@ export class GameService {
     if (clientId === game.users.p1.id) {
       this.logger.log('player 1 READY');
       game.isReady.p1 = true;
-      game.players.p1 = client;
-      client.join(roomId);
-    } else if (client.id === game.users.p2.id) {
+      game.players.p1 = gameClient;
+      gameClient.join(roomId);
+    } else if (clientId === game.users.p2.id) {
       this.logger.log('player 2 READY');
       game.isReady.p2 = true;
-      game.players.p1 = client;
-      client.join(roomId);
+      game.players.p1 = gameClient;
+      gameClient.join(roomId);
     }
     this.logger.log(
       `room: ${roomId} ready status : ${game.isReady}`,
