@@ -81,7 +81,7 @@ export class GameService {
       game.players.p2 = gameClient;
       gameClient.join(roomId);
     }
-
+    
     if (game.isReady.p1 && game.isReady.p2) {
       server.to(roomId).emit('game_start', game.players.p1.id, game.users.p1.user.nickname, game.users.p2.user.nickname);
       this.__game_start(server, game);
@@ -203,8 +203,8 @@ export class GameService {
       this.historyService.save(history);
 
       server.in(game.gameId).socketsLeave(game.gameId);
-      server.sockets.get(game.players.p1.id).disconnect();
-      server.sockets.get(game.players.p2.id).disconnect();
+      // server.sockets.get(game.players.p1.id).disconnect();
+      // server.sockets.get(game.players.p2.id).disconnect();
       this.games.delete(game.gameId);
     }
   }
@@ -317,7 +317,7 @@ export class GameService {
     }
     else if (
       this.__circle_collision({x: ball.x, y: ball.y}, {x: center.x, y: top})
-      )
+    )
     {
       game.data.ballVel = {x: -vel.x, y: -vel.y };
       
