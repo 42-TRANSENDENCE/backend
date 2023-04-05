@@ -49,6 +49,7 @@ export class GameService {
         ballPos: { x: 0, y: 0 },
         ballVel: { x: BALL_VEL_INIT_X, y: BALL_VEL_INIT_Y },
         paddlePos: { p1: 0, p2: 0 },
+        paddleSize: {p1: PADDLE_H, p2: PADDLE_H},
         score: { p1: 0, p2: 0 },
         upPressed: { p1: false, p2: false },
         downPressed: { p1: false, p2: false },
