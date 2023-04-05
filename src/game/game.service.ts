@@ -67,31 +67,31 @@ export class GameService {
     const clientSocket = server.sockets.get(client.id);
     clientSocket.join(game.gameId);
 
-    if (game) {
-      this.logger.log(
-        `
-        Client : ${client.id}
-        Game found : 
-          player1 : ${game.players.p1.id}
-          player2 : ${game.players.p2.id}
-          room ID : ${game.gameId}
-        `
-      )
-      if (client.id === game.players.p1.id) {
-        this.logger.log('player 1 READY');
-        game.isReady.p1 = true;
-      } else if (client.id === game.players.p2.id) {
-        this.logger.log('player 2 READY');
-        game.isReady.p2 = true;
-      }
-      this.logger.log(
-        `room: ${roomId} ready status : ${game.isReady}`,
-      );
+    this.logger.log(
+      `
+      Client : ${client.id}
+      Game found : 
+        player1 : ${game.players.p1.id}
+        player2 : ${game.players.p2.id}
+        room ID : ${game.gameId}
+      `
+    )
+    if (client.id === game.players.p1.id) {
+      this.logger.log('player 1 READY');
+      game.isReady.p1 = true;
+    } else if (client.id === game.players.p2.id) {
+      this.logger.log('player 2 READY');
+      game.isReady.p2 = true;
     }
-    if (game.isReady.p1 && game.isReady.p2) {
+    this.logger.log(
+      `room: ${roomId} ready status : ${game.isReady}`,
+    );
+
+      if (game.isReady.p1 && game.isReady.p2) {
       server.to(roomId).emit('game_start', game.players);
       this.__game_start(server, game);
     }
+
   }
 
   watch(client: Socket, userId: number) {
