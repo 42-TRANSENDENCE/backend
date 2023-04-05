@@ -213,6 +213,7 @@ export class GameService {
     server.to(game.gameId).emit('update_game', {
       ballPos: game.data.ballPos,
       paddlePos: game.data.paddlePos,
+      paddleSize: game.data.paddleSize
     });
   }
 
@@ -250,18 +251,19 @@ export class GameService {
       Number(game.data.downPressed.p1) - Number(game.data.upPressed.p1);
     const p2_dir: number =
       Number(game.data.downPressed.p2) - Number(game.data.upPressed.p2);
-
+    const p1PaddleH = game.data.paddleSize.p1;
+    const p2PaddleH = game.data.paddleSize.p2;
     game.data.paddlePos.p1 += PADDLE_SPEED * p1_dir;
     game.data.paddlePos.p2 += PADDLE_SPEED * p2_dir;
 
-    if (game.data.paddlePos.p1 < TABLE_TOP + PADDLE_H / 2)
-      game.data.paddlePos.p1 = TABLE_TOP + PADDLE_H / 2;
-    else if (game.data.paddlePos.p1 > TABLE_BOTTOM - PADDLE_H / 2)
-      game.data.paddlePos.p1 = TABLE_BOTTOM - PADDLE_H / 2;
-    if (game.data.paddlePos.p2 < TABLE_TOP + PADDLE_H / 2)
-      game.data.paddlePos.p2 = TABLE_TOP + PADDLE_H / 2;
-    else if (game.data.paddlePos.p2 > TABLE_BOTTOM - PADDLE_H / 2)
-      game.data.paddlePos.p2 = TABLE_BOTTOM - PADDLE_H / 2;
+    if (game.data.paddlePos.p1 < TABLE_TOP + p1PaddleH / 2)
+      game.data.paddlePos.p1 = TABLE_TOP + p1PaddleH / 2;
+    else if (game.data.paddlePos.p1 > TABLE_BOTTOM - p1PaddleH / 2)
+      game.data.paddlePos.p1 = TABLE_BOTTOM - p1PaddleH / 2;
+    if (game.data.paddlePos.p2 < TABLE_TOP + p2PaddleH / 2)
+      game.data.paddlePos.p2 = TABLE_TOP + p2PaddleH / 2;
+    else if (game.data.paddlePos.p2 > TABLE_BOTTOM - p2PaddleH / 2)
+      game.data.paddlePos.p2 = TABLE_BOTTOM - p2PaddleH / 2;
   }
 
   private __wall_collision(positions: GameData): void {
