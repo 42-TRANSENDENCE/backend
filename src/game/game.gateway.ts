@@ -48,12 +48,13 @@ export class GameGateway
     this.gameService.watch(client, userId);
   }
 
+  // TODO : 임시로 이렇게 하고 이후에 DTO만들게요.
   @SubscribeMessage('ready')
   handleReadyEvent(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() roomId: string,
+    @ConnectedSocket() game_socket: Socket,
+    @MessageBody() temp : any
   ) {
-    this.gameService.ready(this.server, client, roomId);
+    this.gameService.ready(this.server, game_socket, temp.clientId, temp.roomId);
   }
 
   @SubscribeMessage('keypress')
