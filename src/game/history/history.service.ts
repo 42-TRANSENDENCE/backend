@@ -19,6 +19,7 @@ export class HistoryService {
         loser: game.users.p2.user,
         winnerScore: game.data.score.p1,
         loserScore: game.data.score.p2,
+        startTime : game.startTime,
         endTime: new Date(),
       });
     } else {
@@ -27,6 +28,7 @@ export class HistoryService {
         loser: game.users.p1.user,
         winnerScore: game.data.score.p2,
         loserScore: game.data.score.p1,
+        startTime : game.startTime,
         endTime: new Date(),
       });
     }
