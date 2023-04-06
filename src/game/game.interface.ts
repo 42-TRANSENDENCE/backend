@@ -44,3 +44,9 @@ export interface ReadyDto {
   userId : string;
   roomId : string;
 }
+
+export interface StartDto {
+  p1Id : string ;
+  p1Name : string ;
+  p2Name : string ;
+}

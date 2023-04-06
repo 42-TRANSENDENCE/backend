@@ -83,7 +83,11 @@ export class GameService {
     }
     
     if (game.isReady.p1 && game.isReady.p2) {
-      server.to(roomId).emit('game_start', game.players.p1.id, game.users.p1.user.nickname, game.users.p2.user.nickname);
+      server.to(roomId).emit('game_start', {
+        p1Id : game.players.p1.id,
+        p1Name : game.users.p1.user.nickname,
+        p2Name : game.users.p2.user.nickname
+      });
       this.__game_start(server, game);
     }
   }
