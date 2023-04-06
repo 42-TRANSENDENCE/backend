@@ -203,8 +203,11 @@ export class GameService {
       clearInterval(game.intervalId);
       game.intervalId = null;
 
-      const history = this.historyService.createHistory(game);
-      this.historyService.save(history);
+      if (game.type == GameType.RANK)
+      {
+        const history = this.historyService.createHistory(game);
+        this.historyService.save(history);
+      }
 
       server.in(game.gameId).socketsLeave(game.gameId);
       // server.sockets.get(game.players.p1.id).disconnect();
