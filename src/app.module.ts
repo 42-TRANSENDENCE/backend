@@ -12,8 +12,8 @@ import { DatabaseModule } from './database/database.module';
 import { GameModule } from './game/game.module';
 import { EventsModules } from './channels/events.module';
 import { EventsModule } from './events/events.module';
-import { RateLimitMiddleware } from './ratelimit/rateLimitMiddleware';
-import { MiddlewareConsumer } from '@nestjs/common/interfaces';
+import { AchievementModule } from './achievement/achievement.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -45,6 +45,7 @@ import { MiddlewareConsumer } from '@nestjs/common/interfaces';
     EventsModule,
     GameModule,
     CacheModule.register(),
+    AchievementModule,
   ],
   controllers: [AppController],
   providers: [
