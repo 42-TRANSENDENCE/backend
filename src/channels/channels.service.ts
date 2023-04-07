@@ -7,10 +7,11 @@ import {
   UnauthorizedException,
   NotFoundException,
   MethodNotAllowedException,
+  UseGuards,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Channels } from 'src/channels/channels.entity';
+import { Channels, ChatStatus } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelmember.entity';
 import { ChannelsGateway } from './events.chats.gateway';
@@ -50,14 +51,15 @@ export class ChannelsService {
       title: title,
       password,
       owner: myId,
+      status: ChatStatus.PUBLIC,
     });
     if (password) {
       const hashedPassword = await bcrypt.hash(password.toString(), saltRounds);
-      channel.private = true;
+      channel.status = ChatStatus.PROTECTED;
       channel.password = hashedPassword;
     }
-    // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
     const channelReturned = await this.channelsRepository.save(channel);
+    // this.logger.log(JSON.stringify(channelReturned))
     this.channelsGateway.EmitChannelInfo(channelReturned);
     const channelMember = this.channelMemberRepository.create({
       userId: myId,
@@ -71,7 +73,8 @@ export class ChannelsService {
     const channel = await this.findById(channelId);
     if (channel) {
       const channelMembers = await this.getChannelMembers(channelId);
-      const result = [channelMembers, channel.private];
+      const user_ids = channelMembers.map((member) => member.userId);
+      const result = { memberId: user_ids, status: channel.status };
       return result;
     } else throw new NotFoundException('Check the channelId if there is exist');
   }
@@ -106,12 +109,12 @@ export class ChannelsService {
         //이미 채널id에 해당하는 멤버가 있으면 추가 ㄴㄴ!
         const isInUser = await this.channelMemberRepository
           .createQueryBuilder('channel_member')
-          .where('channel_member.userId = :userId', { userId: 1 })
+          .where('channel_member.userId = :userId', { userId: user.id })
           .getOne();
         // console.log(isInUser)
         if (!isInUser) {
           const cm = this.channelMemberRepository.create({
-            userId: 1, // user.id
+            userId: user.id, // user.id
             channelId: channelId,
           });
           this.channelMemberRepository.save(cm);
@@ -129,24 +132,23 @@ export class ChannelsService {
   }
   async userEnterPublicChannel(
     channelId: number,
-    password: string,
     user: User,
     curChannel: Channels,
   ): Promise<returnStatusMessage> {
     // 공개방은 무조건 소켓 연결 근데 + 밴 리스트 !! 는 나중에
-    // this.channelsGateway.nsp.emit('join-room');
     const isInUser = await this.channelMemberRepository
       .createQueryBuilder('channel_member')
-      .where('channel_member.UserId = :userId', { userId: 1 }) // 1 -> user.id
+      .where('channel_member.userId = :userId', { userId: user.id }) // 1 -> user.id
       .getOne();
     // console.log(isInUser)
     if (!isInUser) {
       const cm = this.channelMemberRepository.create({
-        userId: 1, // user.id
+        userId: user.id, // user.id
         channelId: channelId,
       });
       this.channelMemberRepository.save(cm);
     }
+    // this.channelsGateway.nsp.emit('join-channel', channelId);
     return { message: 'Enter Channel in successfully', status: 200 };
   }
 
@@ -154,22 +156,24 @@ export class ChannelsService {
     channelId: number,
     password: string,
     user: User,
-  ): Promise<{ message: string; status: number }> {
+  ): Promise<returnStatusMessage> {
     const curChannel = await this.channelsRepository.findOneBy({
       id: channelId,
     });
-    this.logger.log(await this.isBanned(channelId, 100)); // user.id 와 연결해야함
-    if (await this.isBanned(channelId, 4))
+    this.logger.log(user);
+    this.logger.log(await this.isBanned(channelId, user.id)); // user.id 와 연결해야함
+    if (await this.isBanned(channelId, user.id))
       throw new UnauthorizedException('YOU ARE BANNED');
     if (!curChannel) throw new NotFoundException('Plz Enter Exist Room');
-    if (curChannel.private)
+    // this.logger.debug(curChannel.status === ChatStatus.PROTECTED)
+    if (curChannel.status === ChatStatus.PROTECTED)
       return this.userEnterPrivateChannel(
         channelId,
         password,
         user,
         curChannel,
       );
-    return this.userEnterPublicChannel(channelId, password, user, curChannel);
+    return this.userEnterPublicChannel(channelId, user, curChannel);
   }
 
   // 내가 이 채팅방에 owner 권한이 있는지
@@ -186,9 +190,8 @@ export class ChannelsService {
     if (curChannel.owner == toUserId)
       throw new MethodNotAllowedException('Owner could not downgrade admin');
     // 채팅방의 Owner가 현재 명령한  userid와 일치 할때  근데 지금은  user가 연동이 안 되어 있닌까
-    // if(user.id == curChannel.owner)
     // owner 가 admin을 자기 자신한테 주면 그냥 owner되게 하기
-    {
+    if (user.id === curChannel.owner) {
       curChannel.admin = toUserId;
       this.channelsRepository.save(curChannel);
     }

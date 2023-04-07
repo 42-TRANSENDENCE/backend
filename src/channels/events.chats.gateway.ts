@@ -22,21 +22,14 @@ import { Chats } from './chats/chats.entity';
 import { Server, Socket, Namespace } from 'socket.io';
 import { ChannelsService } from 'src/channels/channels.service';
 import { leaveDto } from './dto/leave.dto';
-// import { Channels } from 'src/channels/channels.entity';
-// import { Repository } from 'typeorm';
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
 // }
 
 // FRONTEND_URL="http://localhost:5173"
-const originUrl = process.env.FRONTEND_URL;
-@WebSocketGateway({
-  namespace: 'channelchat',
-  cors: {
-    origin: originUrl,
-  },
-})
+// const originUrl = process.env.FRONTEND_URL;
+@WebSocketGateway({ namespace: 'channelchat' })
 export class ChannelsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -51,17 +44,17 @@ export class ChannelsGateway
 
   // 클라이언트가, 프론트가 나한테 보내는 이벤트.
   afterInit() {
-    this.nsp.adapter.on('join-room', (room, id) => {
-      this.logger.log(`"Socket:${id}"이 "Room:${room}"에 참여하였습니다.`);
-    });
+    // this.nsp.adapter.on('join-room', (room, id) => {
+    //   this.logger.log(`"Socket:${id}"이 "Room:${room}"에 참여하였습니다.`);
+    // });
 
-    this.nsp.adapter.on('leave-room', (room, id) => {
-      this.logger.log(`"Socket:${id}"이 "Room:${room}"에서 나갔습니다.`);
-    });
+    // this.nsp.adapter.on('leave-room', (room, id) => {
+    //   this.logger.log(`"Socket:${id}"이 "Room:${room}"에서 나갔습니다.`);
+    // });
 
-    this.nsp.adapter.on('delete-room', (roomName) => {
-      this.logger.log(`"Room:${roomName}"이 삭제되었습니다.`);
-    });
+    // this.nsp.adapter.on('delete-room', (roomName) => {
+    //   this.logger.log(`"Room:${roomName}"이 삭제되었습니다.`);
+    // });
 
     this.logger.log('웹소켓 서버 초기화 ✅');
   }
@@ -88,23 +81,27 @@ export class ChannelsGateway
     }
   }
 
-  @SubscribeMessage('join-room')
+  @SubscribeMessage('join-channel')
   handleJoinRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody('roomId') roomId: string,
+    @MessageBody('channelId') channelId: string,
   ) {
-    socket.join(roomId);
-    this.logger.log(`${socket.id} 가 ${roomId} 에 들어왔다 Well Done ! `);
+    if (!channelId) throw new WsException('There is no user or roomId here');
+    this.logger.debug(socket.id);
+    socket.join(channelId);
+    this.logger.log(`${socket.id} 가 ${channelId} 에 들어왔다 Well Done ! `);
     // socket.emit('message',{message: `${socket.id} 가 들어왔다 Well Done ! `})
 
     // 잘 보내지나 확인용
-    this.logger.log(`소켓에 연결된 사람수 : ${this.getClientsInRoom(roomId)}`);
-    this.nsp.to(roomId).emit('message', {
-      message: `${socket.id} 가 ${roomId} 에 들어왔다 Well Done ! `,
-    });
+    this.logger.log(
+      `소켓에 연결된 사람수 : ${this.getClientsInRoom(channelId)}`,
+    );
+    // this.nsp.to(channelId).emit('message', {
+    //   message: `${socket.id} 가 ${channelId} 에 들어왔다 Well Done ! `,
+    // });
     //
     socket.broadcast
-      .to(roomId)
+      .to(channelId)
       .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
   }
 
@@ -116,6 +113,7 @@ export class ChannelsGateway
     socket.broadcast.emit('message', { username: socket.id, message });
     return { username: socket.id, message };
   }
+
   async sendEmitMessage(sendChat: Chats) {
     // 이부분 해당 방에 해당하는 broadcast로 하는걸로 수정하자 테스트 하면서
     // 방 넘버 가지고 소켓아이디 알아내서 to로 에밋 하고 broadcast해줘야함.
@@ -125,7 +123,7 @@ export class ChannelsGateway
     return this.nsp.emit('newRoom', channelReturned);
   }
 
-  @SubscribeMessage('leave-room')
+  @SubscribeMessage('leave-channel')
   handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() leaveDto: leaveDto,
