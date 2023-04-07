@@ -27,43 +27,41 @@ import {
 } from '@nestjs/swagger';
 import { User } from 'src/auth/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
-import { FriendsService } from 'src/users/friends/friends.service';
 import { ModifyUserDto } from './dto/users.dto';
 import { userAvatarApiBody } from './users.constants';
 import { UsersService } from './users.service';
+import { UserResponse } from './dto/user-response.dto';
+import { UserSearchDto } from './dto/user-search.dto';
 
 @ApiTags('users')
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
-  constructor(
-    private readonly userService: UsersService,
-    private readonly friendsService: FriendsService,
-  ) {}
+  constructor(private readonly userService: UsersService) {}
 
   @Get()
   @UseGuards(JwtTwoFactorGuard)
   @ApiOperation({ summary: '로그인한 user 정보 반환' })
+  @ApiOkResponse({ type: UserResponse })
   async getUserInfo(@User() user) {
-    return user;
+    return this.userService.getUser(user.id);
   }
 
   @Get('search/:nickname')
   @UseGuards(JwtTwoFactorGuard)
   @ApiOperation({ summary: '닉네임으로 유저 정보 검색' })
+  @ApiOkResponse({ type: UserSearchDto })
   getUserByNickname(@User() user, @Param('nickname') nickname: string) {
     return this.userService.getByNickname(user, nickname);
   }
 
-  // TODO: avatar type 저장
   @Get('avatar')
-  @ApiOperation({ summary: '사용자 아바타 이미지 반환 (byte array)' })
   @UseGuards(JwtTwoFactorGuard)
   @Header('Content-Type', 'image/*')
   @Header('Content-Disposition', 'inline')
+  @ApiOperation({ summary: '사용자 아바타 이미지 반환' })
   async getUserAvatar(@User() user) {
-    const avatar = await this.userService.getUserAvatar(user.id);
-    return new StreamableFile(avatar);
+    return new StreamableFile(user.avatar);
   }
 
   @Put('avatar')
@@ -76,9 +74,7 @@ export class UsersController {
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody(userAvatarApiBody)
-  @ApiOkResponse({
-    description: '사용자 아바타 변경 완료. 변경한 이미지 데이터 반환',
-  })
+  @ApiOkResponse({ description: '변경된 이미지 반환' })
   async updateUserAvatar(
     @User() user,
     @UploadedFile(
@@ -94,7 +90,7 @@ export class UsersController {
     file: Express.Multer.File,
   ) {
     return new StreamableFile(
-      await this.userService.updateUserAvatar(user.id, file.buffer),
+      await this.userService.updateUserAvatar(user, file.buffer),
     );
   }
 
@@ -109,7 +105,7 @@ export class UsersController {
   @UseGuards(JwtTwoFactorGuard)
   @ApiOperation({ summary: 'nickname 변경' })
   @ApiOkResponse({ description: '변경 완료' })
-  @ApiBadRequestResponse({ description: '변경 실패. 메세지에 실패 이유 포함' })
+  @ApiBadRequestResponse({ description: '이미 존재하는 닉네임 / 잘못된 입력' })
   modifyNickname(@User() user, @Body() modifyUserDto: ModifyUserDto) {
     return this.userService.modifyNickname(user, modifyUserDto.nickname);
   }

@@ -105,7 +105,7 @@ describe('AuthController', () => {
     it('should redirect to home if user already exists and user is not using 2FA', async () => {
       const result = await authController.login(mockedReq, token);
       const expected = {
-        url: `${mockedConfigService.get('FRONTEND_URL')}/home`,
+        url: `${mockedConfigService.get('FRONTEND_URL')}/socket`,
       };
       expect(result).toEqual(expected);
     });

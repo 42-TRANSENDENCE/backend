@@ -17,8 +17,9 @@ import {
   userNotFoundErr,
 } from './users.constants';
 import * as bcrypt from 'bcrypt';
-import { SearchUserDto } from './dto/search-user.dto';
+import { UserSearchDto } from './dto/user-search.dto';
 import { FriendsService } from './friends/friends.service';
+import { UserResponse } from './dto/user-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -30,7 +31,18 @@ export class UsersService {
     private readonly friendsService: FriendsService,
   ) {}
 
-  async getByNickname(user: User, nickname: string): Promise<SearchUserDto> {
+  async getUser(id: number): Promise<UserResponse> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: { achievements: true, wins: true, loses: true },
+    });
+    if (!user) {
+      throw new NotFoundException(userNotFoundErr);
+    }
+    return new UserResponse(user);
+  }
+
+  async getByNickname(user: User, nickname: string): Promise<UserSearchDto> {
     const found = await this.userRepository.findOne({
       where: { nickname },
       relations: { achievements: true, wins: true, loses: true },
@@ -39,21 +51,11 @@ export class UsersService {
       this.logger.error(`user: ${nickname} not exists`);
       throw new NotFoundException(userNotFoundErr);
     }
-    const response: SearchUserDto = {
-      id: found.id,
-      nickname: found.nickname,
-      avatar: found.avatar,
-      achievement: found.achievements.map((achievement) => achievement.title),
-      isFriend: await this.friendsService.isFriend(user.id, found.id),
-      win: found.wins.length,
-      lose: found.loses.length,
-    };
+    const response = new UserSearchDto(
+      found,
+      await this.friendsService.isFriend(user.id, found.id),
+    );
     return response;
-  }
-
-  async getUserAvatar(id: number): Promise<Uint8Array> {
-    const user = await this.getById(id);
-    return user.avatar;
   }
 
   async getById(id: number): Promise<User> {
@@ -65,15 +67,9 @@ export class UsersService {
     return user;
   }
 
-  async updateUserAvatar(id: number, data: Buffer) {
-    const updateResult = await this.userRepository.update(
-      { id },
-      { avatar: data },
-    );
-    if (!updateResult.affected) {
-      this.logger.error(`user : ${id} update avatar failed`);
-      throw new NotFoundException(userNotFoundErr);
-    }
+  async updateUserAvatar(user: User, data: Buffer) {
+    user.avatar = data;
+    this.userRepository.save(user);
     return data;
   }
 

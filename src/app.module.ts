@@ -12,6 +12,8 @@ import { DatabaseModule } from './database/database.module';
 import { GameModule } from './game/game.module';
 import { EventsModules } from './channels/events.module';
 import { EventsModule } from './events/events.module';
+import { AchievementModule } from './achievement/achievement.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -43,6 +45,7 @@ import { EventsModule } from './events/events.module';
     EventsModule,
     GameModule,
     CacheModule.register(),
+    AchievementModule,
   ],
   controllers: [AppController],
   providers: [
