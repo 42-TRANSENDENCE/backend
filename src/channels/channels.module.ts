@@ -6,12 +6,9 @@ import { Channels } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelmember.entity';
 import { EventsModules } from './events.module';
-import { Chats } from './chats/chats.entity';
 import { forwardRef } from '@nestjs/common';
 import { ChannelBanMember } from './channelbanmember.entity';
-import { ChatsService } from './chats/chats.service';
 import { ChatsModule } from './chats/chats.module';
-import { ChannelsGateway } from './events.chats.gateway';
 @Module({
   imports: [
     CacheModule.register(),
@@ -19,8 +16,8 @@ import { ChannelsGateway } from './events.chats.gateway';
     forwardRef(() => ChatsModule),
     forwardRef(() => EventsModules),
   ],
-  providers: [ChannelsService, ChannelsGateway],
+  providers: [ChannelsService],
   controllers: [ChannelsController],
-  exports: [ChannelsService, ChannelsGateway],
+  exports: [ChannelsService],
 })
 export class ChannelsModule {}
