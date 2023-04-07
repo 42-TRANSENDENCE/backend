@@ -18,7 +18,7 @@ import {
   TABLE_TOP,
   WIN_SCORE,
 } from './game.constants';
-import { Game, GameData, GamePlayDto, GameType } from './game.interface';
+import { Game, GameData, GameMode, GamePlayDto, GameType, ReadyDto } from './game.interface';
 import { HistoryService } from './history/history.service';
 import { ClientStatus, PongClient } from 'src/events/client/client.interface';
 import { WsException } from '@nestjs/websockets';
@@ -49,6 +49,7 @@ export class GameService {
         ballPos: { x: 0, y: 0 },
         ballVel: { x: BALL_VEL_INIT_X, y: BALL_VEL_INIT_Y },
         paddlePos: { p1: 0, p2: 0 },
+        paddleSize: {p1: PADDLE_H, p2: PADDLE_H},
         score: { p1: 0, p2: 0 },
         upPressed: { p1: false, p2: false },
         downPressed: { p1: false, p2: false },
@@ -60,23 +61,14 @@ export class GameService {
     this.games.set(matchInfo.roomId, game);
   }
 
-  ready(server: Namespace, gameClient: Socket, clientId: string, roomId: string) {
+  ready(server: Namespace, gameClient: Socket, readyInfo : ReadyDto) : void {
+    const clientId : string = readyInfo.userId;
+    const roomId : string = readyInfo.roomId;
     const game = this.games.get(roomId);
+
     if (!game) {
       throw new WsException('잘못된 게임 준비 요청입니다.');
     }
-    this.logger.log(
-      // users : 로그인된 사람의 전체 소켓. players : 게임 플레이어의 game_nsp socket.
-      `
-      Client : ${gameClient.id}
-      Game found : 
-        User  1 : ${game.users.p1.id}
-        player1 : ${game.players.p1.id}
-        User  2 : ${game.users.p2.id}
-        player2 : ${game.players.p2.id}
-        room ID : ${game.gameId}
-      `
-    )
 
     if (clientId === game.users.p1.id) {
       this.logger.log('player 1 READY');
@@ -86,15 +78,16 @@ export class GameService {
     } else if (clientId === game.users.p2.id) {
       this.logger.log('player 2 READY');
       game.isReady.p2 = true;
-      game.players.p1 = gameClient;
+      game.players.p2 = gameClient;
       gameClient.join(roomId);
     }
-    this.logger.log(
-      `room: ${roomId} ready status : ${game.isReady}`,
-    );
-
+    
     if (game.isReady.p1 && game.isReady.p2) {
-      server.to(roomId).emit('game_start', game.players);
+      server.to(roomId).emit('game_start', {
+        p1Id : game.players.p1.id,
+        p1Name : game.users.p1.user.nickname,
+        p2Name : game.users.p2.user.nickname
+      });
       this.__game_start(server, game);
     }
   }
@@ -210,12 +203,15 @@ export class GameService {
       clearInterval(game.intervalId);
       game.intervalId = null;
 
-      const history = this.historyService.createHistory(game);
-      this.historyService.save(history);
+      if (game.type == GameType.RANK)
+      {
+        const history = this.historyService.createHistory(game);
+        this.historyService.save(history);
+      }
 
       server.in(game.gameId).socketsLeave(game.gameId);
-      server.sockets.get(game.players.p1.id).disconnect();
-      server.sockets.get(game.players.p2.id).disconnect();
+      // server.sockets.get(game.players.p1.id).disconnect();
+      // server.sockets.get(game.players.p2.id).disconnect();
       this.games.delete(game.gameId);
     }
   }
@@ -224,11 +220,13 @@ export class GameService {
     this.__score_check(server, game);
     this.__collid_check(game);
     this.__keyboard_check(game);
+    if (game.mode == GameMode.SPECIAL)
+      this.__apply_gravity(game.data);
 
-    // console.log("updating", game.data.ballPos, game.data.paddlePos)
     server.to(game.gameId).emit('update_game', {
       ballPos: game.data.ballPos,
       paddlePos: game.data.paddlePos,
+      paddleSize: game.data.paddleSize
     });
   }
 
@@ -239,15 +237,21 @@ export class GameService {
     if (pos.x <= TABLE_LEFT + BALL_RAD) {
       score.p2 += 1;
       server.to(game.gameId).emit('update_score', score);
+      if (game.mode == GameMode.SPECIAL)
+        game.data.paddleSize.p2 -= (PADDLE_H/(WIN_SCORE+1));
+
       if (score.p2 >= WIN_SCORE) {
-        server.to(game.gameId).emit('game_over', game.players.p2);
+        server.to(game.gameId).emit('game_over', game.players.p2.id);
         this.__game_end(server, game);
       }
     } else if (pos.x >= TABLE_RIGHT - BALL_RAD) {
       score.p1 += 1;
       server.to(game.gameId).emit('update_score', score);
+      if (game.mode == GameMode.SPECIAL)
+        game.data.paddleSize.p1 -= (PADDLE_H/(WIN_SCORE+1));
+ 
       if (score.p1 >= WIN_SCORE) {
-        server.to(game.gameId).emit('game_over', game.players.p1);
+        server.to(game.gameId).emit('game_over', game.players.p1.id);
         this.__game_end(server, game);
       }
     }
@@ -266,18 +270,19 @@ export class GameService {
       Number(game.data.downPressed.p1) - Number(game.data.upPressed.p1);
     const p2_dir: number =
       Number(game.data.downPressed.p2) - Number(game.data.upPressed.p2);
-
+    const p1PaddleH = game.data.paddleSize.p1;
+    const p2PaddleH = game.data.paddleSize.p2;
     game.data.paddlePos.p1 += PADDLE_SPEED * p1_dir;
     game.data.paddlePos.p2 += PADDLE_SPEED * p2_dir;
 
-    if (game.data.paddlePos.p1 < TABLE_TOP + PADDLE_H / 2)
-      game.data.paddlePos.p1 = TABLE_TOP + PADDLE_H / 2;
-    else if (game.data.paddlePos.p1 > TABLE_BOTTOM - PADDLE_H / 2)
-      game.data.paddlePos.p1 = TABLE_BOTTOM - PADDLE_H / 2;
-    if (game.data.paddlePos.p2 < TABLE_TOP + PADDLE_H / 2)
-      game.data.paddlePos.p2 = TABLE_TOP + PADDLE_H / 2;
-    else if (game.data.paddlePos.p2 > TABLE_BOTTOM - PADDLE_H / 2)
-      game.data.paddlePos.p2 = TABLE_BOTTOM - PADDLE_H / 2;
+    if (game.data.paddlePos.p1 < TABLE_TOP + p1PaddleH / 2)
+      game.data.paddlePos.p1 = TABLE_TOP + p1PaddleH / 2;
+    else if (game.data.paddlePos.p1 > TABLE_BOTTOM - p1PaddleH / 2)
+      game.data.paddlePos.p1 = TABLE_BOTTOM - p1PaddleH / 2;
+    if (game.data.paddlePos.p2 < TABLE_TOP + p2PaddleH / 2)
+      game.data.paddlePos.p2 = TABLE_TOP + p2PaddleH / 2;
+    else if (game.data.paddlePos.p2 > TABLE_BOTTOM - p2PaddleH / 2)
+      game.data.paddlePos.p2 = TABLE_BOTTOM - p2PaddleH / 2;
   }
 
   private __wall_collision(positions: GameData): void {
@@ -312,18 +317,37 @@ export class GameService {
     const right = center.x + PADDLE_W / 2 + BALL_RAD;
 
     if (left <= ball.x && ball.x <= right && top <= ball.y && ball.y <= bot)
-      game.data.ballVel = { x: -vel.x, y: vel.y };
+    {
+      game.data.ballVel = {x: -vel.x, y: vel.y };
+      game.data.ballPos.x = (player === game.players.p1)
+                              ? (right + 1) : (left - 1); 
+    }
     else if (
-      this.__circle_collision(
-        { x: ball.x, y: ball.y, rad: BALL_RAD },
-        { x: center.x, y: top, rad: rad },
-      ) ||
-      this.__circle_collision(
-        { x: ball.x, y: ball.y, rad: BALL_RAD },
-        { x: center.x, y: bot, rad: rad },
-      )
+      this.__circle_collision({x: ball.x, y: ball.y}, {x: center.x, y: top})
     )
-      game.data.ballVel = { x: -vel.x, y: -vel.y };
+    {
+      game.data.ballVel = {x: -vel.x, y: -vel.y };
+      
+      const vector = { x : game.data.ballPos.x = center.x,
+                       y : game.data.ballPos.y - top };
+      const R_ratio : number = (Math.sqrt(vector.x**2 + vector.y**2)) / (BALL_RAD + PADDLE_W/2);
+      game.data.ballPos.x = center.x - vector.x * R_ratio;
+      game.data.ballPos.y = top - vector.y * R_ratio;
+      game.data.ballPos.x += (game.data.ballPos.x < 0) ? (1) : (-1); 
+    }
+    else if (
+      this.__circle_collision({x: ball.x, y: ball.y},{x: center.x, y: bot})
+    )
+    {
+      game.data.ballVel = {x: -vel.x, y: -vel.y };
+      
+      const vector = { x : game.data.ballPos.x = center.x,
+                       y : game.data.ballPos.y - bot };
+      const R_ratio : number =  (BALL_RAD + PADDLE_W/2) / (Math.sqrt(vector.x**2 + vector.y**2));
+      game.data.ballPos.x = center.x - vector.x * R_ratio;
+      game.data.ballPos.y = bot - vector.y * R_ratio;
+      game.data.ballPos.x += (game.data.ballPos.x < 0) ? (1) : (-1);
+    }
     else return;
 
     game.data.ballVel.x *= ACCEL_RATIO;
@@ -331,11 +355,20 @@ export class GameService {
   }
 
   private __circle_collision(
-    c1: { x: number; y: number; rad: number },
-    c2: { x: number; y: number; rad: number },
+    c1: {x: number; y: number},
+    c2: {x: number; y: number},
   ): boolean {
-    if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2 <= (c1.rad + c2.rad) ** 2)
+    if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2 <= (BALL_RAD + PADDLE_W/2) ** 2)
       return true;
     return false;
+  }
+
+  private __apply_gravity (gameData: GameData)
+  {
+    const yPos : number = gameData.ballPos.y;
+    if (yPos > TABLE_BOTTOM * 0.2 )
+      gameData.ballVel.y += 0.2;
+    else if (yPos < TABLE_TOP * 0.2)
+      gameData.ballVel.y -= 0.2;
   }
 }

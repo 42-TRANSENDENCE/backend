@@ -15,6 +15,7 @@ export interface GameData {
   ballPos: { x: number; y: number };
   ballVel: { x: number; y: number };
   paddlePos: { p1: number; p2: number };
+  paddleSize: { p1: number; p2: number };
   score: { p1: number; p2: number };
   upPressed: { p1: boolean; p2: boolean };
   downPressed: { p1: boolean; p2: boolean };
@@ -37,4 +38,15 @@ export interface Game {
 export interface GamePlayDto {
   roomId: string;
   keyCode: string;
+}
+
+export interface ReadyDto {
+  userId : string;
+  roomId : string;
+}
+
+export interface StartDto {
+  p1Id : string ;
+  p1Name : string ;
+  p2Name : string ;
 }
