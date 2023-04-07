@@ -19,6 +19,7 @@ import { QueueService } from './queue/queue.service';
 import { CreateFriendlyMatchDto } from './dto/create-friendly-match.dto';
 import { InvitationDto } from './dto/invitation.dto';
 import { QueueDto } from './dto/queue.dto';
+import { FriendsStatusDto } from './dto/friends-status.dto';
 
 export interface UserWithStaus extends User {
   status: ClientStatus;
@@ -83,16 +84,11 @@ export class EventGateway
   async handleFriendsStatus(@ConnectedSocket() client: Socket) {
     const user = await this.clientService.getUserFromClient(client);
     const friends: User[] = await this.friendsService.getAllFriends(user);
-    const friendsWithStatus: Set<UserWithStaus> = new Set();
+    const friendsWithStatus: FriendsStatusDto[] = [];
 
     friends.forEach((friend) => {
       const pongClient = this.clientService.getByUserId(friend.id);
-      const status = pongClient ? ClientStatus.ONLINE : ClientStatus.OFFLINE;
-      const userWithStatus: UserWithStaus = {
-        ...user,
-        status,
-      };
-      friendsWithStatus.add(userWithStatus);
+      friendsWithStatus.push(new FriendsStatusDto(pongClient, friend));
     });
     return friendsWithStatus;
   }
