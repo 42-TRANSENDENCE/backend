@@ -1,5 +1,6 @@
 import { Exclude } from 'class-transformer';
 import { ChannelMember } from 'src/channels/channelmember.entity';
+import { ChannelBanMember } from 'src/channels/channelbanmember.entity';
 import {
   Column,
   Entity,
@@ -8,6 +9,7 @@ import {
   ManyToMany,
   JoinTable,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { GameHistory } from 'src/game/history/history.entity';
 import { Friendship } from 'src/users/friends/friendship.entity';
@@ -57,6 +59,12 @@ export class User {
   @OneToMany(() => GameHistory, (gamehistory) => gamehistory.loser)
   loses: GameHistory[];
 
-  @ManyToOne(() => ChannelMember, (channelmember) => channelmember.users)
-  channelMember: User;
+  @OneToMany(() => ChannelMember, (channelmember) => channelmember.user)
+  memberchannels: ChannelMember[];
+
+  @OneToMany(
+    () => ChannelBanMember,
+    (channelbanmember) => channelbanmember.user,
+  )
+  bannedChannels: ChannelBanMember[];
 }
