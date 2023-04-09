@@ -7,11 +7,11 @@ import { User } from 'src/users/users.entity';
 import { HttpModule } from '@nestjs/axios';
 import { UsersModule } from 'src/users/users.module';
 import { TwoFactorAuthController } from '../two-factor-authentication/two-factor-auth.controller';
-import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from '../common/strategy/jwt-refresh.strategy';
-import { JwtTwoFactorStrategy } from './strategies/jwt-two-factor.strategy';
 import { TwoFactorAuthService } from '../two-factor-authentication/two-factor-auth.service';
 import { LoginService } from './login.service';
+import { JwtStrategy } from 'src/common/strategy/jwt.strategy';
+import { JwtTwoFactorStrategy } from 'src/common/strategy/jwt-two-factor.strategy';
 
 @Module({
   imports: [

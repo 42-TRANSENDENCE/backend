@@ -25,8 +25,6 @@ import {
 import { CreateUserDto } from 'src/users/dto/users.dto';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { AuthSessionGuard } from '../common/guard/auth-session.guard';
 import { SessionPayload } from './interface/session-payload.interface';
 import { ConfigService } from '@nestjs/config';
@@ -34,6 +32,8 @@ import { SessionInfo } from './decorator/session-info.decorator';
 import { Code } from './decorator/code.decorator';
 import { LoginService } from './login.service';
 import { GetUser } from '../common/decorator/user.decorator';
+import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
+import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')

@@ -25,13 +25,13 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
 import { ModifyUserDto } from './dto/users.dto';
 import { userAvatarApiBody } from './users.constants';
 import { UsersService } from './users.service';
 import { UserResponse } from './dto/user-response.dto';
 import { UserSearchDto } from './dto/user-search.dto';
 import { GetUser } from 'src/common/decorator/user.decorator';
+import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 
 @ApiTags('users')
 @Controller('users')

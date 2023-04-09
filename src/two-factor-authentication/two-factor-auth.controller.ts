@@ -20,12 +20,12 @@ import {
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from '../auth/auth.service';
 import { GetUser } from '../common/decorator/user.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { JwtTwoFactorGuard } from '../auth/guards/jwt-two-factor.guard';
 import { TwoFactorAuthService } from './two-factor-auth.service';
 import { TwoFactorTokenDto } from './two-factor-token.dto';
 import * as QRCode from 'qrcode';
 import { User } from 'src/users/users.entity';
+import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
+import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 
 @ApiTags('2fa')
 @Controller('2fa')

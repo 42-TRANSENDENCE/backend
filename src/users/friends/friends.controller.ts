@@ -17,10 +17,10 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
 import { FriendsService } from './friends.service';
 import { FriendResponseDto } from '../dto/friend-response.dto';
 import { GetUser } from 'src/common/decorator/user.decorator';
+import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 
 @Controller('users/friends')
 @UseGuards(JwtTwoFactorGuard)
