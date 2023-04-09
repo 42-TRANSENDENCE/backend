@@ -124,7 +124,7 @@ export class FriendsService {
         (achievement) => achievement.title == Title.FIRST_FREINDSHIP,
       )
     ) {
-      this.achievementService.add(user, Title.FIRST_FREINDSHIP);
+      this.achievementService.add(otherUser, Title.FIRST_FREINDSHIP);
     }
 
     return this.friendsRepository.save(friendship);
