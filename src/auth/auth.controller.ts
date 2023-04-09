@@ -22,7 +22,6 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateUserDto } from 'src/users/dto/users.dto';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
 import { AuthSessionGuard } from '../common/guard/auth-session.guard';
@@ -34,6 +33,7 @@ import { LoginService } from './login.service';
 import { GetUser } from '../common/decorator/user.decorator';
 import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
 import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
+import { UserRequestDto } from 'src/users/dto/user.request.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -100,10 +100,10 @@ export class AuthController {
   @ApiForbiddenResponse({
     description: '잘못된 접근 / 로그인을 거치지 않고 온 경우',
   })
-  @ApiBody({ type: CreateUserDto })
+  @ApiBody({ type: UserRequestDto })
   async signUp(
     @Req() req,
-    @Body() createUserDto: CreateUserDto,
+    @Body() createUserDto: UserRequestDto,
     @SessionInfo() sessionInfo: SessionPayload,
   ) {
     const user = await this.usersService.create(

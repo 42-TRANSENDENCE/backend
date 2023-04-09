@@ -5,11 +5,11 @@ import { UsersService } from '../users/users.service';
 import { ConfigService } from '@nestjs/config';
 import { mockedConfigService } from 'src/utils/mocks/config.service';
 import { FourtyTwoToken } from './interface/fourty-two-token.interface';
-import { User, UserStatus } from 'src/users/users.entity';
+import { User } from 'src/users/users.entity';
 import { NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from 'src/users/dto/users.dto';
 import { LoginService } from './login.service';
 import { faker } from '@faker-js/faker';
+import { UserRequestDto } from 'src/users/dto/user.request.dto';
 
 const mockedAuthService = {
   getCookieWithJwtAccessToken: jest.fn(),
@@ -135,7 +135,7 @@ describe('AuthController', () => {
   });
 
   describe('signup', () => {
-    const mockedUserDto: CreateUserDto = {
+    const mockedUserDto: UserRequestDto = {
       nickname: 'test user',
     };
 

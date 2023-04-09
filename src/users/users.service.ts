@@ -17,9 +17,9 @@ import {
   userNotFoundErr,
 } from './users.constants';
 import * as bcrypt from 'bcrypt';
-import { UserSearchDto } from './dto/user-search.dto';
+import { UserSearchDto } from './dto/user.search.response.dto';
 import { FriendsService } from './friends/friends.service';
-import { UserResponse } from './dto/user-response.dto';
+import { UserResponse } from './dto/user.response.dto';
 
 @Injectable()
 export class UsersService {

@@ -18,7 +18,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { FriendsService } from './friends.service';
-import { FriendResponseDto } from '../dto/friend-response.dto';
+import { FriendResponseDto } from './dto/friend.response.dto';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 

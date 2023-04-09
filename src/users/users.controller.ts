@@ -25,13 +25,13 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { ModifyUserDto } from './dto/users.dto';
 import { userAvatarApiBody } from './users.constants';
 import { UsersService } from './users.service';
-import { UserResponse } from './dto/user-response.dto';
-import { UserSearchDto } from './dto/user-search.dto';
+import { UserResponse } from './dto/user.response.dto';
+import { UserSearchDto } from './dto/user.search.response.dto';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
+import { UserRequestDto } from './dto/user.request.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -97,7 +97,7 @@ export class UsersController {
   @ApiOperation({ summary: 'nickname 변경' })
   @ApiOkResponse({ description: '변경 완료' })
   @ApiBadRequestResponse({ description: '이미 존재하는 닉네임 / 잘못된 입력' })
-  modifyNickname(@GetUser() user, @Body() modifyUserDto: ModifyUserDto) {
+  modifyNickname(@GetUser() user, @Body() modifyUserDto: UserRequestDto) {
     return this.userService.modifyNickname(user, modifyUserDto.nickname);
   }
 }
