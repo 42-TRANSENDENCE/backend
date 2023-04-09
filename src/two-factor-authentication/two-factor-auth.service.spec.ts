@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GeneratedSecret } from 'speakeasy';
-import { UsersService } from 'src/users/users.service';
 import { TwoFactorAuthService } from './two-factor-auth.service';
 import * as speakeasy from 'speakeasy';
-import { Logger, UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { User } from 'src/users/users.entity';
 
-const mockedUsersService = {
-  setTwoFactorAuthenticationSecret: jest.fn(),
+const mockedUserRepository = {
+  save: jest.fn(),
 };
 
 describe('TwoFactorAuthSercie', () => {
@@ -15,61 +16,77 @@ describe('TwoFactorAuthSercie', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [],
-      providers: [UsersService, TwoFactorAuthService],
-    })
-      .overrideProvider(UsersService)
-      .useValue(mockedUsersService)
-      .compile();
+      providers: [
+        TwoFactorAuthService,
+        { provide: getRepositoryToken(User), useValue: mockedUserRepository },
+      ],
+    }).compile();
 
     twoFactorAuthService =
       module.get<TwoFactorAuthService>(TwoFactorAuthService);
   });
 
   describe('register', () => {
-    it('should generate a secret and call the users service', async () => {
-      const id = 42;
-      const secret: GeneratedSecret = {
+    it('user에 secret 저장', async () => {
+      // given
+      const expected: GeneratedSecret = {
         ascii: 'ascii_test',
         hex: 'hex_test',
         base32: 'base32_test',
         google_auth_qr: 'google auth',
       };
-      jest.spyOn(speakeasy, 'generateSecret').mockReturnValue(secret);
+      const mockedUser = new User();
+      jest.spyOn(speakeasy, 'generateSecret').mockReturnValueOnce(expected);
 
-      const setTwoFactorAuthenticationSecretSpy = jest
-        .spyOn(mockedUsersService, 'setTwoFactorAuthenticationSecret')
-        .mockReturnValue(null);
-      const result: GeneratedSecret = await twoFactorAuthService.register(id);
+      // when
+      const actual: GeneratedSecret = twoFactorAuthService.register(mockedUser);
 
-      expect(result).toBeDefined();
-      expect(result).toEqual(secret);
-      expect(setTwoFactorAuthenticationSecretSpy).toHaveBeenCalledWith(
-        id,
-        secret.ascii,
-      );
+      // then
+      expect(actual).toBeDefined();
+      expect(actual).toEqual(expected);
+      expect(mockedUser.twoFactorSecret).toEqual(expected.ascii);
     });
   });
 
   describe('verifyTwoFactorAuth', () => {
-    const secret = 'test secret';
-    const token = '123456';
-    const error = new UnauthorizedException('two factor authentication fail');
-
-    it('should return true if token is verified', () => {
-      jest.spyOn(speakeasy.totp, 'verify').mockReturnValue(true);
-      expect(twoFactorAuthService.verifyTwoFactorAuth(secret, token)).toEqual(
-        true,
-      );
-    });
-
-    it('should be throw UnauthorizedException if token is not verifed', () => {
-      const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error');
+    it('2차 인증 실패시 401 에러', () => {
+      // given
+      const secret = 'test';
+      const token = '123456';
       jest.spyOn(speakeasy.totp, 'verify').mockReturnValue(false);
 
+      // then
       expect(() => {
         twoFactorAuthService.verifyTwoFactorAuth(secret, token);
-      }).toThrowError(error);
-      expect(loggerErrorSpy).toHaveBeenCalledWith(`2FA Failed token: ${token}`);
+      }).toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('turnOnTwoFactorAuthentication', () => {
+    it('2차 인증 사용', () => {
+      // given
+      const mockedUser = new User();
+
+      // when
+      const actual =
+        twoFactorAuthService.turnOnTwoFactorAuthentication(mockedUser);
+
+      // then
+      expect(actual.isTwoFactorAuthenticationEnabled).toEqual(true);
+    });
+  });
+
+  describe('turnOffTwoFactorAuthentication', () => {
+    it('2차 인증 사용하지 않음', () => {
+      // given
+      const mockedUser = new User();
+
+      // when
+      const actual =
+        twoFactorAuthService.turnOffTwoFactorAuthentication(mockedUser);
+
+      // then
+      expect(actual.isTwoFactorAuthenticationEnabled).toEqual(false);
     });
   });
 });

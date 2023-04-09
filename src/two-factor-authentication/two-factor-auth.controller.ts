@@ -17,7 +17,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UsersService } from 'src/users/users.service';
 import { AuthService } from '../auth/auth.service';
 import { GetUser } from '../common/decorator/user.decorator';
 import { TwoFactorAuthService } from './two-factor-auth.service';
@@ -34,7 +33,6 @@ export class TwoFactorAuthController {
   constructor(
     private readonly twoFactorAuthService: TwoFactorAuthService,
     private readonly authService: AuthService,
-    private readonly usersService: UsersService,
   ) {}
 
   @Get('generate')

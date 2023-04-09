@@ -36,13 +36,15 @@ export class TwoFactorAuthService {
     return true;
   }
 
-  turnOnTwoFactorAuthentication(user: User): Promise<User> {
+  turnOnTwoFactorAuthentication(user: User): User {
     user.isTwoFactorAuthenticationEnabled = true;
-    return this.userRepository.save(user);
+    this.userRepository.save(user);
+    return user;
   }
 
-  turnOffTwoFactorAuthentication(user: User): Promise<User> {
-    user.isTwoFactorAuthenticationEnabled = true;
-    return this.userRepository.save(user);
+  turnOffTwoFactorAuthentication(user: User): User {
+    user.isTwoFactorAuthenticationEnabled = false;
+    this.userRepository.save(user);
+    return user;
   }
 }
