@@ -20,6 +20,7 @@ import * as bcrypt from 'bcrypt';
 import { UserSearchDto } from './dto/user-search.dto';
 import { FriendsService } from './friends/friends.service';
 import { UserResponse } from './dto/user-response.dto';
+import { Achievement, Title } from 'src/achievement/achievement.entity';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +29,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly httpService: HttpService,
+    @InjectRepository(Achievement)
+    private readonly achievementRepository: Repository<Achievement>,
     private readonly friendsService: FriendsService,
   ) {}
 
@@ -158,11 +161,15 @@ export class UsersService {
     }
 
     const avatar = await this.getAvatarFromWeb(avatarUrl);
+    const firstLogin = await this.achievementRepository.findOneBy({
+      title: Title.FIRST_LOGIN,
+    });
     const user = this.userRepository.create({
       id,
       nickname,
       avatar,
       friends: [],
+      achievements: [firstLogin],
     });
     return this.userRepository.save(user);
   }
