@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
@@ -29,15 +29,12 @@ export class JwtTwoFactorStrategy extends PassportStrategy(
 
   async validate(payload: JwtTokenPayload) {
     const user = await this.userService.getById(payload.id);
-
-    if (!user.isTwoFactorAuthenticationEnabled) {
-      this.logger.debug(`user ${user.nickname} does not using 2FA`);
-      return user;
+    if (
+      user.isTwoFactorAuthenticationEnabled &&
+      !payload.isTwoFactorAuthenticationCompleted
+    ) {
+      throw new UnauthorizedException('2차 인증이 필요합니다.');
     }
-    if (payload.isTwoFactorAuthenticationCompleted) {
-      this.logger.debug(`user ${user.nickname} already done 2FA`);
-      return user;
-    }
-    this.logger.debug(`user ${user.nickname} needs 2FA validation`);
+    return user;
   }
 }
