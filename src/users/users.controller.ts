@@ -31,7 +31,7 @@ import { userAvatarApiBody } from './users.constants';
 import { UsersService } from './users.service';
 import { UserResponse } from './dto/user-response.dto';
 import { UserSearchDto } from './dto/user-search.dto';
-import { GetUser } from 'src/auth/decorator/user.decorator';
+import { GetUser } from 'src/common/decorator/user.decorator';
 
 @ApiTags('users')
 @Controller('users')

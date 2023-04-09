@@ -27,13 +27,13 @@ import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
-import { AuthSessionGuard } from './guards/auth-session.guard';
+import { AuthSessionGuard } from '../common/guard/auth-session.guard';
 import { SessionPayload } from './interface/session-payload.interface';
 import { ConfigService } from '@nestjs/config';
 import { SessionInfo } from './decorator/session-info.decorator';
 import { Code } from './decorator/code.decorator';
 import { LoginService } from './login.service';
-import { GetUser } from './decorator/user.decorator';
+import { GetUser } from '../common/decorator/user.decorator';
 
 @ApiTags('auth')
 @Controller('auth')

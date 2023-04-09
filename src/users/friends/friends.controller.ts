@@ -20,7 +20,7 @@ import {
 import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
 import { FriendsService } from './friends.service';
 import { FriendResponseDto } from '../dto/friend-response.dto';
-import { GetUser } from 'src/auth/decorator/user.decorator';
+import { GetUser } from 'src/common/decorator/user.decorator';
 
 @Controller('users/friends')
 @UseGuards(JwtTwoFactorGuard)

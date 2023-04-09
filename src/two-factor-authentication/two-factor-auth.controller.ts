@@ -18,10 +18,10 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { UsersService } from 'src/users/users.service';
-import { AuthService } from '../auth.service';
-import { GetUser } from '../decorator/user.decorator';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { JwtTwoFactorGuard } from '../guards/jwt-two-factor.guard';
+import { AuthService } from '../auth/auth.service';
+import { GetUser } from '../common/decorator/user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtTwoFactorGuard } from '../auth/guards/jwt-two-factor.guard';
 import { TwoFactorAuthService } from './two-factor-auth.service';
 import { TwoFactorTokenDto } from './two-factor-token.dto';
 import * as QRCode from 'qrcode';

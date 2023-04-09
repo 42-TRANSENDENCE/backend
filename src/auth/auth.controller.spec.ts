@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from '../auth.controller';
-import { AuthService } from '../auth.service';
-import { UsersService } from '../../users/users.service';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
 import { ConfigService } from '@nestjs/config';
 import { mockedConfigService } from 'src/utils/mocks/config.service';
-import { FourtyTwoToken } from '../interface/fourty-two-token.interface';
+import { FourtyTwoToken } from './interface/fourty-two-token.interface';
 import { User, UserStatus } from 'src/users/users.entity';
 import { NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from 'src/users/dto/users.dto';
-import { LoginService } from '../login.service';
+import { LoginService } from './login.service';
 import { faker } from '@faker-js/faker';
 
 const mockedAuthService = {
