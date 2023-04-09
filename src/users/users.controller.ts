@@ -55,15 +55,6 @@ export class UsersController {
     return this.userService.getByNickname(user, nickname);
   }
 
-  @Get('avatar')
-  @UseGuards(JwtTwoFactorGuard)
-  @Header('Content-Type', 'image/*')
-  @Header('Content-Disposition', 'inline')
-  @ApiOperation({ summary: '사용자 아바타 이미지 반환' })
-  async getUserAvatar(@User() user) {
-    return new StreamableFile(user.avatar);
-  }
-
   @Put('avatar')
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(JwtTwoFactorGuard)
