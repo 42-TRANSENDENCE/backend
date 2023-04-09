@@ -30,10 +30,10 @@ import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { AuthSessionGuard } from './guards/auth-session.guard';
 import { SessionPayload } from './interface/session-payload.interface';
 import { ConfigService } from '@nestjs/config';
-import { User } from './decorator/user.decorator';
 import { SessionInfo } from './decorator/session-info.decorator';
 import { Code } from './decorator/code.decorator';
 import { LoginService } from './login.service';
+import { GetUser } from './decorator/user.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -132,7 +132,7 @@ export class AuthController {
       'refresh token을 기반으로 새로운 access token을 cookie에 저장 기존 token이 만료되었을때 사용',
   })
   @ApiCookieAuth('Refresh')
-  refresh(@Req() req, @User() user) {
+  refresh(@Req() req, @GetUser() user) {
     const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(
       user.id,
     );
@@ -145,7 +145,7 @@ export class AuthController {
   @HttpCode(200)
   @ApiOkResponse({ description: '로그아웃. cookie token 삭제' })
   @ApiCookieAuth('Authentication')
-  async logOut(@Req() req, @User() user) {
+  async logOut(@Req() req, @GetUser() user) {
     await this.usersService.removeRefreshToken(user.id);
     const cookie = await this.authService.getCookieForLogOut();
     req.res.setHeader('Set-Cookie', cookie);

@@ -178,28 +178,4 @@ export class UsersService {
     );
     return data;
   }
-
-  async turnOnTwoFactorAuthentication(id: number) {
-    const updateResult = await this.userRepository.update(
-      { id },
-      { isTwoFactorAuthenticationEnabled: true },
-    );
-    if (!updateResult.affected) {
-      this.logger.error(`user : ${id} turn on 2FA failed`);
-      throw new NotFoundException(userNotFoundErr);
-    }
-    return;
-  }
-
-  async turnOffTwoFactorAuthentication(id: number) {
-    const updateResult = await this.userRepository.update(
-      { id },
-      { isTwoFactorAuthenticationEnabled: false, twoFactorSecret: null },
-    );
-    if (!updateResult.affected) {
-      this.logger.error(`user : ${id} turn off 2FA failed`);
-      throw new NotFoundException(userNotFoundErr);
-    }
-    return;
-  }
 }

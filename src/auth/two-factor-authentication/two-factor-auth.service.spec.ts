@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GeneratedSecret } from 'speakeasy';
 import { UsersService } from 'src/users/users.service';
-import { TwoFactorAuthService } from '../two-factor-authentication/two-factor-auth.service';
+import { TwoFactorAuthService } from './two-factor-auth.service';
 import * as speakeasy from 'speakeasy';
 import { Logger, UnauthorizedException } from '@nestjs/common';
 
