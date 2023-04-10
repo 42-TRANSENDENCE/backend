@@ -36,7 +36,7 @@ export class LoginService {
     const token: FourtyTwoToken = await this.getFourtyTwoToken(code);
     this.logger.log(`access token: ${token.access_token}`);
 
-    delayTime = 1000;
+    delayTime = 2000;
     await this.delay(delayTime);
     this.logger.debug(`waited for ${delayTime} ms`);
     return this.getFourtyTwoUserInfo(token.access_token);

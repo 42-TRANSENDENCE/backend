@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { GameHistory } from './history.entity';
 import { HistoryService } from './history.service';
+import { User } from 'src/users/users.entity';
+import { AchievementService } from 'src/achievement/achievement.service';
 
 const mockedHistoryRepository = {
   create: jest.fn(),
@@ -18,6 +20,14 @@ describe('HistoryService', () => {
         {
           provide: getRepositoryToken(GameHistory),
           useValue: mockedHistoryRepository,
+        },
+        {
+          provide: getRepositoryToken(User),
+          useValue: {},
+        },
+        {
+          provide: AchievementService,
+          useValue: {},
         },
       ],
     }).compile();

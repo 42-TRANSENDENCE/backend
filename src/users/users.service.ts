@@ -17,9 +17,9 @@ import {
   userNotFoundErr,
 } from './users.constants';
 import * as bcrypt from 'bcrypt';
-import { UserSearchDto } from './dto/user-search.dto';
+import { UserSearchDto } from './dto/user.search.response.dto';
 import { FriendsService } from './friends/friends.service';
-import { UserResponse } from './dto/user-response.dto';
+import { UserResponse } from './dto/user.response.dto';
 import { Achievement, Title } from 'src/achievement/achievement.entity';
 
 @Injectable()
@@ -184,29 +184,5 @@ export class UsersService {
       ),
     );
     return data;
-  }
-
-  async turnOnTwoFactorAuthentication(id: number) {
-    const updateResult = await this.userRepository.update(
-      { id },
-      { isTwoFactorAuthenticationEnabled: true },
-    );
-    if (!updateResult.affected) {
-      this.logger.error(`user : ${id} turn on 2FA failed`);
-      throw new NotFoundException(userNotFoundErr);
-    }
-    return;
-  }
-
-  async turnOffTwoFactorAuthentication(id: number) {
-    const updateResult = await this.userRepository.update(
-      { id },
-      { isTwoFactorAuthenticationEnabled: false, twoFactorSecret: null },
-    );
-    if (!updateResult.affected) {
-      this.logger.error(`user : ${id} turn off 2FA failed`);
-      throw new NotFoundException(userNotFoundErr);
-    }
-    return;
   }
 }
