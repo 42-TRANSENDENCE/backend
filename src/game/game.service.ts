@@ -18,9 +18,16 @@ import {
   TABLE_TOP,
   WIN_SCORE,
 } from './game.constants';
-import { Game, GameData, GameMode, GamePlayDto, GameType, ReadyDto } from './game.interface';
+import {
+  Game,
+  GameData,
+  GameMode,
+  GamePlayDto,
+  GameType,
+  ReadyDto,
+} from './game.interface';
 import { HistoryService } from './history/history.service';
-import { ClientStatus, PongClient } from 'src/events/client/client.interface';
+import { ClientStatus } from 'src/events/client/client.interface';
 import { WsException } from '@nestjs/websockets';
 import { ClientService } from 'src/events/client/client.service';
 import { FriendsService } from 'src/users/friends/friends.service';
@@ -42,14 +49,14 @@ export class GameService {
       gameId: matchInfo.roomId,
       intervalId: null,
       isReady: { p1: false, p2: false },
-      players : {p1 : null, p2 : null },
+      players: { p1: null, p2: null },
       users: { p1: matchInfo.p1, p2: matchInfo.p2 },
       spectators: [],
       data: {
         ballPos: { x: 0, y: 0 },
         ballVel: { x: BALL_VEL_INIT_X, y: BALL_VEL_INIT_Y },
         paddlePos: { p1: 0, p2: 0 },
-        paddleSize: {p1: PADDLE_H, p2: PADDLE_H},
+        paddleSize: { p1: PADDLE_H, p2: PADDLE_H },
         score: { p1: 0, p2: 0 },
         upPressed: { p1: false, p2: false },
         downPressed: { p1: false, p2: false },
@@ -61,9 +68,9 @@ export class GameService {
     this.games.set(matchInfo.roomId, game);
   }
 
-  ready(server: Namespace, gameClient: Socket, readyInfo : ReadyDto) : void {
-    const clientId : string = readyInfo.userId;
-    const roomId : string = readyInfo.roomId;
+  ready(server: Namespace, gameClient: Socket, readyInfo: ReadyDto): void {
+    const clientId: string = readyInfo.userId;
+    const roomId: string = readyInfo.roomId;
     const game = this.games.get(roomId);
 
     if (!game) {
@@ -81,12 +88,12 @@ export class GameService {
       game.players.p2 = gameClient;
       gameClient.join(roomId);
     }
-    
+
     if (game.isReady.p1 && game.isReady.p2) {
       server.to(roomId).emit('game_start', {
-        p1Id : game.players.p1.id,
-        p1Name : game.users.p1.user.nickname,
-        p2Name : game.users.p2.user.nickname
+        p1Id: game.players.p1.id,
+        p1Name: game.users.p1.user.nickname,
+        p2Name: game.users.p2.user.nickname,
       });
       this.__game_start(server, game);
     }
@@ -203,8 +210,7 @@ export class GameService {
       clearInterval(game.intervalId);
       game.intervalId = null;
 
-      if (game.type == GameType.RANK)
-      {
+      if (game.type == GameType.RANK) {
         const history = this.historyService.createHistory(game);
         this.historyService.save(history);
       }
@@ -220,13 +226,12 @@ export class GameService {
     this.__score_check(server, game);
     this.__collid_check(game);
     this.__keyboard_check(game);
-    if (game.mode == GameMode.SPECIAL)
-      this.__apply_gravity(game.data);
+    if (game.mode == GameMode.SPECIAL) this.__apply_gravity(game.data);
 
     server.to(game.gameId).emit('update_game', {
       ballPos: game.data.ballPos,
       paddlePos: game.data.paddlePos,
-      paddleSize: game.data.paddleSize
+      paddleSize: game.data.paddleSize,
     });
   }
 
@@ -238,7 +243,7 @@ export class GameService {
       score.p2 += 1;
       server.to(game.gameId).emit('update_score', score);
       if (game.mode == GameMode.SPECIAL)
-        game.data.paddleSize.p2 -= (PADDLE_H/(WIN_SCORE+1));
+        game.data.paddleSize.p2 -= PADDLE_H / (WIN_SCORE + 1);
 
       if (score.p2 >= WIN_SCORE) {
         server.to(game.gameId).emit('game_over', game.players.p2.id);
@@ -248,8 +253,8 @@ export class GameService {
       score.p1 += 1;
       server.to(game.gameId).emit('update_score', score);
       if (game.mode == GameMode.SPECIAL)
-        game.data.paddleSize.p1 -= (PADDLE_H/(WIN_SCORE+1));
- 
+        game.data.paddleSize.p1 -= PADDLE_H / (WIN_SCORE + 1);
+
       if (score.p1 >= WIN_SCORE) {
         server.to(game.gameId).emit('game_over', game.players.p1.id);
         this.__game_end(server, game);
@@ -316,59 +321,58 @@ export class GameService {
     const left = center.x - PADDLE_W / 2 - BALL_RAD;
     const right = center.x + PADDLE_W / 2 + BALL_RAD;
 
-    if (left <= ball.x && ball.x <= right && top <= ball.y && ball.y <= bot)
-    {
-      game.data.ballVel = {x: -vel.x, y: vel.y };
-      game.data.ballPos.x = (player === game.players.p1)
-                              ? (right + 1) : (left - 1); 
-    }
-    else if (
-      this.__circle_collision({x: ball.x, y: ball.y}, {x: center.x, y: top})
-    )
-    {
-      game.data.ballVel = {x: -vel.x, y: -vel.y };
-      
-      const vector = { x : game.data.ballPos.x = center.x,
-                       y : game.data.ballPos.y - top };
-      const R_ratio : number = (Math.sqrt(vector.x**2 + vector.y**2)) / (BALL_RAD + PADDLE_W/2);
+    if (left <= ball.x && ball.x <= right && top <= ball.y && ball.y <= bot) {
+      game.data.ballVel = { x: -vel.x, y: vel.y };
+      game.data.ballPos.x = player === game.players.p1 ? right + 1 : left - 1;
+    } else if (
+      this.__circle_collision({ x: ball.x, y: ball.y }, { x: center.x, y: top })
+    ) {
+      game.data.ballVel = { x: -vel.x, y: -vel.y };
+
+      const vector = {
+        x: (game.data.ballPos.x = center.x),
+        y: game.data.ballPos.y - top,
+      };
+      const R_ratio: number =
+        Math.sqrt(vector.x ** 2 + vector.y ** 2) / (BALL_RAD + PADDLE_W / 2);
       game.data.ballPos.x = center.x - vector.x * R_ratio;
       game.data.ballPos.y = top - vector.y * R_ratio;
-      game.data.ballPos.x += (game.data.ballPos.x < 0) ? (1) : (-1); 
-    }
-    else if (
-      this.__circle_collision({x: ball.x, y: ball.y},{x: center.x, y: bot})
-    )
-    {
-      game.data.ballVel = {x: -vel.x, y: -vel.y };
-      
-      const vector = { x : game.data.ballPos.x = center.x,
-                       y : game.data.ballPos.y - bot };
-      const R_ratio : number =  (BALL_RAD + PADDLE_W/2) / (Math.sqrt(vector.x**2 + vector.y**2));
+      game.data.ballPos.x += game.data.ballPos.x < 0 ? 1 : -1;
+    } else if (
+      this.__circle_collision({ x: ball.x, y: ball.y }, { x: center.x, y: bot })
+    ) {
+      game.data.ballVel = { x: -vel.x, y: -vel.y };
+
+      const vector = {
+        x: (game.data.ballPos.x = center.x),
+        y: game.data.ballPos.y - bot,
+      };
+      const R_ratio: number =
+        (BALL_RAD + PADDLE_W / 2) / Math.sqrt(vector.x ** 2 + vector.y ** 2);
       game.data.ballPos.x = center.x - vector.x * R_ratio;
       game.data.ballPos.y = bot - vector.y * R_ratio;
-      game.data.ballPos.x += (game.data.ballPos.x < 0) ? (1) : (-1);
-    }
-    else return;
+      game.data.ballPos.x += game.data.ballPos.x < 0 ? 1 : -1;
+    } else return;
 
     game.data.ballVel.x *= ACCEL_RATIO;
     game.data.ballVel.y *= ACCEL_RATIO;
   }
 
   private __circle_collision(
-    c1: {x: number; y: number},
-    c2: {x: number; y: number},
+    c1: { x: number; y: number },
+    c2: { x: number; y: number },
   ): boolean {
-    if ((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2 <= (BALL_RAD + PADDLE_W/2) ** 2)
+    if (
+      (c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2 <=
+      (BALL_RAD + PADDLE_W / 2) ** 2
+    )
       return true;
     return false;
   }
 
-  private __apply_gravity (gameData: GameData)
-  {
-    const yPos : number = gameData.ballPos.y;
-    if (yPos > TABLE_BOTTOM * 0.2 )
-      gameData.ballVel.y += 0.2;
-    else if (yPos < TABLE_TOP * 0.2)
-      gameData.ballVel.y -= 0.2;
+  private __apply_gravity(gameData: GameData) {
+    const yPos: number = gameData.ballPos.y;
+    if (yPos > TABLE_BOTTOM * 0.2) gameData.ballVel.y += 0.2;
+    else if (yPos < TABLE_TOP * 0.2) gameData.ballVel.y -= 0.2;
   }
 }

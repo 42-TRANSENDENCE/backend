@@ -8,9 +8,15 @@ import { FriendsService } from './friends/friends.service';
 import { FriendsController } from './friends/friends.controller';
 import { Friendship } from './friends/friendship.entity';
 import { FriendsRepository } from './friends/friends.repository';
+import { Achievement } from 'src/achievement/achievement.entity';
+import { AchievementModule } from 'src/achievement/achievement.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Friendship]), HttpModule],
+  imports: [
+    TypeOrmModule.forFeature([User, Friendship, Achievement]),
+    HttpModule,
+    AchievementModule,
+  ],
   providers: [UsersService, FriendsService, FriendsRepository],
   controllers: [UsersController, FriendsController],
   exports: [UsersService, FriendsService],
