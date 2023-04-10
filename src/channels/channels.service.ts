@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Channels, ChatStatus } from 'src/channels/channels.entity';
+import { Channels, ChannelStatus } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelmember.entity';
 import { ChannelsGateway } from './events.chats.gateway';
@@ -45,17 +45,18 @@ export class ChannelsService {
   async getChannels() {
     return this.channelsRepository.createQueryBuilder('channels').getMany();
   }
+
   async createChannels(title: string, password: string, myId: number) {
     const saltRounds = 10;
     const channel = this.channelsRepository.create({
       title: title,
       password,
       owner: myId,
-      status: ChatStatus.PUBLIC,
+      status: ChannelStatus.PUBLIC,
     });
     if (password) {
       const hashedPassword = await bcrypt.hash(password.toString(), saltRounds);
-      channel.status = ChatStatus.PROTECTED;
+      channel.status = ChannelStatus.PROTECTED;
       channel.password = hashedPassword;
     }
     const channelReturned = await this.channelsRepository.save(channel);
@@ -84,6 +85,36 @@ export class ChannelsService {
     return this.channelMemberRepository.find({
       where: { channelId: channelId },
     });
+  }
+
+  // GET 내가 참여하고 있는 채팅방 목록
+  // async getChannelsByUser(userId: number) {
+  //   const channelMembers = await this.channelMemberRepository.find({
+  //     where: { userId: userId },
+  //   });
+  //   const channelIds = channelMembers.map((member) => member.channelId);
+  //   const channels = await this.channelsRepository.findByIds(channelIds);
+  //   console.log(channels)
+  //   return channels;
+  // }
+
+  async getChannelsByUser(userId: number) {
+    try {
+      const channelMembers = await this.channelMemberRepository.find({
+        where: { userId: userId },
+      });
+      const channelIds = channelMembers.map((member) => member.channelId);
+      if (channelIds.length === 0) {
+        // If the user isn't a member of any channels, return an empty array
+        return [];
+      }
+      const channels = await this.channelsRepository.findByIds(channelIds);
+      return channels;
+    } catch (error) {
+      // Handle any errors that occur during the database queries
+      this.logger.error('Error retrieving channels:', error);
+      throw new Error('Unable to retrieve channels');
+    }
   }
 
   async userEnterPrivateChannel(
@@ -166,7 +197,7 @@ export class ChannelsService {
       throw new UnauthorizedException('YOU ARE BANNED');
     if (!curChannel) throw new NotFoundException('Plz Enter Exist Room');
     // this.logger.debug(curChannel.status === ChatStatus.PROTECTED)
-    if (curChannel.status === ChatStatus.PROTECTED)
+    if (curChannel.status === ChannelStatus.PROTECTED)
       return this.userEnterPrivateChannel(
         channelId,
         password,
