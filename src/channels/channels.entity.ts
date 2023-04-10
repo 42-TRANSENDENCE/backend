@@ -5,20 +5,23 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ChannelMember } from './channelmember.entity';
 import { ChannelBanMember } from './channelbanmember.entity';
 import { Exclude } from 'class-transformer';
-import { Chats } from './chats/chats.entity';
+import { Chat } from './chats/chats.entity';
+import { JoinAttribute } from 'typeorm/query-builder/JoinAttribute';
 
-export enum ChatStatus {
+export enum ChannelStatus {
   PUBLIC = 'PUBLIC',
   PROTECTED = 'PROTECTED',
   PRIVATE = 'PRIVATE',
 }
 
 @Entity({ name: 'channel' })
-export class Channels {
+export class Channel {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -41,8 +44,8 @@ export class Channels {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ type: 'enum', enum: ChatStatus, nullable: true })
-  status: ChatStatus;
+  @Column({ type: 'enum', enum: ChannelStatus, nullable: true })
+  status: ChannelStatus;
 
   @OneToMany(() => ChannelMember, (channelmember) => channelmember.channel)
   members: ChannelMember[];
@@ -53,12 +56,9 @@ export class Channels {
   )
   bannedMembers: ChannelBanMember[];
 
-  // chats: Chats[];
+  @OneToMany(() => Chat, (chats) => chats.channelId)
+  chats: Chat[];
 
+  // @OneToMany(() => Chats, (chats) => chats.dm)
   // dm: Chats[];
-  @OneToMany(() => Chats, (chats) => chats.chats)
-  chats: Chats[];
-
-  @OneToMany(() => Chats, (chats) => chats.dm)
-  dm: Chats[];
 }

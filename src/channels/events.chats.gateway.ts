@@ -18,7 +18,7 @@ import {
   WsException,
 } from '@nestjs/websockets';
 
-import { Chats } from './chats/chats.entity';
+import { Chat } from './chats/chats.entity';
 import { Server, Socket, Namespace } from 'socket.io';
 import { ChannelsService } from 'src/channels/channels.service';
 import { leaveDto } from './dto/leave.dto';
@@ -114,7 +114,7 @@ export class ChannelsGateway
     return { username: socket.id, message };
   }
 
-  async sendEmitMessage(sendChat: Chats) {
+  async sendEmitMessage(sendChat: Chat) {
     // 이부분 해당 방에 해당하는 broadcast로 하는걸로 수정하자 테스트 하면서
     // 방 넘버 가지고 소켓아이디 알아내서 to로 에밋 하고 broadcast해줘야함.
     return this.nsp.emit('meesage', sendChat);

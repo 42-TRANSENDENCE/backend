@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Channels, ChannelStatus } from 'src/channels/channels.entity';
+import { Channel, ChannelStatus } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/channelmember.entity';
 import { ChannelsGateway } from './events.chats.gateway';
@@ -25,8 +25,8 @@ import { Cache } from 'cache-manager';
 @Injectable()
 export class ChannelsService {
   constructor(
-    @InjectRepository(Channels)
-    private channelsRepository: Repository<Channels>,
+    @InjectRepository(Channel)
+    private channelsRepository: Repository<Channel>,
     @InjectRepository(ChannelMember)
     private channelMemberRepository: Repository<ChannelMember>,
     @InjectRepository(ChannelBanMember)
@@ -121,7 +121,7 @@ export class ChannelsService {
     channelId: number,
     password: string,
     user: User,
-    curChannel: Channels,
+    curChannel: Channel,
   ): Promise<returnStatusMessage> {
     // 맞으면 채팅방 멤버에추가 해줘야한다. -> channel member entitiy 에 insert 하는거 추가 해야함.
     if (password) {
@@ -164,7 +164,7 @@ export class ChannelsService {
   async userEnterPublicChannel(
     channelId: number,
     user: User,
-    curChannel: Channels,
+    curChannel: Channel,
   ): Promise<returnStatusMessage> {
     // 공개방은 무조건 소켓 연결 근데 + 밴 리스트 !! 는 나중에
     const isInUser = await this.channelMemberRepository

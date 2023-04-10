@@ -12,7 +12,7 @@ import {
   OneToOne,
   PrimaryColumn,
 } from 'typeorm';
-import { Channels } from './channels.entity';
+import { Channel } from './channels.entity';
 import { ChannelMember } from './channelmember.entity';
 
 @Entity()
@@ -39,9 +39,11 @@ export class ChannelBanMember {
   user: User;
 
   @ManyToOne(
-    () => Channels,
+    () => Channel,
     (channelBanMember) => channelBanMember.bannedMembers,
-    { onDelete: 'SET NULL' },
+    {
+      onDelete: 'SET NULL',
+    },
   )
-  channel: Channels;
+  channel: Channel;
 }

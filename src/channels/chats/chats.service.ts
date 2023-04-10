@@ -8,20 +8,20 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Chats } from './chats.entity';
+import { Chat } from './chats.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelsGateway } from 'src/channels/events.chats.gateway';
-import { Channels } from 'src/channels/channels.entity';
+import { Channel } from 'src/channels/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
 import { Cache } from 'cache-manager';
 
 @Injectable()
 export class ChatsService {
   constructor(
-    @InjectRepository(Chats) private chatsRepository: Repository<Chats>,
+    @InjectRepository(Chat) private chatsRepository: Repository<Chat>,
     @InjectRepository(User) private usersRepository: Repository<User>,
-    @InjectRepository(Channels)
-    private channelsRepository: Repository<Channels>,
+    @InjectRepository(Channel)
+    private channelsRepository: Repository<Channel>,
 
     @Inject(forwardRef(() => ChannelsService))
     private readonly channelsService: ChannelsService,
@@ -50,7 +50,7 @@ export class ChatsService {
     if (await this.isMutted(roomId, 2))
       throw new UnauthorizedException('YOU ARE MUTED');
     const chats = this.chatsRepository.create({
-      senderId: 2, //user.id,
+      // senderId: 2, //user.id,
       channelId: roomId,
       content: chat,
     });

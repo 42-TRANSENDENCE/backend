@@ -10,10 +10,12 @@ import {
   JoinTable,
   OneToMany,
   JoinColumn,
+  OneToOne,
 } from 'typeorm';
 import { GameHistory } from 'src/game/history/history.entity';
 import { Friendship } from 'src/users/friends/friendship.entity';
 import { Achievement } from 'src/achievement/achievement.entity';
+import { Chat } from 'src/channels/chats/chats.entity';
 
 export enum UserStatus {
   ONLINE = 'ONLINE',
@@ -67,4 +69,15 @@ export class User {
     (channelbanmember) => channelbanmember.user,
   )
   bannedChannels: ChannelBanMember[];
+
+  // @OneToOne(() => Chats, (chat) => chat.senderId) // specify inverse side as a second parameter
+  // @JoinColumn()
+  // senderId: Chats;
+
+  // @OneToOne(() => Profile, (profile) => profile.user) // specify inverse side as a second parameter
+  //   @JoinColumn()
+  //   profile: Profile
+  // @OneToOne(() => Chats)
+  // @JoinColumn({ name: 'senderId' })
+  // chats: Chats;
 }

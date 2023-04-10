@@ -1,4 +1,4 @@
-import { Channels } from '../channels.entity';
+import { Channel } from '../channels.entity';
 import {
   PrimaryGeneratedColumn,
   Column,
@@ -9,12 +9,17 @@ import {
   ManyToOne,
   JoinColumn,
   PrimaryColumn,
+  OneToOne,
 } from 'typeorm';
+import { User } from 'src/users/users.entity';
 
-@Index('userId', ['senderId'], {})
-@Index('channelId', ['channelId'], {})
+// @Index('userId', ['senderId'], {})
+// @Index('channelId', ['channelId'], {})
 @Entity()
-export class Chats {
+export class Chat {
+  // @PrimaryGeneratedColumn()
+  // id: number;
+
   @Column('varchar', {
     length: 100,
   })
@@ -35,12 +40,22 @@ export class Chats {
   @Column({ nullable: true }) // 얘도 유저 아이디랑 묶어야 겠다.
   receiverId?: number;
 
-  @ManyToOne(() => Channels, (channel) => channel.chats, {
+  @ManyToOne(() => Channel, (channel) => channel.chats, {
     onDelete: 'SET NULL',
   })
-  // @JoinColumn({ name: 'channelId' })
-  chats: Chats;
+  @JoinColumn({ name: 'channelId' })
+  chats: Channel;
 
-  @ManyToOne(() => Channels, (channel) => channel.dm, { onDelete: 'SET NULL' })
-  dm: Chats;
+  // @ManyToOne(() => Channels, (channel) => channel.dm, { onDelete: 'SET NULL' })
+  // dm: Chats;
+
+  // @OneToOne(() => User, (user) => user.id) // specify inverse side as a second parameter
+  // senderId: User;
+
+  // @OneToOne(() => User, (user) => user.profile) // specify inverse side as a second parameter
+  //   user: User
+
+  // @OneToOne(() => User)
+  // @JoinColumn({ name: 'senderId' })
+  // sender: User;
 }

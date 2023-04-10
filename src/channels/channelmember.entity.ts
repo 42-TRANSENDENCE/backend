@@ -11,7 +11,7 @@ import {
   JoinColumn,
   PrimaryColumn,
 } from 'typeorm';
-import { Channels } from './channels.entity';
+import { Channel } from './channels.entity';
 
 @Entity({ name: 'channelMember' })
 export class ChannelMember {
@@ -24,8 +24,8 @@ export class ChannelMember {
   @ManyToOne(() => User, (user) => user.memberchannels, { onDelete: 'CASCADE' })
   user: User;
 
-  @ManyToOne(() => Channels, (channelMember) => channelMember.members, {
+  @ManyToOne(() => Channel, (channelMember) => channelMember.members, {
     onDelete: 'SET NULL',
   })
-  channel: Channels;
+  channel: Channel;
 }
