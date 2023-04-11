@@ -234,7 +234,7 @@ export class GameService {
     this.__collid_check(game);
     this.__keyboard_check(game);
     if (game.mode == GameMode.SPECIAL) this.__apply_gravity(game.data);
-
+    
     server.to(game.gameId).emit('update_game', {
       ballPos: game.data.ballPos,
       paddlePos: game.data.paddlePos,
@@ -340,40 +340,30 @@ export class GameService {
     if (left <= ball.x && ball.x <= right && top <= ball.y && ball.y <= bot) {
       game.data.ballVel = { x: -vel.x, y: vel.y };
       game.data.ballPos.x = player === game.players.p1 ? right + 1 : left - 1;
-    } else if (
-      this.__circle_collision({ x: ball.x, y: ball.y }, { x: center.x, y: top })
-    ) {
-      game.data.ballVel = { x: -vel.x, y: -vel.y };
+    } else {
+      let circle_center : number | undefined;
 
-      const vector = {
-        x: (game.data.ballPos.x = center.x),
-        y: game.data.ballPos.y - top,
-      };
-      const R_ratio: number =
-        Math.sqrt(vector.x ** 2 + vector.y ** 2) / (BALL_RAD + PADDLE_W / 2);
-      game.data.ballPos.x = center.x - vector.x * R_ratio;
-      game.data.ballPos.y = top - vector.y * R_ratio;
-      game.data.ballPos.x += game.data.ballPos.x < 0 ? 1 : -1;
-    } else if (
-      this.__circle_collision({ x: ball.x, y: ball.y }, { x: center.x, y: bot })
-    ) {
+      if (this.__circle_collision({ x: ball.x, y: ball.y }, { x: paddle_center.x, y: top })) {
+        circle_center = top;
+      } else if (this.__circle_collision({ x: ball.x, y: ball.y }, { x: paddle_center.x, y: bot })) {
+        circle_center = bot;
+      } else {
+        return;
+      }
+      
       game.data.ballVel = { x: -vel.x, y: -vel.y };
+      const dx : number = (game.data.ballPos.x - paddle_center.x);
+      const dy : number = (game.data.ballPos.y - circle_center);
+      const R_ratio: number = (BALL_RAD + PADDLE_W / 2) /  Math.sqrt(dx ** 2 + dy ** 2);
 
-      const vector = {
-        x: (game.data.ballPos.x = center.x),
-        y: game.data.ballPos.y - bot,
-      };
-      const R_ratio: number =
-        (BALL_RAD + PADDLE_W / 2) / Math.sqrt(vector.x ** 2 + vector.y ** 2);
-      game.data.ballPos.x = center.x - vector.x * R_ratio;
-      game.data.ballPos.y = bot - vector.y * R_ratio;
-      game.data.ballPos.x += game.data.ballPos.x < 0 ? 1 : -1;
-    } else return;
+      game.data.ballPos.x = paddle_center.x + dx * R_ratio;
+      game.data.ballPos.y = circle_center + dy * R_ratio;
+      game.data.ballPos.x += (game.data.ballPos.x >= paddle_center) ? 1 : -1;
 
       if (game.data.ballVel.x**2 + game.data.ballVel.y**2 <= 625)
       {
-    game.data.ballVel.x *= ACCEL_RATIO;
-    game.data.ballVel.y *= ACCEL_RATIO;
+        game.data.ballVel.x *= ACCEL_RATIO;
+        game.data.ballVel.y *= ACCEL_RATIO;
       }
     }
   }
