@@ -308,8 +308,16 @@ export class GameService {
       if (vel.y > 0) vel.y = -BALL_VEL_INIT_Y;
       else vel.y = BALL_VEL_INIT_Y;
     }
-    if (pos.y <= TABLE_TOP + BALL_RAD || pos.y >= TABLE_BOTTOM - BALL_RAD)
+    if (pos.y <= TABLE_TOP + BALL_RAD)
+    {
       vel.y = -vel.y;
+      positions.ballPos.y = TABLE_TOP + BALL_RAD + 1;
+    }
+    if (pos.y >= TABLE_BOTTOM - BALL_RAD)
+    {
+      vel.y = -vel.y;
+      positions.ballPos.y = TABLE_BOTTOM - BALL_RAD - 1;
+    }
   }
 
   private __paddle_collision(player: Socket, game: Game): void {
