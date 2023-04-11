@@ -13,7 +13,6 @@ import { Namespace } from 'socket.io';
 import { Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { GamePlayDto, ReadyDto } from './game.interface';
-import { MatchDto } from 'src/events/dto/match.dto';
 
 @WebSocketGateway({ namespace: '/game' })
 export class GameGateway
@@ -51,7 +50,7 @@ export class GameGateway
   @SubscribeMessage('ready')
   handleReadyEvent(
     @ConnectedSocket() client: Socket,
-    @MessageBody() readyInfo : ReadyDto,
+    @MessageBody() readyInfo: ReadyDto,
   ) {
     this.gameService.ready(this.server, client, readyInfo);
   }

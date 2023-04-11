@@ -21,8 +21,8 @@ export class HistoryService {
     let gameHistory: GameHistory;
     if (game.data.score.p1 > game.data.score.p2) {
       gameHistory = this.historyRepository.create({
-        winner: game.users.p1.user,
-        loser: game.users.p2.user,
+        winner: game.users.p1,
+        loser: game.users.p2,
         winnerScore: game.data.score.p1,
         loserScore: game.data.score.p2,
         startTime: game.startTime,
@@ -30,8 +30,8 @@ export class HistoryService {
       });
     } else {
       gameHistory = this.historyRepository.create({
-        winner: game.users.p2.user,
-        loser: game.users.p1.user,
+        winner: game.users.p2,
+        loser: game.users.p1,
         winnerScore: game.data.score.p2,
         loserScore: game.data.score.p1,
         startTime: game.startTime,

@@ -50,7 +50,7 @@ export class GameService {
       intervalId: null,
       isReady: { p1: false, p2: false },
       players: { p1: null, p2: null },
-      users: { p1: matchInfo.p1, p2: matchInfo.p2 },
+      users: { p1: matchInfo.p1.user, p2: matchInfo.p2.user },
       spectators: [],
       data: {
         ballPos: { x: 0, y: 0 },
@@ -68,8 +68,8 @@ export class GameService {
     this.games.set(matchInfo.roomId, game);
   }
 
-  ready(server: Namespace, gameClient: Socket, readyInfo: ReadyDto): void {
-    const clientId: string = readyInfo.userId;
+  async ready(server: Namespace, gameClient: Socket, readyInfo: ReadyDto) {
+    const user = await this.clientService.getUserFromClient(gameClient);
     const roomId: string = readyInfo.roomId;
     const game = this.games.get(roomId);
 
@@ -77,12 +77,12 @@ export class GameService {
       throw new WsException('잘못된 게임 준비 요청입니다.');
     }
 
-    if (clientId === game.users.p1.id) {
+    if (user.id === game.users.p1.id) {
       this.logger.log('player 1 READY');
       game.isReady.p1 = true;
       game.players.p1 = gameClient;
       gameClient.join(roomId);
-    } else if (clientId === game.users.p2.id) {
+    } else if (user.id === game.users.p2.id) {
       this.logger.log('player 2 READY');
       game.isReady.p2 = true;
       game.players.p2 = gameClient;
@@ -92,8 +92,8 @@ export class GameService {
     if (game.isReady.p1 && game.isReady.p2) {
       server.to(roomId).emit('game_start', {
         p1Id: game.players.p1.id,
-        p1Name: game.users.p1.user.nickname,
-        p2Name: game.users.p2.user.nickname,
+        p1Name: game.users.p1.nickname,
+        p2Name: game.users.p2.nickname,
       });
       this.__game_start(server, game);
     }
@@ -158,10 +158,7 @@ export class GameService {
   private __find_game(userId: number): string | null {
     const values = this.games.values();
     for (const value of values) {
-      if (
-        value.users.p1.user.id === userId ||
-        value.users.p2.user.id === userId
-      ) {
+      if (value.users.p1.id === userId || value.users.p2.id === userId) {
         return value.gameId;
       }
     }
