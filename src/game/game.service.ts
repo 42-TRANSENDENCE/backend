@@ -379,6 +379,8 @@ export class GameService {
 
   private __apply_gravity(gameData: GameData) {
     const yPos: number = gameData.ballPos.y;
+    if (gameData.ballVel.y >= 20)
+      return;
     if (yPos > TABLE_BOTTOM * 0.2) gameData.ballVel.y += 0.2;
     else if (yPos < TABLE_TOP * 0.2) gameData.ballVel.y -= 0.2;
   }
