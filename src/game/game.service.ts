@@ -369,8 +369,12 @@ export class GameService {
       game.data.ballPos.x += game.data.ballPos.x < 0 ? 1 : -1;
     } else return;
 
+      if (game.data.ballVel.x**2 + game.data.ballVel.y**2 <= 625)
+      {
     game.data.ballVel.x *= ACCEL_RATIO;
     game.data.ballVel.y *= ACCEL_RATIO;
+      }
+    }
   }
 
   private __circle_collision(
