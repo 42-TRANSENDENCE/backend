@@ -165,27 +165,34 @@ export class GameService {
     return null;
   }
 
-  quitGame(server: Namespace, client: Socket): void {
-    const pongClient = this.clientService.get(client.id);
-    if (!pongClient) {
-      return;
+  private findGameBySocketId(id: string) {
+    const values = this.games.values();
+    for (const value of values) {
+      if (value.players.p1.id === id || value.players.p2.id === id) {
+        return value.gameId;
+      }
     }
-    const game = this.games.get(pongClient.room);
-    if (!game) {
-      return;
-    }
+    return null;
+  }
 
-    if (game.players.p1.id === pongClient.id) {
+  quitGame(server: Namespace, client: Socket): void {
+    const gameId = this.findGameBySocketId(client.id);
+    if (!gameId) {
+      return;
+    }
+    const game = this.games.get(gameId);
+
+    if (game.players.p1.id === client.id) {
       game.data.score.p1 = -1;
-    } else if (game.players.p2.id === pongClient.id) {
+    } else if (game.players.p2.id === client.id) {
       game.data.score.p2 = -1;
     }
 
     server.to(game.gameId).emit('update_score', game.data.score);
 
-    if (game.players.p1.id === pongClient.id) {
+    if (game.players.p1.id === client.id) {
       server.to(game.gameId).emit('game_over', game.players.p2);
-    } else if (game.players.p2.id === pongClient.id) {
+    } else if (game.players.p2.id === client.id) {
       server.to(game.gameId).emit('game_over', game.players.p1);
     }
 

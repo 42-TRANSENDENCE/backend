@@ -18,9 +18,8 @@ export class HistoryService {
   ) {}
 
   createHistory(game: Game): GameHistory {
-    let gameHistory: GameHistory;
     if (game.data.score.p1 > game.data.score.p2) {
-      gameHistory = this.historyRepository.create({
+      return this.historyRepository.create({
         winner: game.users.p1,
         loser: game.users.p2,
         winnerScore: game.data.score.p1,
@@ -29,7 +28,7 @@ export class HistoryService {
         endTime: new Date(),
       });
     } else {
-      gameHistory = this.historyRepository.create({
+      return this.historyRepository.create({
         winner: game.users.p2,
         loser: game.users.p1,
         winnerScore: game.data.score.p2,
@@ -38,7 +37,6 @@ export class HistoryService {
         endTime: new Date(),
       });
     }
-    return gameHistory;
   }
 
   async save(gameHistory: GameHistory): Promise<GameHistory> {
