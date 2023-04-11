@@ -18,7 +18,7 @@ import { JwtTwoFactorStrategy } from 'src/common/strategy/jwt-two-factor.strateg
     TypeOrmModule.forFeature([User]),
     JwtModule.register({}),
     HttpModule.register({
-      timeout: 2000,
+      timeout: 3000,
     }),
     UsersModule,
   ],

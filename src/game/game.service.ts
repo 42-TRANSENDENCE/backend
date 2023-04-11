@@ -50,7 +50,7 @@ export class GameService {
       intervalId: null,
       isReady: { p1: false, p2: false },
       players: { p1: null, p2: null },
-      users: { p1: matchInfo.p1, p2: matchInfo.p2 },
+      users: { p1: matchInfo.p1.user, p2: matchInfo.p2.user },
       spectators: [],
       data: {
         ballPos: { x: 0, y: 0 },
@@ -68,8 +68,8 @@ export class GameService {
     this.games.set(matchInfo.roomId, game);
   }
 
-  ready(server: Namespace, gameClient: Socket, readyInfo: ReadyDto): void {
-    const clientId: string = readyInfo.userId;
+  async ready(server: Namespace, gameClient: Socket, readyInfo: ReadyDto) {
+    const user = await this.clientService.getUserFromClient(gameClient);
     const roomId: string = readyInfo.roomId;
     const game = this.games.get(roomId);
 
@@ -77,12 +77,12 @@ export class GameService {
       throw new WsException('잘못된 게임 준비 요청입니다.');
     }
 
-    if (clientId === game.users.p1.id) {
+    if (user.id === game.users.p1.id) {
       this.logger.log('player 1 READY');
       game.isReady.p1 = true;
       game.players.p1 = gameClient;
       gameClient.join(roomId);
-    } else if (clientId === game.users.p2.id) {
+    } else if (user.id === game.users.p2.id) {
       this.logger.log('player 2 READY');
       game.isReady.p2 = true;
       game.players.p2 = gameClient;
@@ -92,8 +92,8 @@ export class GameService {
     if (game.isReady.p1 && game.isReady.p2) {
       server.to(roomId).emit('game_start', {
         p1Id: game.players.p1.id,
-        p1Name: game.users.p1.user.nickname,
-        p2Name: game.users.p2.user.nickname,
+        p1Name: game.users.p1.nickname,
+        p2Name: game.users.p2.nickname,
       });
       this.__game_start(server, game);
     }
@@ -158,10 +158,17 @@ export class GameService {
   private __find_game(userId: number): string | null {
     const values = this.games.values();
     for (const value of values) {
-      if (
-        value.users.p1.user.id === userId ||
-        value.users.p2.user.id === userId
-      ) {
+      if (value.users.p1.id === userId || value.users.p2.id === userId) {
+        return value.gameId;
+      }
+    }
+    return null;
+  }
+
+  private findGameBySocketId(id: string) {
+    const values = this.games.values();
+    for (const value of values) {
+      if (value.players.p1.id === id || value.players.p2.id === id) {
         return value.gameId;
       }
     }
@@ -169,27 +176,24 @@ export class GameService {
   }
 
   quitGame(server: Namespace, client: Socket): void {
-    const pongClient = this.clientService.get(client.id);
-    if (!pongClient) {
+    const gameId = this.findGameBySocketId(client.id);
+    if (!gameId) {
       return;
     }
-    const game = this.games.get(pongClient.room);
-    if (!game) {
-      return;
-    }
+    const game = this.games.get(gameId);
 
-    if (game.players.p1.id === pongClient.id) {
+    if (game.players.p1.id === client.id) {
       game.data.score.p1 = -1;
-    } else if (game.players.p2.id === pongClient.id) {
+    } else if (game.players.p2.id === client.id) {
       game.data.score.p2 = -1;
     }
 
     server.to(game.gameId).emit('update_score', game.data.score);
 
-    if (game.players.p1.id === pongClient.id) {
-      server.to(game.gameId).emit('game_over', game.players.p2);
-    } else if (game.players.p2.id === pongClient.id) {
-      server.to(game.gameId).emit('game_over', game.players.p1);
+    if (game.players.p1.id === client.id) {
+      server.to(game.gameId).emit('game_over', game.players.p2.id);
+    } else if (game.players.p2.id === client.id) {
+      server.to(game.gameId).emit('game_over', game.players.p1.id);
     }
 
     this.__game_end(server, game);
@@ -213,6 +217,9 @@ export class GameService {
       if (game.type == GameType.RANK) {
         const history = this.historyService.createHistory(game);
         this.historyService.save(history);
+        this.logger.log(
+          `winner : ${history.winner.nickname} / loser : ${history.loser.nickname} score : ${history.winnerScore} : ${history.loserScore}`,
+        );
       }
 
       server.in(game.gameId).socketsLeave(game.gameId);
