@@ -191,9 +191,9 @@ export class GameService {
     server.to(game.gameId).emit('update_score', game.data.score);
 
     if (game.players.p1.id === client.id) {
-      server.to(game.gameId).emit('game_over', game.players.p2);
+      server.to(game.gameId).emit('game_over', game.players.p2.id);
     } else if (game.players.p2.id === client.id) {
-      server.to(game.gameId).emit('game_over', game.players.p1);
+      server.to(game.gameId).emit('game_over', game.players.p1.id);
     }
 
     this.__game_end(server, game);
@@ -217,6 +217,9 @@ export class GameService {
       if (game.type == GameType.RANK) {
         const history = this.historyService.createHistory(game);
         this.historyService.save(history);
+        this.logger.log(
+          `winner : ${history.winner.nickname} / loser : ${history.loser.nickname} score : ${history.winnerScore} : ${history.loserScore}`,
+        );
       }
 
       server.in(game.gameId).socketsLeave(game.gameId);
