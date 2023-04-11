@@ -321,20 +321,21 @@ export class GameService {
   }
 
   private __paddle_collision(player: Socket, game: Game): void {
-    let center;
+    let paddle_center;
     const vel = game.data.ballVel;
     const ball = game.data.ballPos;
 
     if (player === game.players.p1)
-      center = { x: TABLE_LEFT + PADDLE_L, y: game.data.paddlePos.p1 };
+      paddle_center = { x: TABLE_LEFT + PADDLE_L, y: game.data.paddlePos.p1 };
     else if (player === game.players.p2)
-      center = { x: TABLE_RIGHT - PADDLE_R, y: game.data.paddlePos.p2 };
+      paddle_center = { x: TABLE_RIGHT - PADDLE_R, y: game.data.paddlePos.p2 };
     else return;
+
     const rad = PADDLE_W / 2;
-    const top = center.y - PADDLE_H / 2 + rad;
-    const bot = center.y + PADDLE_H / 2 - rad;
-    const left = center.x - PADDLE_W / 2 - BALL_RAD;
-    const right = center.x + PADDLE_W / 2 + BALL_RAD;
+    const top = paddle_center.y - PADDLE_H / 2 + rad;
+    const bot = paddle_center.y + PADDLE_H / 2 - rad;
+    const left = paddle_center.x - PADDLE_W / 2 - BALL_RAD;
+    const right = paddle_center.x + PADDLE_W / 2 + BALL_RAD;
 
     if (left <= ball.x && ball.x <= right && top <= ball.y && ball.y <= bot) {
       game.data.ballVel = { x: -vel.x, y: vel.y };
