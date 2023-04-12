@@ -15,7 +15,7 @@ import {
 import { Channel } from './channels.entity';
 import { ChannelMember } from './channelmember.entity';
 
-@Entity()
+@Entity({ name: 'channel_banmember' })
 export class ChannelBanMember {
   @PrimaryColumn()
   userId: number;
