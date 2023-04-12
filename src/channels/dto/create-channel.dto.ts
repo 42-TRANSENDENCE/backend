@@ -15,5 +15,4 @@ export class CreateChannelDto {
     description: '비밀번호',
   })
   public password: string;
-
 }
