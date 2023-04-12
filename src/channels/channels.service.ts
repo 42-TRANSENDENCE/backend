@@ -52,7 +52,7 @@ export class ChannelsService {
       .getMany();
   }
 
-  // 똑같은 title 이 중복 되는거 예외처리 
+  // 똑같은 title 이 중복 되는거 예외처리
   async createChannels(title: string, password: string, myId: number) {
     // 이거 환경변수로 관리
     const saltRounds = 10;
