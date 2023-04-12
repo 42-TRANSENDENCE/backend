@@ -69,15 +69,4 @@ export class User {
     (channelbanmember) => channelbanmember.user,
   )
   bannedChannels: ChannelBanMember[];
-
-  // @OneToOne(() => Chats, (chat) => chat.senderId) // specify inverse side as a second parameter
-  // @JoinColumn()
-  // senderId: Chats;
-
-  // @OneToOne(() => Profile, (profile) => profile.user) // specify inverse side as a second parameter
-  //   @JoinColumn()
-  //   profile: Profile
-  // @OneToOne(() => Chats)
-  // @JoinColumn({ name: 'senderId' })
-  // chats: Chats;
 }
