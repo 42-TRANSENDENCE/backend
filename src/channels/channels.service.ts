@@ -7,6 +7,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   MethodNotAllowedException,
+  BadRequestException,
   UseGuards,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -57,6 +58,12 @@ export class ChannelsService {
     // 이거 환경변수로 관리
     const saltRounds = 10;
     // 이거 constructor 로 entity안에 넣을까 ?
+    const isDuplicate = await this.channelsRepository.findOneBy({
+      title,
+    });
+    if (isDuplicate) {
+      throw new BadRequestException('Channel title already exists');
+    }
     const channel = this.channelsRepository.create({
       title: title,
       password,
