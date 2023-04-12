@@ -120,7 +120,7 @@ export class ChannelsGateway
     return this.nsp.emit('meesage', sendChat);
   }
   async EmitChannelInfo(channelReturned) {
-    return this.nsp.emit('newRoom', channelReturned);
+    return this.nsp.emit('newChannel', channelReturned);
   }
 
   @SubscribeMessage('leave-channel')
