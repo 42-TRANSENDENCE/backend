@@ -22,18 +22,18 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateUserDto } from 'src/users/dto/users.dto';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
-import { AuthSessionGuard } from './guards/auth-session.guard';
+import { AuthSessionGuard } from '../common/guard/auth-session.guard';
 import { SessionPayload } from './interface/session-payload.interface';
 import { ConfigService } from '@nestjs/config';
-import { User } from './decorator/user.decorator';
 import { SessionInfo } from './decorator/session-info.decorator';
 import { Code } from './decorator/code.decorator';
 import { LoginService } from './login.service';
+import { GetUser } from '../common/decorator/user.decorator';
+import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
+import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
+import { UserRequestDto } from 'src/users/dto/user.request.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -100,10 +100,10 @@ export class AuthController {
   @ApiForbiddenResponse({
     description: '잘못된 접근 / 로그인을 거치지 않고 온 경우',
   })
-  @ApiBody({ type: CreateUserDto })
+  @ApiBody({ type: UserRequestDto })
   async signUp(
     @Req() req,
-    @Body() createUserDto: CreateUserDto,
+    @Body() createUserDto: UserRequestDto,
     @SessionInfo() sessionInfo: SessionPayload,
   ) {
     const user = await this.usersService.create(
@@ -132,7 +132,7 @@ export class AuthController {
       'refresh token을 기반으로 새로운 access token을 cookie에 저장 기존 token이 만료되었을때 사용',
   })
   @ApiCookieAuth('Refresh')
-  refresh(@Req() req, @User() user) {
+  refresh(@Req() req, @GetUser() user) {
     const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(
       user.id,
     );
@@ -145,7 +145,7 @@ export class AuthController {
   @HttpCode(200)
   @ApiOkResponse({ description: '로그아웃. cookie token 삭제' })
   @ApiCookieAuth('Authentication')
-  async logOut(@Req() req, @User() user) {
+  async logOut(@Req() req, @GetUser() user) {
     await this.usersService.removeRefreshToken(user.id);
     const cookie = await this.authService.getCookieForLogOut();
     req.res.setHeader('Set-Cookie', cookie);

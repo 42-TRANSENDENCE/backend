@@ -17,14 +17,15 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UsersService } from 'src/users/users.service';
-import { AuthService } from '../auth.service';
-import { User } from '../decorator/user.decorator';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { JwtTwoFactorGuard } from '../guards/jwt-two-factor.guard';
+import { AuthService } from '../auth/auth.service';
+import { GetUser } from '../common/decorator/user.decorator';
 import { TwoFactorAuthService } from './two-factor-auth.service';
 import { TwoFactorTokenDto } from './two-factor-token.dto';
 import * as QRCode from 'qrcode';
+import { User } from 'src/users/users.entity';
+import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
+import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
+
 @ApiTags('2fa')
 @Controller('2fa')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -32,7 +33,6 @@ export class TwoFactorAuthController {
   constructor(
     private readonly twoFactorAuthService: TwoFactorAuthService,
     private readonly authService: AuthService,
-    private readonly usersService: UsersService,
   ) {}
 
   @Get('generate')
@@ -41,8 +41,8 @@ export class TwoFactorAuthController {
     description: 'Google Authenticator에 등록할 QR Code 반환',
   })
   @Header('Content-Type', 'image/png')
-  async register(@Req() req, @Res() res, @User() user) {
-    const secret = await this.twoFactorAuthService.register(user.id);
+  register(@Res() res, @GetUser() user: User) {
+    const secret = this.twoFactorAuthService.register(user);
     return QRCode.toFileStream(res, secret.otpauth_url);
   }
 
@@ -55,9 +55,9 @@ export class TwoFactorAuthController {
   async validate(
     @Req() req,
     @Body() twoFactorTokenDto: TwoFactorTokenDto,
-    @User() user,
+    @GetUser() user: User,
   ) {
-    await this.twoFactorAuthService.verifyTwoFactorAuth(
+    this.twoFactorAuthService.verifyTwoFactorAuth(
       user.twoFactorSecret,
       twoFactorTokenDto.token,
     );
@@ -73,15 +73,15 @@ export class TwoFactorAuthController {
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
   @ApiOkResponse({ description: '2차 인증 활성화' })
-  async turnOn(@User() user) {
-    return await this.usersService.turnOnTwoFactorAuthentication(user.id);
+  turnOn(@GetUser() user: User) {
+    return this.twoFactorAuthService.turnOnTwoFactorAuthentication(user);
   }
 
   @Post('turn-off')
   @HttpCode(200)
   @UseGuards(JwtTwoFactorGuard)
   @ApiOkResponse({ description: '2차 인증 비활성화' })
-  async turnOff(@User() user) {
-    return await this.usersService.turnOffTwoFactorAuthentication(user.id);
+  turnOff(@GetUser() user: User) {
+    return this.twoFactorAuthService.turnOffTwoFactorAuthentication(user);
   }
 }

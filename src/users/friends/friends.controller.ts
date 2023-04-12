@@ -17,10 +17,10 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { User } from 'src/auth/decorator/user.decorator';
-import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
 import { FriendsService } from './friends.service';
-import { FriendResponseDto } from '../dto/friend-response.dto';
+import { FriendResponseDto } from './dto/friend.response.dto';
+import { GetUser } from 'src/common/decorator/user.decorator';
+import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 
 @Controller('users/friends')
 @UseGuards(JwtTwoFactorGuard)
@@ -33,7 +33,7 @@ export class FriendsController {
   @Get()
   @ApiOperation({ summary: '모든 친구 조회' })
   @ApiOkResponse({ type: [FriendResponseDto] })
-  async getAllFriends(@User() user): Promise<FriendResponseDto[]> {
+  async getAllFriends(@GetUser() user): Promise<FriendResponseDto[]> {
     const friends = await this.friendsService.getAllFriends(user);
     return friends.map((friend) => {
       return new FriendResponseDto(friend);
@@ -46,7 +46,7 @@ export class FriendsController {
     description: '보낸 친구요청을 아직 수락하지 않은 사용자들을 반환',
   })
   @ApiOkResponse({ type: [FriendResponseDto] })
-  async getPendingRequests(@User() user): Promise<FriendResponseDto[]> {
+  async getPendingRequests(@GetUser() user): Promise<FriendResponseDto[]> {
     return (await this.friendsService.getPendingRequests(user)).map(
       (pendingRequest) => new FriendResponseDto(pendingRequest),
     );
@@ -58,7 +58,7 @@ export class FriendsController {
     description: '나에게 친구 요청을 보낸 사용자들을 반환',
   })
   @ApiOkResponse({ type: [FriendResponseDto] })
-  async receivedRequest(@User() user): Promise<FriendResponseDto[]> {
+  async receivedRequest(@GetUser() user): Promise<FriendResponseDto[]> {
     return (await this.friendsService.getReceivedFriendships(user)).map(
       (receivedRequest) => new FriendResponseDto(receivedRequest),
     );
@@ -70,7 +70,7 @@ export class FriendsController {
     description: '다른 사용자에게 친구 요청',
   })
   @ApiNotFoundResponse({ description: '사용자 정보 없음' })
-  requestFriendship(@User() user, @Param('id') id: number) {
+  requestFriendship(@GetUser() user, @Param('id') id: number) {
     return this.friendsService.requestFriendship(user, id);
   }
 
@@ -82,7 +82,7 @@ export class FriendsController {
   @ApiNotFoundResponse({
     description: '친구 요청 정보 없음',
   })
-  deleteRequest(@User() user, @Param('id') id: number) {
+  deleteRequest(@GetUser() user, @Param('id') id: number) {
     return this.friendsService.deleteRequest(user.id, id);
   }
 
@@ -91,7 +91,7 @@ export class FriendsController {
     summary: '친구 요청 거절',
     description: '받은 친구 요청 삭제',
   })
-  deleteReceived(@User() user, @Param('id') id: number) {
+  deleteReceived(@GetUser() user, @Param('id') id: number) {
     return this.friendsService.deleteRequest(id, user.id);
   }
 
@@ -101,7 +101,7 @@ export class FriendsController {
     description: '받은 친구 요청 수락',
   })
   @ApiNotFoundResponse({ description: '친구 요청 정보 없음' })
-  approveFriendship(@User() user, @Param('id', ParseIntPipe) id: number) {
+  approveFriendship(@GetUser() user, @Param('id', ParseIntPipe) id: number) {
     return this.friendsService.approveFriendship(user.id, id);
   }
 
@@ -111,7 +111,7 @@ export class FriendsController {
     description: '친구 삭제 (이미 친구 관계)',
   })
   @ApiNotFoundResponse({ description: '친구 관계 정보 없음' })
-  deleteFriend(@User() user, @Param('id') id: number) {
+  deleteFriend(@GetUser() user, @Param('id') id: number) {
     return this.friendsService.deleteFriendship(user, id);
   }
 }

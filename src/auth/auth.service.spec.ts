@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from 'src/users/users.service';
 import { mockedConfigService } from 'src/utils/mocks/config.service';
 import { mockedJwtService } from 'src/utils/mocks/jwt.service';
-import { AuthService } from '../auth.service';
+import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
   let authService: AuthService;

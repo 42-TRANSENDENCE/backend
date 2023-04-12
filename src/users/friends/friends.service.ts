@@ -17,6 +17,8 @@ import {
 import { Friendship, FriendStatus } from './friendship.entity';
 import { userNotFoundErr } from '../users.constants';
 import { FriendsRepository } from './friends.repository';
+import { AchievementService } from 'src/achievement/achievement.service';
+import { Title } from 'src/achievement/achievement.entity';
 
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -27,6 +29,7 @@ export class FriendsService {
     private readonly friendsRepository: FriendsRepository,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly achievementService: AchievementService,
   ) {}
 
   async getAllFriends(user: User): Promise<User[]> {
@@ -97,6 +100,33 @@ export class FriendsService {
       throw new NotFoundException(requestNotFoundErr);
     }
     friendship.status = FriendStatus.APPROVED;
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: { achievements: true },
+    });
+
+    const otherUser = await this.userRepository.findOne({
+      where: { id },
+      relations: { achievements: true },
+    });
+
+    if (
+      !user.achievements.find(
+        (achievement) => achievement.title == Title.FIRST_FREINDSHIP,
+      )
+    ) {
+      this.achievementService.add(user, Title.FIRST_FREINDSHIP);
+    }
+
+    if (
+      !otherUser.achievements.find(
+        (achievement) => achievement.title == Title.FIRST_FREINDSHIP,
+      )
+    ) {
+      this.achievementService.add(otherUser, Title.FIRST_FREINDSHIP);
+    }
+
     return this.friendsRepository.save(friendship);
   }
 

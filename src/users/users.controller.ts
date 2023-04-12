@@ -25,13 +25,13 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { User } from 'src/auth/decorator/user.decorator';
-import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
-import { ModifyUserDto } from './dto/users.dto';
 import { userAvatarApiBody } from './users.constants';
 import { UsersService } from './users.service';
-import { UserResponse } from './dto/user-response.dto';
-import { UserSearchDto } from './dto/user-search.dto';
+import { UserResponse } from './dto/user.response.dto';
+import { UserSearchDto } from './dto/user.search.response.dto';
+import { GetUser } from 'src/common/decorator/user.decorator';
+import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
+import { UserRequestDto } from './dto/user.request.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -43,7 +43,7 @@ export class UsersController {
   @UseGuards(JwtTwoFactorGuard)
   @ApiOperation({ summary: '로그인한 user 정보 반환' })
   @ApiOkResponse({ type: UserResponse })
-  async getUserInfo(@User() user) {
+  async getUserInfo(@GetUser() user) {
     return this.userService.getUser(user.id);
   }
 
@@ -51,17 +51,8 @@ export class UsersController {
   @UseGuards(JwtTwoFactorGuard)
   @ApiOperation({ summary: '닉네임으로 유저 정보 검색' })
   @ApiOkResponse({ type: UserSearchDto })
-  getUserByNickname(@User() user, @Param('nickname') nickname: string) {
+  getUserByNickname(@GetUser() user, @Param('nickname') nickname: string) {
     return this.userService.getByNickname(user, nickname);
-  }
-
-  @Get('avatar')
-  @UseGuards(JwtTwoFactorGuard)
-  @Header('Content-Type', 'image/*')
-  @Header('Content-Disposition', 'inline')
-  @ApiOperation({ summary: '사용자 아바타 이미지 반환' })
-  async getUserAvatar(@User() user) {
-    return new StreamableFile(user.avatar);
   }
 
   @Put('avatar')
@@ -76,7 +67,7 @@ export class UsersController {
   @ApiBody(userAvatarApiBody)
   @ApiOkResponse({ description: '변경된 이미지 반환' })
   async updateUserAvatar(
-    @User() user,
+    @GetUser() user,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -97,7 +88,7 @@ export class UsersController {
   @Delete()
   @UseGuards(JwtTwoFactorGuard)
   @ApiOperation({ summary: '사용자 삭제', description: '회원 탈퇴' })
-  deleteUser(@User() user) {
+  deleteUser(@GetUser() user) {
     return this.userService.deleteUser(user.id);
   }
 
@@ -106,7 +97,7 @@ export class UsersController {
   @ApiOperation({ summary: 'nickname 변경' })
   @ApiOkResponse({ description: '변경 완료' })
   @ApiBadRequestResponse({ description: '이미 존재하는 닉네임 / 잘못된 입력' })
-  modifyNickname(@User() user, @Body() modifyUserDto: ModifyUserDto) {
+  modifyNickname(@GetUser() user, @Body() modifyUserDto: UserRequestDto) {
     return this.userService.modifyNickname(user, modifyUserDto.nickname);
   }
 }

@@ -8,6 +8,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsResponse,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { LobbyService } from 'src/events/lobby/lobby.service';
@@ -81,7 +82,9 @@ export class EventGateway
   }
 
   @SubscribeMessage('friends_status')
-  async handleFriendsStatus(@ConnectedSocket() client: Socket) {
+  async handleFriendsStatus(
+    @ConnectedSocket() client: Socket,
+  ): Promise<WsResponse<FriendsStatusDto[]>> {
     const user = await this.clientService.getUserFromClient(client);
     const friends: User[] = await this.friendsService.getAllFriends(user);
     const friendsWithStatus: FriendsStatusDto[] = [];
@@ -90,7 +93,9 @@ export class EventGateway
       const pongClient = this.clientService.getByUserId(friend.id);
       friendsWithStatus.push(new FriendsStatusDto(pongClient, friend));
     });
-    return friendsWithStatus;
+
+    const event = 'friends_status';
+    return { event, data: friendsWithStatus };
   }
 
   /** Lobby */

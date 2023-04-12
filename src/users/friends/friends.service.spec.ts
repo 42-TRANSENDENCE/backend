@@ -7,6 +7,7 @@ import { Friendship, FriendStatus } from './friendship.entity';
 import { FriendsService } from './friends.service';
 import { requestNotFoundErr } from './friends.constants';
 import { FriendsRepository } from './friends.repository';
+import { AchievementService } from 'src/achievement/achievement.service';
 
 describe('FriendsService', () => {
   function createRandomUser(): User {
@@ -38,6 +39,7 @@ describe('FriendsService', () => {
 
   const mockedUserRepository = {
     findOneBy: jest.fn(),
+    findOne: jest.fn(),
   };
 
   let friendsService: FriendsService;
@@ -51,6 +53,7 @@ describe('FriendsService', () => {
           useValue: mockedFriendshipRepository,
         },
         { provide: getRepositoryToken(User), useValue: mockedUserRepository },
+        { provide: AchievementService, useValue: { add: jest.fn() } },
       ],
     }).compile();
 
@@ -152,6 +155,10 @@ describe('FriendsService', () => {
   });
 
   describe('approveFriendship', () => {
+    beforeEach(() => {
+      mockedUserRepository.findOne.mockReturnValue(mockedUser);
+    });
+
     it('should approve friendship request', async () => {
       mockedFriendshipRepository.findOnePendingRequest.mockReturnValueOnce(
         friendship3,
