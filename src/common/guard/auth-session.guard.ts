@@ -13,7 +13,6 @@ export class AuthSessionGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const session: any = request.session;
-
     if (!session.info) {
       throw new ForbiddenException('잘못된 접근입니다.');
     }

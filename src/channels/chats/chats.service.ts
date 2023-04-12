@@ -5,23 +5,27 @@ import {
   UnauthorizedException,
   CACHE_MANAGER,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Chats } from './chats.entity';
+import { Chat } from './chats.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelsGateway } from 'src/channels/events.chats.gateway';
-import { Channels } from 'src/channels/channels.entity';
+import { Channel } from 'src/channels/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
 import { Cache } from 'cache-manager';
+import { ChannelMember } from '../channelmember.entity';
 
 @Injectable()
 export class ChatsService {
   constructor(
-    @InjectRepository(Chats) private chatsRepository: Repository<Chats>,
+    @InjectRepository(Chat) private chatsRepository: Repository<Chat>,
     @InjectRepository(User) private usersRepository: Repository<User>,
-    @InjectRepository(Channels)
-    private channelsRepository: Repository<Channels>,
+    @InjectRepository(ChannelMember)
+    private channelMembersRepository: Repository<ChannelMember>,
+    @InjectRepository(Channel)
+    private channelsRepository: Repository<Channel>,
 
     @Inject(forwardRef(() => ChannelsService))
     private readonly channelsService: ChannelsService,
@@ -47,10 +51,17 @@ export class ChatsService {
     return false;
   }
   async sendChatToChannel(roomId: number, chat: string, user: User) {
-    if (await this.isMutted(roomId, 2))
+    if (await this.isMutted(roomId, user.id))
       throw new UnauthorizedException('YOU ARE MUTED');
+    // 이거 따로 빼서 함수로 만들기. 민준's repository 참고
+    const channelMember = this.channelMembersRepository.find({
+      where: { channelId: roomId },
+      relations: ['userId'],
+    });
+    if (!channelMember) throw new NotFoundException('YOU ARE NOT MEMBER');
+    // 채팅 저장 , 일단 캐시에 다 넣고 나중에 한번에 저장 ?
     const chats = this.chatsRepository.create({
-      senderId: 2, //user.id,
+      // sender: user.id, //user.id,
       channelId: roomId,
       content: chat,
     });

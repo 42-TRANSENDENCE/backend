@@ -1,3 +1,4 @@
+import { Channel } from '../channels.entity';
 import {
   PrimaryGeneratedColumn,
   Column,
@@ -7,12 +8,15 @@ import {
   Index,
   ManyToOne,
   JoinColumn,
+  PrimaryColumn,
+  OneToOne,
 } from 'typeorm';
+import { User } from 'src/users/users.entity';
 
-@Index('userId', ['id'], {})
-@Index('channelId', ['channelId'], {})
+// @Index('userId', ['senderId'], {})
+// @Index('channelId', ['channelId'], {})
 @Entity()
-export class Chats {
+export class Chat {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -27,26 +31,17 @@ export class Chats {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column()
+  @PrimaryColumn()
   channelId: number;
 
-  @Column()
-  senderId: number;
+  @ManyToOne(() => User, (user) => user.id, {
+    onDelete: 'SET NULL',
+  })
+  // @JoinColumn({ name: 'senderId' })
+  sender: User;
 
-  @Column({ nullable: true })
-  receiverId?: number;
-
-  // @ManyToOne(() => User, (users) => users.ChannelChats, {
-  //     onDelete: 'SET NULL',
-  //     onUpdate: 'CASCADE',
-  // })
-  // @JoinColumn([{ name: 'UserId', referencedColumnName: 'id' }])
-  // User: User;
-
-  // @ManyToOne(() => Channels, (channels) => channels.ChannelChats, {
-  //     onDelete: 'SET NULL',
-  //     onUpdate: 'CASCADE',
-  // })
-  // @JoinColumn([{ name: 'ChannelId', referencedColumnName: 'id' }])
-  // Channel: Channels;
+  @ManyToOne(() => Channel, (channel) => channel.chats, {
+    onDelete: 'SET NULL',
+  })
+  channel: Channel;
 }

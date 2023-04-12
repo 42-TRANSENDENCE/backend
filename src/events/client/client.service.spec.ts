@@ -33,9 +33,10 @@ describe('ClientService', () => {
     isTwoFactorAuthenticationEnabled: false,
     friends: [],
     achievements: [],
-    channelMember: null,
     wins: [],
     loses: [],
+    memberchannels: [],
+    bannedChannels: [],
   };
 
   const socketId = '4242';
