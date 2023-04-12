@@ -8,6 +8,7 @@ import {
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChannelsService } from './channels.service';
@@ -21,8 +22,8 @@ import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
 
 @ApiTags('CHAT')
-@Controller('/channels')
-@UseInterceptors(ClassSerializerInterceptor)
+@Controller('channels')
+// @UseInterceptors(ClassSerializerInterceptor)
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
 
@@ -30,6 +31,7 @@ export class ChannelsController {
   @UseGuards(JwtTwoFactorGuard)
   @Get()
   async getChannels() {
+    // return this.channelsService.getMyChannels(u)
     return this.channelsService.getChannels();
   }
 
@@ -44,12 +46,20 @@ export class ChannelsController {
     );
   }
 
-  // @ApiOperation({ summary: 'DM방 만들기' })
-  // @Post()
-  // @UseGuards(JwtTwoFactorGuard)
-  // async createDMChannels(@GetUser() use:User, @Body() reciveUser: User) {
-  //   return this.channelsService.createDMChannels(user, reciveUser);
-  // }
+  @ApiOperation({ summary: 'DM방 만들기' })
+  @Post()
+  @UseGuards(JwtTwoFactorGuard)
+  async createDMChannels(@GetUser() user: User, @Body() reciveUser: User) {
+    return this.channelsService.createDMChannel(user, reciveUser);
+  }
+
+  @ApiOperation({ summary: '내 채팅방 목록 DM 포함' })
+  @Get('mychannels')
+  @UseGuards(JwtTwoFactorGuard)
+  async getMyChannels(@GetUser() user) {
+    // return this.channelsService.getMyChannels(user);
+    return this.channelsService.getMyChannels(user);
+  }
 
   @ApiOperation({
     summary:
@@ -57,7 +67,9 @@ export class ChannelsController {
   })
   @UseGuards(JwtTwoFactorGuard)
   @Get(':channelId')
-  async getChannelInfo(@Param('channelId') channelId: number) {
+  // @Param('id', ParseIntPipe) id: number
+  // async getCahnnelInfo(@Param('channelId') channelId: number) {
+  async getChannelInfo(@Param('channelId', ParseIntPipe) channelId: number) {
     const result = await this.channelsService.getChannelInfo(channelId);
     // banMember 도 추가
     // private 인지 알러면 채팅방 에 쿼리로 접근해서 알아와야 하는데.
