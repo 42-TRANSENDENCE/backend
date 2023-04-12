@@ -18,15 +18,14 @@ import { Response } from 'express';
 import { JwtTwoFactorGuard } from 'src/auth/guards/jwt-two-factor.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from 'src/auth/guards/jwt-refresh-auth.guard';
+
 @ApiTags('CHAT')
 @Controller('/channels')
-// @UseInterceptors(ClassSerializerInterceptor)
+@UseInterceptors(ClassSerializerInterceptor)
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
 
-  // 일단 인자에 Users와 Param 은 필요 없음 (추후 확인후 첨삭 해야함)
-  // 현재 user.id 를 그냥 1로 넣어주고 있음 ( 지금 로직에서도 안 쓰임 )
-  @ApiOperation({ summary: '채팅방 모두 가져오기' })
+  @ApiOperation({ summary: '채팅방 모두 가져오기 PRIVATE 뺴고' })
   @UseGuards(JwtTwoFactorGuard)
   @Get()
   async getChannels() {
@@ -43,6 +42,13 @@ export class ChannelsController {
       user.id,
     );
   }
+
+  // @ApiOperation({ summary: 'DM방 만들기' })
+  // @Post()
+  // @UseGuards(JwtTwoFactorGuard)
+  // async createDMChannels(@User() user, @Body() reciveUser: User) {
+  //   return this.channelsService.createDMChannels(user, reciveUser);
+  // }
 
   @ApiOperation({
     summary:

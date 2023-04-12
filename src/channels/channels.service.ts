@@ -52,6 +52,7 @@ export class ChannelsService {
       .getMany();
   }
 
+  // 똑같은 title 이 중복 되는거 예외처리 
   async createChannels(title: string, password: string, myId: number) {
     // 이거 환경변수로 관리
     const saltRounds = 10;
@@ -77,6 +78,29 @@ export class ChannelsService {
     });
     await this.channelMemberRepository.save(channelMember);
   }
+
+  // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
+  // async createDMChannel(user: User, reciveId: number) {
+  //   const channel = this.channelsRepository.create({
+  //     title: user.nickname,
+  //     owner: user.id,
+  //     status: ChannelStatus.PRIVATE,
+  //   });
+  //   const channelReturned = await this.channelsRepository.save(channel);
+  //   const channelMember = this.channelMemberRepository.create({
+  //     userId: myId,
+  //     channelId: channelReturned.id,
+  //     type: MemberType.OWNER,
+  //   });
+  //   const channelMember2 = this.channelMemberRepository.create({
+  //     userId: reciveId,
+  //     channelId: channelReturned.id,
+  //     type: MemberType.MEMBER,
+  //   });
+  //   await this.channelMemberRepository.save(channelMember);
+  //   await this.channelMemberRepository.save(channelMember2);
+  //   return channelReturned;
+  // }
 
   // 방이 없을때 예외 처리
   async getChannelInfo(channelId: number) {
