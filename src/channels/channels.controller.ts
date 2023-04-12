@@ -15,6 +15,7 @@ import { GetUser } from 'src/common/decorator/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
 import { Response } from 'express';
+import { User } from 'src/users/users.entity';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
@@ -35,7 +36,7 @@ export class ChannelsController {
   @ApiOperation({ summary: '채팅방 만들기' })
   @Post()
   @UseGuards(JwtTwoFactorGuard)
-  async createChannels(@Body() body: CreateChannelDto, @GetUser() user) {
+  async createChannels(@Body() body: CreateChannelDto, @GetUser() user: User) {
     return this.channelsService.createChannels(
       body.title,
       body.password,
@@ -46,7 +47,7 @@ export class ChannelsController {
   // @ApiOperation({ summary: 'DM방 만들기' })
   // @Post()
   // @UseGuards(JwtTwoFactorGuard)
-  // async createDMChannels(@User() user, @Body() reciveUser: User) {
+  // async createDMChannels(@GetUser() use:User, @Body() reciveUser: User) {
   //   return this.channelsService.createDMChannels(user, reciveUser);
   // }
 
@@ -69,7 +70,7 @@ export class ChannelsController {
   async userEnterChannel(
     @Param('channelId') channelId: number,
     @Body() enterDto: EnterChannelDto,
-    @GetUser() user,
+    @GetUser() user: User,
     @Res() res: Response,
   ) {
     const result = await this.channelsService.userEnterChannel(
@@ -87,7 +88,7 @@ export class ChannelsController {
   async ownerGiveAdmin(
     @Param('channelid') channelId: number,
     @Param('userid') toUserId: number,
-    @GetUser() user,
+    @GetUser() user: User,
   ) {
     return this.channelsService.ownerGiveAdmin(channelId, toUserId, user);
   }
@@ -98,7 +99,7 @@ export class ChannelsController {
   async postBanInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
-    @GetUser() user,
+    @GetUser() user: User,
   ) {
     return this.channelsService.postBanInChannel(channelId, userId, user);
   }
@@ -108,7 +109,7 @@ export class ChannelsController {
   async postKickInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
-    @GetUser() user,
+    @GetUser() user: User,
   ) {
     // return this.channelsService.postKickInChannel(channelId, userId, user)
     return this.channelsService.addToKicklist(channelId, userId, 3000);
@@ -119,7 +120,7 @@ export class ChannelsController {
   async postMuteInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
-    @GetUser() user,
+    @GetUser() user: User,
   ) {
     return this.channelsService.addToMutelist(channelId, userId, 3000);
   }
