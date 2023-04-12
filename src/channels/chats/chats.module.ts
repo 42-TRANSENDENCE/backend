@@ -7,9 +7,11 @@ import { Chat } from 'src/channels/chats/chats.entity';
 import { EventsModules } from '../events.module';
 import { Channel } from 'src/channels/channels.entity';
 import { ChannelsModule } from 'src/channels/channels.module';
+import { ChannelMember } from '../channelmember.entity';
+
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Chat, User, Channel]),
+    TypeOrmModule.forFeature([Chat, User, Channel, ChannelMember]),
     EventsModules,
     forwardRef(() => ChannelsModule),
     CacheModule.register(),
