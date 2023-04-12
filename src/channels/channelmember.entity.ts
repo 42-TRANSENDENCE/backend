@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 import { Channel } from './channels.entity';
 
-@Entity({ name: 'channelMember' })
+@Entity({ name: 'channel_member' })
 export class ChannelMember {
   @PrimaryColumn()
   userId: number;
