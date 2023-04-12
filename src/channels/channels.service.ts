@@ -13,7 +13,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Channel, ChannelStatus } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
-import { ChannelMember } from 'src/channels/channelmember.entity';
+import { ChannelMember, MemberType } from 'src/channels/channelmember.entity';
 import { ChannelsGateway } from './events.chats.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
@@ -43,11 +43,19 @@ export class ChannelsService {
   }
 
   async getChannels() {
-    return this.channelsRepository.createQueryBuilder('channels').getMany();
+    const statuses = [ChannelStatus.PUBLIC, ChannelStatus.PROTECTED];
+    return this.channelsRepository
+      .createQueryBuilder('channel')
+      .where('channel.status IN (:...statuses)', {
+        statuses,
+      }) // Add condition for status
+      .getMany();
   }
 
   async createChannels(title: string, password: string, myId: number) {
+    // 이거 환경변수로 관리
     const saltRounds = 10;
+    // 이거 constructor 로 entity안에 넣을까 ?
     const channel = this.channelsRepository.create({
       title: title,
       password,
@@ -65,6 +73,7 @@ export class ChannelsService {
     const channelMember = this.channelMemberRepository.create({
       userId: myId,
       channelId: channelReturned.id,
+      type: MemberType.OWNER,
     });
     await this.channelMemberRepository.save(channelMember);
   }
@@ -147,6 +156,7 @@ export class ChannelsService {
           const cm = this.channelMemberRepository.create({
             userId: user.id, // user.id
             channelId: channelId,
+            type: MemberType.MEMBER,
           });
           this.channelMemberRepository.save(cm);
         }
@@ -176,6 +186,7 @@ export class ChannelsService {
       const cm = this.channelMemberRepository.create({
         userId: user.id, // user.id
         channelId: channelId,
+        type: MemberType.MEMBER,
       });
       this.channelMemberRepository.save(cm);
     }
@@ -207,6 +218,14 @@ export class ChannelsService {
     return this.userEnterPublicChannel(channelId, user, curChannel);
   }
 
+  async isAdmininChannel(channelId: number, userId: number) {
+    const curChannelMember = await this.channelMemberRepository.findOneBy({
+      channelId: channelId,
+      userId: userId,
+    });
+    if (curChannelMember.type === 'ADMIN') return true;
+    return false;
+  }
   // 내가 이 채팅방에 owner 권한이 있는지
   // 없으면  cut 있으면  admin 권한을  toUserid 에게 준다.
   async ownerGiveAdmin(channelId: number, toUserId: number, user: User) {
@@ -216,15 +235,30 @@ export class ChannelsService {
       .getOne();
     if (!isInUser)
       throw new NotFoundException(`In this room ${toUserId} is not exsit`);
+    if (isInUser.type === 'MEMBER')
+      throw new MethodNotAllowedException('You have no permission');
     const curChannel = await this.findById(channelId);
     if (!curChannel) throw new NotFoundException(`${channelId} is not exsit`);
     if (curChannel.owner == toUserId)
       throw new MethodNotAllowedException('Owner could not downgrade admin');
-    // 채팅방의 Owner가 현재 명령한  userid와 일치 할때  근데 지금은  user가 연동이 안 되어 있닌까
     // owner 가 admin을 자기 자신한테 주면 그냥 owner되게 하기
-    if (user.id === curChannel.owner) {
-      curChannel.admin = toUserId;
-      this.channelsRepository.save(curChannel);
+    // 해당 채널의 멤버가 admin인지 확인하는것도 추가 해야함
+    if (
+      user.id === curChannel.owner ||
+      this.isAdmininChannel(channelId, user.id)
+    ) {
+      // curChannel.admin = toUserId;
+      const member = curChannel.members.find(
+        (member) => member.userId === toUserId,
+      );
+      if (!member)
+        throw new NotFoundException(`In this room ${toUserId} is not exsit`);
+      if (member.type === MemberType.ADMIN)
+        throw new MethodNotAllowedException('Already Admin');
+      {
+        member.type = MemberType.ADMIN; // Update the member's type to ADMIN
+        await this.channelMemberRepository.save(member); // Save the updated Channel entity to the database
+      }
     }
   }
 

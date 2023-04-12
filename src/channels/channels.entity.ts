@@ -6,13 +6,15 @@ import {
   UpdateDateColumn,
   OneToMany,
   OneToOne,
+  ManyToMany,
+  JoinTable,
   JoinColumn,
 } from 'typeorm';
 import { ChannelMember } from './channelmember.entity';
 import { ChannelBanMember } from './channelbanmember.entity';
 import { Exclude } from 'class-transformer';
 import { Chat } from './chats/chats.entity';
-import { JoinAttribute } from 'typeorm/query-builder/JoinAttribute';
+import { User } from 'src/users/users.entity';
 
 export enum ChannelStatus {
   PUBLIC = 'PUBLIC',
@@ -28,11 +30,15 @@ export class Channel {
   @Column('varchar', { length: 30, default: 'default' })
   title: string;
 
-  @Column({ nullable: true })
-  admin?: number;
+  // @Column({ nullable: true })
+  // admin?: number[];
+  // userid 배열로 admin을 가지고 있을까 아니면 User객체 자체를 연결 할ㄲ ㅏ..  ? 굳이 객체를 연결할 필요가 있나?
+  @ManyToMany(() => ChannelMember)
+  @JoinTable()
+  admins: ChannelMember[];
 
-  @Column({ nullable: true })
-  owner?: number;
+  @Column()
+  owner: number;
 
   @Column('varchar', { length: 1000, nullable: true })
   @Exclude()
@@ -44,7 +50,7 @@ export class Channel {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ type: 'enum', enum: ChannelStatus, nullable: true })
+  @Column({ type: 'enum', enum: ChannelStatus })
   status: ChannelStatus;
 
   @OneToMany(() => ChannelMember, (channelmember) => channelmember.channel)
@@ -58,7 +64,4 @@ export class Channel {
 
   @OneToMany(() => Chat, (chats) => chats.channelId)
   chats: Chat[];
-
-  // @OneToMany(() => Chats, (chats) => chats.dm)
-  // dm: Chats[];
 }
