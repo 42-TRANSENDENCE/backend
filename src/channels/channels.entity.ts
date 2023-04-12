@@ -9,6 +9,7 @@ import {
   ManyToMany,
   JoinTable,
   JoinColumn,
+  Unique,
 } from 'typeorm';
 import { ChannelMember } from './channelmember.entity';
 import { ChannelBanMember } from './channelbanmember.entity';
@@ -23,6 +24,7 @@ export enum ChannelStatus {
 }
 
 @Entity({ name: 'channel' })
+@Unique(['title'])
 export class Channel {
   @PrimaryGeneratedColumn()
   id: number;
