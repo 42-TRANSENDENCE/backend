@@ -23,7 +23,7 @@ import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
 
 @ApiTags('CHAT')
 @Controller('channels')
-// @UseInterceptors(ClassSerializerInterceptor)
+@UseInterceptors(ClassSerializerInterceptor)
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
 
