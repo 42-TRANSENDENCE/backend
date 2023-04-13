@@ -85,6 +85,7 @@ export class ChannelsService {
       type: MemberType.OWNER,
     });
     await this.channelMemberRepository.save(channelMember);
+    // return channelReturned; // 이게 맞나?
   }
 
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
@@ -167,7 +168,7 @@ export class ChannelsService {
         const isInUser = await this.channelMemberRepository.findOne({
           where: { channelId: channelId, userId: user.id },
         });
-        // if (isInUser) throw new BadRequestException('Already in the channel');
+        if (isInUser) throw new BadRequestException('Already in the channel');
         if (!isInUser) {
           const cm = this.channelMemberRepository.create({
             userId: user.id, // user.id
@@ -193,6 +194,7 @@ export class ChannelsService {
     const isInUser = await this.channelMemberRepository.findOne({
       where: { channelId: channelId, userId: user.id },
     });
+    if (isInUser) throw new BadRequestException('Already in the channel');
     if (!isInUser) {
       const cm = this.channelMemberRepository.create({
         userId: user.id,
@@ -212,15 +214,10 @@ export class ChannelsService {
     const curChannel = await this.channelsRepository.findOneBy({
       id: channelId,
     });
-    // this.logger.log(await this.isBanned(channelId, user.id)); 
+    // this.logger.log(await this.isBanned(channelId, user.id));
     if (await this.isBanned(channelId, user.id))
       throw new UnauthorizedException('YOU ARE BANNED');
     if (!curChannel) throw new NotFoundException('PLZ ENTER EXIST CHANNEL');
-    const isInUser = await this.channelMemberRepository.findOne({
-      where: { channelId: channelId, userId: user.id },
-    });
-    if (isInUser)
-      throw new BadRequestException('YOU ARE ALREADY IN THE CHANNEL');
     if (curChannel.status === ChannelStatus.PROTECTED)
       return this.userEnterPrivateChannel(
         channelId,

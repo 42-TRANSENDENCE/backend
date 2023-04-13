@@ -12,6 +12,7 @@ import {
   OneToOne,
 } from 'typeorm';
 import { User } from 'src/users/users.entity';
+import { isNotEmpty } from 'class-validator';
 
 // @Index('userId', ['senderId'], {})
 // @Index('channelId', ['channelId'], {})
@@ -22,6 +23,7 @@ export class Chat {
 
   @Column('varchar', {
     length: 100,
+    nullable: true,
   })
   content: string;
 
@@ -34,10 +36,13 @@ export class Chat {
   @PrimaryColumn()
   channelId: number;
 
+  @Column({ nullable: true })
+  senderUserId: number;
+
   @ManyToOne(() => User, (user) => user.id, {
     onDelete: 'SET NULL',
   })
-  // @JoinColumn({ name: 'senderId' })
+  @JoinColumn({ name: 'senderId' })
   sender: User;
 
   @ManyToOne(() => Channel, (channel) => channel.chats, {
