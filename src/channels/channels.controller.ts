@@ -8,6 +8,7 @@ import {
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChannelsService } from './channels.service';
@@ -15,12 +16,13 @@ import { GetUser } from 'src/common/decorator/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
 import { Response } from 'express';
+import { User } from 'src/users/users.entity';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
 
 @ApiTags('CHAT')
-@Controller('/channels')
+@Controller('channels')
 @UseInterceptors(ClassSerializerInterceptor)
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
@@ -29,13 +31,14 @@ export class ChannelsController {
   @UseGuards(JwtTwoFactorGuard)
   @Get()
   async getChannels() {
+    // return this.channelsService.getMyChannels(u)
     return this.channelsService.getChannels();
   }
 
   @ApiOperation({ summary: '채팅방 만들기' })
   @Post()
   @UseGuards(JwtTwoFactorGuard)
-  async createChannels(@Body() body: CreateChannelDto, @GetUser() user) {
+  async createChannels(@Body() body: CreateChannelDto, @GetUser() user: User) {
     return this.channelsService.createChannels(
       body.title,
       body.password,
@@ -43,12 +46,20 @@ export class ChannelsController {
     );
   }
 
-  // @ApiOperation({ summary: 'DM방 만들기' })
-  // @Post()
-  // @UseGuards(JwtTwoFactorGuard)
-  // async createDMChannels(@User() user, @Body() reciveUser: User) {
-  //   return this.channelsService.createDMChannels(user, reciveUser);
-  // }
+  @ApiOperation({ summary: 'DM방 만들기' })
+  @Post()
+  @UseGuards(JwtTwoFactorGuard)
+  async createDMChannels(@GetUser() user: User, @Body() reciveUser: User) {
+    return this.channelsService.createDMChannel(user, reciveUser);
+  }
+
+  @ApiOperation({ summary: '내 채팅방 목록 DM 포함' })
+  @Get('mychannels')
+  @UseGuards(JwtTwoFactorGuard)
+  async getMyChannels(@GetUser() user) {
+    // return this.channelsService.getMyChannels(user);
+    return this.channelsService.getMyChannels(user);
+  }
 
   @ApiOperation({
     summary:
@@ -56,7 +67,9 @@ export class ChannelsController {
   })
   @UseGuards(JwtTwoFactorGuard)
   @Get(':channelId')
-  async getChannelInfo(@Param('channelId') channelId: number) {
+  // @Param('id', ParseIntPipe) id: number
+  // async getCahnnelInfo(@Param('channelId') channelId: number) {
+  async getChannelInfo(@Param('channelId', ParseIntPipe) channelId: number) {
     const result = await this.channelsService.getChannelInfo(channelId);
     // banMember 도 추가
     // private 인지 알러면 채팅방 에 쿼리로 접근해서 알아와야 하는데.
@@ -69,7 +82,7 @@ export class ChannelsController {
   async userEnterChannel(
     @Param('channelId') channelId: number,
     @Body() enterDto: EnterChannelDto,
-    @GetUser() user,
+    @GetUser() user: User,
     @Res() res: Response,
   ) {
     const result = await this.channelsService.userEnterChannel(
@@ -87,7 +100,7 @@ export class ChannelsController {
   async ownerGiveAdmin(
     @Param('channelid') channelId: number,
     @Param('userid') toUserId: number,
-    @GetUser() user,
+    @GetUser() user: User,
   ) {
     return this.channelsService.ownerGiveAdmin(channelId, toUserId, user);
   }
@@ -98,7 +111,7 @@ export class ChannelsController {
   async postBanInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
-    @GetUser() user,
+    @GetUser() user: User,
   ) {
     return this.channelsService.postBanInChannel(channelId, userId, user);
   }
@@ -108,7 +121,7 @@ export class ChannelsController {
   async postKickInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
-    @GetUser() user,
+    @GetUser() user: User,
   ) {
     // return this.channelsService.postKickInChannel(channelId, userId, user)
     return this.channelsService.addToKicklist(channelId, userId, 3000);
@@ -119,7 +132,7 @@ export class ChannelsController {
   async postMuteInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
-    @GetUser() user,
+    @GetUser() user: User,
   ) {
     return this.channelsService.addToMutelist(channelId, userId, 3000);
   }

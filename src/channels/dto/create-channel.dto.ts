@@ -15,17 +15,4 @@ export class CreateChannelDto {
     description: '비밀번호',
   })
   public password: string;
-
-  @IsNumber()
-  @ApiProperty({
-    example: 1,
-    description: '채팅방 소유자, 처음 생성자',
-  })
-  public owner: number;
-
-  // @ApiProperty({
-  //   example: true,
-  //   description: '채팅방 비번 유무',
-  // })
-  // public private: boolean;
 }

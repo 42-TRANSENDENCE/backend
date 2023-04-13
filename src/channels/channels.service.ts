@@ -7,7 +7,9 @@ import {
   UnauthorizedException,
   NotFoundException,
   MethodNotAllowedException,
+  BadRequestException,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -48,7 +50,7 @@ export class ChannelsService {
       .createQueryBuilder('channel')
       .where('channel.status IN (:...statuses)', {
         statuses,
-      }) // Add condition for status
+      })
       .getMany();
   }
 
@@ -57,6 +59,12 @@ export class ChannelsService {
     // 이거 환경변수로 관리
     const saltRounds = 10;
     // 이거 constructor 로 entity안에 넣을까 ?
+    const isDuplicate = await this.channelsRepository.findOneBy({
+      title,
+    });
+    if (isDuplicate) {
+      throw new BadRequestException('Channel title already exists');
+    }
     const channel = this.channelsRepository.create({
       title: title,
       password,
@@ -80,27 +88,27 @@ export class ChannelsService {
   }
 
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
-  // async createDMChannel(user: User, reciveId: number) {
-  //   const channel = this.channelsRepository.create({
-  //     title: user.nickname,
-  //     owner: user.id,
-  //     status: ChannelStatus.PRIVATE,
-  //   });
-  //   const channelReturned = await this.channelsRepository.save(channel);
-  //   const channelMember = this.channelMemberRepository.create({
-  //     userId: myId,
-  //     channelId: channelReturned.id,
-  //     type: MemberType.OWNER,
-  //   });
-  //   const channelMember2 = this.channelMemberRepository.create({
-  //     userId: reciveId,
-  //     channelId: channelReturned.id,
-  //     type: MemberType.MEMBER,
-  //   });
-  //   await this.channelMemberRepository.save(channelMember);
-  //   await this.channelMemberRepository.save(channelMember2);
-  //   return channelReturned;
-  // }
+  async createDMChannel(user: User, reciver: User) {
+    const channel = this.channelsRepository.create({
+      title: user.nickname + reciver.nickname + 'DM',
+      owner: user.id,
+      status: ChannelStatus.PRIVATE,
+    });
+    const channelReturned = await this.channelsRepository.save(channel);
+    const channelMember = this.channelMemberRepository.create({
+      userId: user.id,
+      channelId: channelReturned.id,
+      type: MemberType.OWNER,
+    });
+    const channelMember2 = this.channelMemberRepository.create({
+      userId: reciver.id,
+      channelId: channelReturned.id,
+      type: MemberType.MEMBER,
+    });
+    await this.channelMemberRepository.save(channelMember);
+    await this.channelMemberRepository.save(channelMember2);
+    return channelReturned;
+  }
 
   // 방이 없을때 예외 처리
   async getChannelInfo(channelId: number) {
@@ -120,21 +128,11 @@ export class ChannelsService {
     });
   }
 
-  // GET 내가 참여하고 있는 채팅방 목록
-  // async getChannelsByUser(userId: number) {
-  //   const channelMembers = await this.channelMemberRepository.find({
-  //     where: { userId: userId },
-  //   });
-  //   const channelIds = channelMembers.map((member) => member.channelId);
-  //   const channels = await this.channelsRepository.findByIds(channelIds);
-  //   console.log(channels)
-  //   return channels;
-  // }
-
-  async getChannelsByUser(userId: number) {
+  // 나의 채팅목록
+  async getMyChannels(user: User) {
     try {
       const channelMembers = await this.channelMemberRepository.find({
-        where: { userId: userId },
+        where: { userId: user.id },
       });
       const channelIds = channelMembers.map((member) => member.channelId);
       if (channelIds.length === 0) {
@@ -165,7 +163,7 @@ export class ChannelsService {
       );
       // this.logger.log(inputPasswordMatches);
       if (!inputPasswordMatches) {
-        throw new UnauthorizedException('Invalid password');
+        throw new ForbiddenException('Invalid password');
       } else {
         // 맞으면 소켓 연결하고 디비에 추가 채널멤버에(채널멤버 엔티티에 insert 하는거 뭐 추가 해야함 배열에 ) .
         // this.logger.log(' debug : Check only Server suceccses');
@@ -192,7 +190,7 @@ export class ChannelsService {
       }
     } else {
       // 비번방인데 비밀번호 입력 안 했을때
-      throw new UnauthorizedException('Invalid password');
+      throw new ForbiddenException('Invalid password');
     }
   }
   async userEnterPublicChannel(
@@ -200,12 +198,14 @@ export class ChannelsService {
     user: User,
     curChannel: Channel,
   ): Promise<returnStatusMessage> {
-    // 공개방은 무조건 소켓 연결 근데 + 밴 리스트 !! 는 나중에
-    const isInUser = await this.channelMemberRepository
-      .createQueryBuilder('channel_member')
-      .where('channel_member.userId = :userId', { userId: user.id }) // 1 -> user.id
-      .getOne();
-    // console.log(isInUser)
+    // const isInUser = await this.channelMemberRepository
+    //   .createQueryBuilder('channel_member')
+    //   .where('channel_member.userId = :userId', { userId: user.id }) // 1 -> user.id
+    //   .getOne();
+    const isInUser = await this.channelMemberRepository.findOne({
+      where: { channelId: channelId, userId: user.id },
+    });
+    if (isInUser) throw new BadRequestException('Already in the channel');
     if (!isInUser) {
       const cm = this.channelMemberRepository.create({
         userId: user.id, // user.id
@@ -226,8 +226,7 @@ export class ChannelsService {
     const curChannel = await this.channelsRepository.findOneBy({
       id: channelId,
     });
-    this.logger.log(user);
-    this.logger.log(await this.isBanned(channelId, user.id)); // user.id 와 연결해야함
+    // this.logger.log(await this.isBanned(channelId, user.id)); // user.id 와 연결해야함
     if (await this.isBanned(channelId, user.id))
       throw new UnauthorizedException('YOU ARE BANNED');
     if (!curChannel) throw new NotFoundException('Plz Enter Exist Room');
