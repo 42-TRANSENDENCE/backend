@@ -12,6 +12,7 @@ import { User } from 'src/users/users.entity';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
+import { ChatsDto } from './dto/chats.dto';
 
 @ApiTags('CHAT')
 @Controller('chat')
@@ -35,10 +36,10 @@ export class ChatsController {
   @Post(':channelId')
   async sendChatToChannel(
     @Param('channelId', ParseIntPipe) id: number,
-    @Body('chat') chat: string,
+    @Body() chat: ChatsDto,
     @GetUser() user: User,
   ) {
     // this.chatsService.createChats(chat,id,user)
-    return this.chatsService.sendChatToChannel(id, chat, user);
+    return this.chatsService.sendChatToChannel(id, chat.content, user);
   }
 }
