@@ -85,7 +85,7 @@ export class ChannelsService {
       type: MemberType.OWNER,
     });
     await this.channelMemberRepository.save(channelMember);
-    return channelReturned; // 이게 맞나?
+    // return channelReturned; // 이게 맞나?
   }
 
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
@@ -214,7 +214,7 @@ export class ChannelsService {
     const curChannel = await this.channelsRepository.findOneBy({
       id: channelId,
     });
-    // this.logger.log(await this.isBanned(channelId, user.id)); 
+    // this.logger.log(await this.isBanned(channelId, user.id));
     if (await this.isBanned(channelId, user.id))
       throw new UnauthorizedException('YOU ARE BANNED');
     if (!curChannel) throw new NotFoundException('PLZ ENTER EXIST CHANNEL');
