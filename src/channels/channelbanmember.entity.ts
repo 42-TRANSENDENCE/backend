@@ -9,13 +9,19 @@ import {
   PrimaryColumnCannotBeNullableError,
   PrimaryGeneratedColumn,
   JoinColumn,
+  OneToOne,
+  PrimaryColumn,
 } from 'typeorm';
-import { Channels } from './channels.entity';
+import { Channel } from './channels.entity';
+import { ChannelMember } from './channelmember.entity';
 
-@Entity()
+@Entity({ name: 'channel_banmember' })
 export class ChannelBanMember {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn()
+  userId: number;
+
+  @PrimaryColumn()
+  channelId: number;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -23,32 +29,21 @@ export class ChannelBanMember {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ primary: true })
-  channelId: number;
-
-  @Column({ primary: true })
-  userId: number;
-
   @Column({
     type: 'timestamp',
     nullable: true,
-    // default: () => "'0'"
   })
   expiresAt: Date;
-  // @Column({ array: true, default: '{}' })
-  // channelMember: string[];
-  /**
-   * 1 : M 관계 설정
-   * @ManyToOne
-   * 여기서 Many 는 채널 이고 One이 멤버 이다.
-   */
-  // @ManyToOne(() => Channels)
-  // @JoinColumn({name: "ChannelId"})
-  // channelMember: ChannelMember;
 
-  // @OneToMany(() => User, (user) => user.channelBanMember)
-  // users: User[]
+  @ManyToOne(() => User, (user) => user.bannedChannels, { onDelete: 'CASCADE' })
+  user: User;
 
-  // @ManyToOne(() => Channels, (channelBanMember) => channelBanMember.ChannelBanMembers)
-  // Channel: Channels
+  @ManyToOne(
+    () => Channel,
+    (channelBanMember) => channelBanMember.bannedMembers,
+    {
+      onDelete: 'SET NULL',
+    },
+  )
+  channel: Channel;
 }

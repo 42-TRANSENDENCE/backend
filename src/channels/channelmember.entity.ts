@@ -7,36 +7,34 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  OneToOne,
+  JoinColumn,
+  PrimaryColumn,
 } from 'typeorm';
-import { Channels } from './channels.entity';
+import { Channel } from './channels.entity';
 
-@Entity()
+export enum MemberType {
+  OWNER = 'OWNER',
+  ADMIN = 'ADMIN',
+  MEMBER = 'MEMBER',
+}
+
+@Entity({ name: 'channel_member' })
 export class ChannelMember {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn()
+  userId: number;
 
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @Column({ primary: true })
+  @PrimaryColumn()
   channelId: number;
 
-  @Column({ primary: true })
-  userId: number;
-  /**
-   * 1 : M 관계 설정
-   * @ManyToOne
-   * 여기서 Many 는 채널 이고 One이 멤버 이다.
-   */
-  // @ManyToOne(() => Channels)
-  // @JoinColumn({name: "ChannelId"})
-  // channelMember: ChannelMember;
-  @OneToMany(() => User, (user) => user.channelMember)
-  users: User[];
+  @Column({ type: 'enum', enum: MemberType })
+  type: MemberType;
 
-  @ManyToOne(() => Channels, (channelMember) => channelMember.ChannelMembers)
-  Channel: Channels;
+  @ManyToOne(() => User, (user) => user.memberchannels, { onDelete: 'CASCADE' })
+  user: User;
+
+  @ManyToOne(() => Channel, (channelMember) => channelMember.members, {
+    onDelete: 'SET NULL',
+  })
+  channel: Channel;
 }
