@@ -63,7 +63,7 @@ export class ChannelsService {
       title,
     });
     if (isDuplicate) {
-      throw new BadRequestException('Channel title already exists');
+      throw new BadRequestException('CHANNEL TITLE ALREADY EXIST');
     }
     const channel = this.channelsRepository.create({
       title: title,
@@ -118,7 +118,7 @@ export class ChannelsService {
       const user_ids = channelMembers.map((member) => member.userId);
       const result = { memberId: user_ids, status: channel.status };
       return result;
-    } else throw new NotFoundException('Check the channelId if there is exist');
+    } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
   }
 
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
@@ -162,7 +162,7 @@ export class ChannelsService {
       );
       // this.logger.log(inputPasswordMatches);
       if (!inputPasswordMatches) {
-        throw new ForbiddenException('Invalid password');
+        throw new ForbiddenException('INVALID PASSWORD');
       } else {
         const isInUser = await this.channelMemberRepository.findOne({
           where: { channelId: channelId, userId: user.id },
@@ -182,7 +182,7 @@ export class ChannelsService {
       }
     } else {
       // 비번방인데 비밀번호 입력 안 했을때
-      throw new ForbiddenException('Invalid password');
+      throw new ForbiddenException('INVALID PASSWORD');
     }
   }
   async userEnterPublicChannel(

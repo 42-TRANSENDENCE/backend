@@ -11,7 +11,7 @@ import {
   ParseIntPipe,
   HttpCode,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChannelsService } from './channels.service';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
@@ -28,7 +28,8 @@ import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
 
-  @ApiOperation({ summary: '채팅방 모두 가져오기 PRIVATE 뺴고' })
+  @ApiOperation({ summary: '채팅방 모두 가져오기' })
+  @ApiOkResponse({ description: '채팅방 목록 가져오기 성공(PRIVATE 빼고)' })
   @UseGuards(JwtTwoFactorGuard)
   @Get()
   async getChannels() {
@@ -37,6 +38,8 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: '채팅방 만들기' })
+  @ApiOkResponse({ description: '만들기 완료' })
+  @ApiBadRequestResponse({ description: '이미 존재하는 채널 이름' })
   @Post()
   @UseGuards(JwtTwoFactorGuard)
   async createChannels(@Body() body: CreateChannelDto, @GetUser() user: User) {
