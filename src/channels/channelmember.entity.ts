@@ -31,6 +31,7 @@ export class ChannelMember {
   type: MemberType;
 
   @ManyToOne(() => User, (user) => user.memberchannels, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' }) // Add this line
   user: User;
 
   @ManyToOne(() => Channel, (channelMember) => channelMember.members, {
