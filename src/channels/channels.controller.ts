@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   ParseIntPipe,
+  HttpCode,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChannelsService } from './channels.service';
@@ -47,7 +48,7 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: 'DM방 만들기' })
-  @Post()
+  @Post('dm')
   @UseGuards(JwtTwoFactorGuard)
   async createDMChannels(@GetUser() user: User, @Body() reciveUser: User) {
     return this.channelsService.createDMChannel(user, reciveUser);
@@ -78,21 +79,18 @@ export class ChannelsController {
 
   @ApiOperation({ summary: '채팅방 최초 입장' })
   @Post(':channelId')
+  @HttpCode(200)
   @UseGuards(JwtTwoFactorGuard)
   async userEnterChannel(
     @Param('channelId') channelId: number,
     @Body() enterDto: EnterChannelDto,
     @GetUser() user: User,
-    @Res() res: Response,
   ) {
-    const result = await this.channelsService.userEnterChannel(
+    return await this.channelsService.userEnterChannel(
       channelId,
       enterDto.password,
       user,
     );
-    return res
-      .status(result.status)
-      .send({ statusCode: result.status, message: result.message });
   }
 
   @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌' })
