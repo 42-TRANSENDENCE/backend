@@ -80,7 +80,30 @@ export class ChannelsGateway
       return 0;
     }
   }
+  @SubscribeMessage('closeChannel')
+  handlecloseRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody('channelId') channelId: string,
+  ) {
+    if (!channelId) throw new WsException('There is no user or roomId here');
+    this.logger.debug(socket.id);
+    socket.leave(channelId);
+    this.logger.log(
+      `${socket.id} 가 ${channelId} 에 서 나갔다 !  Well Done ! `,
+    );
+    // socket.emit('message',{message: `${socket.id} 가 들어왔다 Well Done ! `})
+    // 잘 보내지나 확인용
+    this.logger.log(
+      `소켓에 연결된 사람수 : ${this.getClientsInRoom(channelId)}`,
+    );
+    this.nsp.to(channelId).emit('message', {
+      message: `${socket.id} 가 ${channelId} 에서 나갔다 ! Well Done ! `,
+    });
 
+    // socket.broadcast
+    //   .to(channelId)
+    //   .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
+  }
   @SubscribeMessage('joinChannel')
   handleJoinRoom(
     @ConnectedSocket() socket: Socket,
@@ -95,13 +118,13 @@ export class ChannelsGateway
     this.logger.log(
       `소켓에 연결된 사람수 : ${this.getClientsInRoom(channelId)}`,
     );
-    // this.nsp.to(channelId).emit('message', {
-    //   message: `${socket.id} 가 ${channelId} 에 들어왔다 Well Done ! `,
-    // });
-    //
-    socket.broadcast
-      .to(channelId)
-      .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
+    this.nsp.to(channelId).emit('message', {
+      message: `${socket.id} 가 ${channelId} 에 들어왔다 Well Done ! `,
+    });
+
+    // socket.broadcast
+    //   .to(channelId)
+    //   .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
   }
 
   @SubscribeMessage('message')
@@ -129,7 +152,7 @@ export class ChannelsGateway
     return this.nsp.emit('newChannel', channelReturned);
   }
 
-  @SubscribeMessage('leave-channel')
+  @SubscribeMessage('leaveChannel')
   handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() leaveDto: leaveDto,
