@@ -289,11 +289,10 @@ export class ChannelsService {
       if (!curChannel) {
         throw new NotFoundException('CHANNEL DOSE NOT EXIST');
       }
-
-      if (curChannel.owner === userId) {
+      if (+curChannel.owner === +userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
-        this.channelMemberRepository.delete({ channelId: +channelId });
-        this.channelsRepository.delete({ id: +channelId });
+        await this.channelMemberRepository.delete({ channelId: +channelId });
+        await this.channelsRepository.delete({ id: +channelId });
       } else {
         // 멤버에서만 delete
         //TODO:채널 안의 멤버 가 존재 하는지 안 하는지 쿼리
@@ -306,7 +305,7 @@ export class ChannelsService {
         if (!curChannelMembers)
           throw new NotFoundException('Member in this Channel does not exist!');
         else
-          this.channelMemberRepository.delete({
+          await this.channelMemberRepository.delete({
             userId: userId,
             channelId: +channelId,
           });
@@ -371,7 +370,7 @@ export class ChannelsService {
       );
       if (Number(ban.expiresAt) - Number(new Date(Date.now())) > 0) return true;
       else {
-        this.channelBanMemberRepository.delete({
+        await this.channelBanMemberRepository.delete({
           userId: userId,
           channelId: channelId,
         });
