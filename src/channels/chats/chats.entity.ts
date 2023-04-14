@@ -36,7 +36,7 @@ export class Chat {
   @PrimaryColumn()
   channelId: number;
 
-  @Column({ nullable: true })
+  @Column()
   senderUserId: number;
 
   @ManyToOne(() => User, (user) => user.id, {

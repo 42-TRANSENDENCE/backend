@@ -77,6 +77,7 @@ export class ChatsService {
       throw new NotFoundException('YOU ARE NOT A MEMBER');
 
     const chats = this.chatsRepository.create({
+      senderUserId: user.id,
       sender: user,
       channelId: roomId,
       content: chat,

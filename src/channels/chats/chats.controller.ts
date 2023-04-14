@@ -12,7 +12,7 @@ import { User } from 'src/users/users.entity';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
-import { ChatsDto } from './dto/chats.dto';
+import { ChatsDto } from './dto/chats-input.dto';
 
 @ApiTags('CHAT')
 @Controller('chat')
