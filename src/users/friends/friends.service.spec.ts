@@ -20,8 +20,8 @@ describe('FriendsService', () => {
       wins: [],
       loses: [],
       friends: [],
-      memberchannels: [],
-      bannedChannels: [],
+      channelMembers: [],
+      channelBanMembers: [],
     };
     return user;
   }

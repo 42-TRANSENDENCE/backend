@@ -62,11 +62,11 @@ export class User {
   loses: GameHistory[];
 
   @OneToMany(() => ChannelMember, (channelmember) => channelmember.user)
-  memberchannels: ChannelMember[];
+  channelMembers: ChannelMember[];
 
   @OneToMany(
     () => ChannelBanMember,
     (channelbanmember) => channelbanmember.user,
   )
-  bannedChannels: ChannelBanMember[];
+  channelBanMembers: ChannelBanMember[];
 }
