@@ -22,6 +22,7 @@ import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
 import { ChannelBanMember } from './channelbanmember.entity';
+import { ChannelMemberDto } from './dto/channel-member.dto';
 
 import { Cache } from 'cache-manager';
 @Injectable()
@@ -128,6 +129,10 @@ export class ChannelsService {
       where: { channelId: channelId },
     });
   }
+  // getChannelMembersDto
+  // async getChannelMembersDto(channelId: number) {
+
+  // }
 
   // 나의 채팅목록
   async getMyChannels(user: User) {
