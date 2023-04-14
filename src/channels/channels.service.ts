@@ -12,7 +12,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Channel, ChannelStatus } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember, MemberType } from 'src/channels/channelmember.entity';
@@ -148,7 +148,9 @@ export class ChannelsService {
         // If the user isn't a member of any channels, return an empty array
         return [];
       }
-      const channels = await this.channelsRepository.findByIds(channelIds);
+      const channels = await this.channelsRepository.find({
+        where: { id: In(channelIds) }, // Use In operator here
+      });
       return channels;
     } catch (error) {
       // Handle any errors that occur during the database queries
