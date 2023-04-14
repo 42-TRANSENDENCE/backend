@@ -125,9 +125,12 @@ export class ChannelsService {
 
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
   async getChannelMembers(channelId: number) {
-    return this.channelMemberRepository.find({
+    const members = await this.channelMemberRepository.find({
       where: { channelId: channelId },
     });
+    if (members.length === 0)
+      throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
+    return members;
   }
   // getChannelMembersDto
   // async getChannelMembersDto(channelId: number) {
