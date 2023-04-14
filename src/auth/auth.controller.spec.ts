@@ -61,8 +61,8 @@ describe('AuthController', () => {
     friends: [],
     wins: [],
     loses: [],
-    bannedChannels: [],
-    memberchannels: [],
+    channelBanMembers: [],
+    channelMembers: [],
   };
 
   const mockedFourtyTwoUser = {
