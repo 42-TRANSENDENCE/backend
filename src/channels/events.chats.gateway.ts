@@ -159,14 +159,15 @@ export class ChannelsGateway
   ) {
     //소켓 연결 끊기 **
     //roomId,userId가 없을때 예외 처리
-    if (!leaveDto.roomId || !leaveDto.userId)
-      throw new WsException('There is no user or roomId here');
+    // this.logger.debug(`----${leaveDto.channelId} , ${leaveDto.userId}`)
+    if (!leaveDto.channelId || !leaveDto.userId)
+      throw new WsException('There is no user or channelId here');
     // 해당 방에대해 소켓 연결 끊는부분 연결하고 테스트를 해봐야 할듯.!!!!!
-    socket.leave(leaveDto.roomId);
-    this.logger.log(`Client ${socket.id} left room ${leaveDto.roomId}`);
+    socket.leave(leaveDto.channelId);
+    this.logger.log(`Client ${socket.id} left room ${leaveDto.channelId}`);
     this.channelsService.userExitChannel(
       socket,
-      leaveDto.roomId,
+      leaveDto.channelId,
       leaveDto.userId,
     );
   }

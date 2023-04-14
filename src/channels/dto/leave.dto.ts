@@ -8,7 +8,7 @@ export class leaveDto {
     example: 'room:1:socket',
     description: '채팅방에 연결된 소켓의 이름',
   })
-  roomId: string;
+  channelId: string;
 
   @IsNotEmpty()
   @IsNumber()

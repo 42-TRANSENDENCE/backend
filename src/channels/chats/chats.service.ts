@@ -16,7 +16,7 @@ import { Channel } from 'src/channels/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
 import { Cache } from 'cache-manager';
 import { ChannelMember } from '../channelmember.entity';
-import { ChatResponseDto } from './dto/chats-response.dto';
+// import { ChatResponseDto } from './dto/chats-response.dto';
 
 @Injectable()
 export class ChatsService {
