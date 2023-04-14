@@ -114,10 +114,17 @@ export class ChannelsGateway
   }
 
   async sendEmitMessage(sendChat: Chat) {
-    // 이부분 해당 방에 해당하는 broadcast로 하는걸로 수정하자 테스트 하면서
-    // 방 넘버 가지고 소켓아이디 알아내서 to로 에밋 하고 broadcast해줘야함.
-    return this.nsp.emit('meesage', sendChat);
+    // Get the chat room ID from the `sendChat` object
+    const roomId = sendChat.channelId;
+
+    // Emit the chat message to the corresponding room using the `to` method
+    // and broadcast it to all connected clients in the room using the `broadcast` method
+    this.nsp.to(roomId.toString()).emit('message', sendChat);
+
+    // this.nsp.to(roomId.toString()).broadcast.emit('message', sendChat);
+    // this.server.to(roomId.toString()).broadcast.emit('message', sendChat.content);
   }
+
   async EmitChannelInfo(channelReturned) {
     return this.nsp.emit('newChannel', channelReturned);
   }
