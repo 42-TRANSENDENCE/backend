@@ -96,13 +96,39 @@ export class LobbyService {
 
   // cancelAllInvitations(server : Server, client : Socket) {
   // }
-  refuse(server: Server, invitation: InvitationDto) {
-    server.in(invitation.roomId).socketsLeave(invitation.roomId);
-    const fromSocket = server.sockets.sockets.get(invitation.from.id);
-    if (!fromSocket) {
-      return;
+
+  refuse(server: Server, client : Socket, invitation: InvitationDto) {
+    this.logger.log(`invitation refused. invitation : ${invitation.from.user.nickname}->${invitation.to.user.nickname}`);
+
+    const invitationsList : InvitationDto[] | undefined = this.invitations.get(invitation.to.user.id);
+    if (invitationsList === undefined)
+    {
+      this.logger.log("No matching list");
+      return ;
     }
-    fromSocket.emit('refused', invitation);
+    this.logger.log("curr invitaion count : ", invitationsList.length);
+    for (let i = invitationsList.length - 1; i >= 0; i--) {
+      const singleInvitation : InvitationDto = invitationsList[i];
+
+      if (singleInvitation.to.id === client.id) {
+        invitationsList.splice(i, 1);
+        const inviterClient : PongClient | null = this.clientService.getByUserId(singleInvitation.from.user.id);
+        if (inviterClient != null) {
+          server.to(inviterClient.id).emit('invitationCanceled');
+        }
+      }
+
+    }
+
+    const inviteeSocketId : string | undefined = this.clientService.getByUserId(invitation.to.user.id)?.id;
+    if (inviteeSocketId === undefined)
+      return ;
+    if (invitationsList.length === 0) {
+      this.invitations.delete(invitation.to.user.id);
+      server.to(inviteeSocketId).emit('updateInviteList', null);
+    } else {
+      server.to(inviteeSocketId).emit('updateInviteList', invitationsList);
+    }
   }
 
   accept(server: Server, client: Socket, invitation: InvitationDto) {

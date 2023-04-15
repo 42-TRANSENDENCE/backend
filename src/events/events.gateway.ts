@@ -109,8 +109,11 @@ export class EventGateway
   }
 
   @SubscribeMessage('refuse')
-  handleRefuseEvent(@MessageBody() invitation: InvitationDto) {
-    this.lobbyService.refuse(this.server, invitation);
+  handleRefuseEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() invitation: InvitationDto
+  ): void {
+    this.lobbyService.refuse(this.server, client, invitation);
   }
 
   @SubscribeMessage('accept')
