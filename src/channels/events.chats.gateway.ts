@@ -138,15 +138,8 @@ export class ChannelsGateway
   }
 
   async sendEmitMessage(sendChat: Chat) {
-    // Get the chat room ID from the `sendChat` object
     const channelId = sendChat.channelId;
-
-    // Emit the chat message to the corresponding room using the `to` method
-    // and broadcast it to all connected clients in the room using the `broadcast` method
     this.nsp.to(channelId.toString()).emit('message', sendChat);
-
-    // this.nsp.to(channelId.toString()).broadcast.emit('message', sendChat);
-    // this.server.to(channelId.toString()).broadcast.emit('message', sendChat.content);
   }
 
   async EmitChannelInfo(channelReturned) {
@@ -167,7 +160,6 @@ export class ChannelsGateway
     // this.logger.debug(`----${leaveDto.channelId} , ${leaveDto.userId}`)
     if (!leaveDto.channelId || !leaveDto.userId)
       throw new WsException('There is no user or channelId here');
-    // 해당 방에대해 소켓 연결 끊는부분 연결하고 테스트를 해봐야 할듯.!!!!!
     socket.leave(leaveDto.channelId);
     this.logger.log(`Client ${socket.id} left room ${leaveDto.channelId}`);
     this.channelsService.userExitChannel(

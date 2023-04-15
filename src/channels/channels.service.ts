@@ -309,7 +309,6 @@ export class ChannelsService {
       } else {
         // 멤버에서만 delete
         //TODO:채널 안의 멤버 가 존재 하는지 안 하는지 쿼리
-        // const curChannelMembers = this.channelMemberRepository.findOne({ChannelId: })
         const curChannelMembers = await this.channelMemberRepository
           .createQueryBuilder('channel_member')
           .where('channel_member.userId = :userId', { userId: userId }) // 1 -> user.id
@@ -339,7 +338,7 @@ export class ChannelsService {
   async postBanInChannel(channelId: number, userId: number, user: User) {
     const isInUser = await this.channelBanMemberRepository
       .createQueryBuilder('channel_ban_member')
-      .where('channel_ban_member.UserId = :userId', { userId: userId }) // 1 -> user.id
+      .where('channel_ban_member.UserId = :userId', { userId: user.id }) // 1 -> user.id
       .getOne();
     this.logger.log(`in this room banned in user : ${isInUser}`);
     if (!isInUser) {
