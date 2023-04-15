@@ -22,6 +22,7 @@ import { Chat } from './chats/chats.entity';
 import { Server, Socket, Namespace } from 'socket.io';
 import { ChannelsService } from 'src/channels/channels.service';
 import { leaveDto } from './dto/leave.dto';
+import { EmitChannelInfoDto } from './dto/emit-channel.dto';
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
@@ -149,10 +150,12 @@ export class ChannelsGateway
   }
 
   async EmitChannelInfo(channelReturned) {
-    return this.nsp.emit('newChannel', channelReturned);
+    const curChannel = new EmitChannelInfoDto(channelReturned);
+    return this.nsp.emit('newChannel', curChannel);
   }
   async EmitDeletChannelInfo(channelReturned) {
-    return this.nsp.emit('removeChannel', channelReturned);
+    const curChannel = new EmitChannelInfoDto(channelReturned);
+    return this.nsp.emit('removeChannel', curChannel);
   }
   @SubscribeMessage('leaveChannel')
   handleLeaveRoom(
