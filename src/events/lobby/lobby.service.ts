@@ -53,6 +53,15 @@ export class LobbyService {
       this.sendAllInvitations(server, otherPlayer.id);
     }
   }
+
+  sendAllInvitations(server : Server, clientSocketId : string) {
+    const targetClient : PongClient | null = this.clientService.get(clientSocketId);
+    if (targetClient != null) {
+      const targetInvitationList : InvitationDto[] | undefined = this.invitations.get(targetClient.user.id);
+      if (targetInvitationList)
+        server.sockets.sockets.get(clientSocketId).emit('updateInviteList', targetInvitationList);
+      else
+        server.sockets.sockets.get(clientSocketId).emit('updateInviteList', null);
     }
   }
 

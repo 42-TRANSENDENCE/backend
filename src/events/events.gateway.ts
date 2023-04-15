@@ -147,4 +147,12 @@ export class EventGateway
     pongClient.status = status;
     this.notify(pongClient, status);
   }
+
+  @SubscribeMessage('getinvitaionlist')
+  handleGetInviteListEvent(
+    @ConnectedSocket() client: Socket,
+  ): void {
+    this.lobbyService.sendAllInvitations(this.server, client.id);
+  }
+
 }
