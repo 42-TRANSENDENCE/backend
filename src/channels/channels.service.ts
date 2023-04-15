@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Res,
   Inject,
   forwardRef,
   CACHE_MANAGER,
@@ -8,7 +7,6 @@ import {
   NotFoundException,
   MethodNotAllowedException,
   BadRequestException,
-  UseGuards,
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -25,6 +23,7 @@ import { ChannelBanMember } from './channelbanmember.entity';
 // import { ChannelMemberDto } from './dto/channel-member.dto';
 
 import { Cache } from 'cache-manager';
+import { ChannelMemberDto } from './dto/channel-member.dto';
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -47,25 +46,77 @@ export class ChannelsService {
 
   async getChannels() {
     const statuses = [ChannelStatus.PUBLIC, ChannelStatus.PROTECTED];
-    return this.channelsRepository
+    const channels = await this.channelsRepository
       .createQueryBuilder('channel')
       .where('channel.status IN (:...statuses)', {
         statuses,
       })
       .getMany();
+    //여기엔 유저 닉네임만 넣어주면 됨 .
+    return channels;
+  }
+  // 채팅방 하나에 대한 정보 요청 .
+  // 멤버 안에 아바타 ,
+  async getChannelInfo(channelId: number) {
+    const channel = await this.findById(channelId);
+    if (channel) {
+      const channelMembers = await this.getChannelMembers(channelId);
+      const user_ids = channelMembers.map((member) => member.userId);
+      const result = { memberId: user_ids, status: channel.status };
+      return result;
+    } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
+  }
+
+  // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
+  async getChannelMembers(channelId: number) {
+    const members = await this.channelMemberRepository.find({
+      where: { channelId: channelId },
+    });
+    if (members.length === 0)
+      throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
+    // return members;
+    this.logger.log(members);
+    const memberDtos = members.map((member) => new ChannelMemberDto(member));
+    return memberDtos;
+  }
+  // getChannelMembersDto
+  // async getChannelMembersDto(channelId: number) {
+
+  // }
+
+  // 나의 채팅목록
+  async getMyChannels(user: User) {
+    try {
+      const channelMembers = await this.channelMemberRepository.find({
+        where: { userId: user.id },
+      });
+      const channelIds = channelMembers.map((member) => member.channelId);
+      if (channelIds.length === 0) {
+        // If the user isn't a member of any channels, return an empty array
+        return [];
+      }
+      const channels = await this.channelsRepository.find({
+        where: { id: In(channelIds) }, // Use In operator here
+      });
+      return channels;
+    } catch (error) {
+      // Handle any errors that occur during the database queries
+      this.logger.error('Error retrieving channels:', error);
+      throw new Error('Unable to retrieve channels');
+    }
   }
 
   // 똑같은 title 이 중복 되는거 예외처리
   async createChannels(title: string, password: string, myId: number) {
     // 이거 환경변수로 관리
     const saltRounds = 10;
-    // 이거 constructor 로 entity안에 넣을까 ?
     const isDuplicate = await this.channelsRepository.findOneBy({
       title,
     });
     if (isDuplicate) {
       throw new BadRequestException('CHANNEL TITLE ALREADY EXIST');
     }
+    // 이거 constructor 로 entity안에 넣을까 ?
     const channel = this.channelsRepository.create({
       title: title,
       password,
@@ -112,53 +163,6 @@ export class ChannelsService {
     return channelReturned;
   }
 
-  // 방이 없을때 예외 처리
-  async getChannelInfo(channelId: number) {
-    const channel = await this.findById(channelId);
-    if (channel) {
-      const channelMembers = await this.getChannelMembers(channelId);
-      const user_ids = channelMembers.map((member) => member.userId);
-      const result = { memberId: user_ids, status: channel.status };
-      return result;
-    } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
-  }
-
-  // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
-  async getChannelMembers(channelId: number) {
-    const members = await this.channelMemberRepository.find({
-      where: { channelId: channelId },
-    });
-    if (members.length === 0)
-      throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
-    return members;
-  }
-  // getChannelMembersDto
-  // async getChannelMembersDto(channelId: number) {
-
-  // }
-
-  // 나의 채팅목록
-  async getMyChannels(user: User) {
-    try {
-      const channelMembers = await this.channelMemberRepository.find({
-        where: { userId: user.id },
-      });
-      const channelIds = channelMembers.map((member) => member.channelId);
-      if (channelIds.length === 0) {
-        // If the user isn't a member of any channels, return an empty array
-        return [];
-      }
-      const channels = await this.channelsRepository.find({
-        where: { id: In(channelIds) }, // Use In operator here
-      });
-      return channels;
-    } catch (error) {
-      // Handle any errors that occur during the database queries
-      this.logger.error('Error retrieving channels:', error);
-      throw new Error('Unable to retrieve channels');
-    }
-  }
-
   async userEnterPrivateChannel(
     channelId: number,
     password: string,
@@ -199,7 +203,6 @@ export class ChannelsService {
   async userEnterPublicChannel(
     channelId: number,
     user: User,
-    curChannel: Channel,
   ): Promise<returnStatusMessage> {
     const isInUser = await this.channelMemberRepository.findOne({
       where: { channelId: channelId, userId: user.id },
@@ -235,7 +238,7 @@ export class ChannelsService {
         user,
         curChannel,
       );
-    return this.userEnterPublicChannel(channelId, user, curChannel);
+    return this.userEnterPublicChannel(channelId, user);
   }
 
   async isAdmininChannel(channelId: number, userId: number) {
@@ -302,18 +305,22 @@ export class ChannelsService {
         // 멤버에서만 delete
         //TODO:채널 안의 멤버 가 존재 하는지 안 하는지 쿼리
         // const curChannelMembers = this.channelMemberRepository.findOne({ChannelId: })
-        const curChannelMembers = await this.channelMemberRepository
-          .createQueryBuilder('channel_member')
-          .where('channel_member.userId = :userId', { userId: userId }) // 1 -> user.id
-          .getOne();
+        // const curChannelMembers = await this.channelMemberRepository
+        //   .createQueryBuilder('channel_member')
+        //   .where('channel_member.userId = :userId', { userId: userId }) // 1 -> user.id
+        //   .getOne();
         // const curChannelMembers = await this.findById(+channelId)
+        const curChannelMembers = await this.channelMemberRepository.findOne({
+          where: { channelId: +channelId, userId: userId },
+        });
         if (!curChannelMembers)
           throw new NotFoundException('Member in this Channel does not exist!');
-        else
+        else {
           await this.channelMemberRepository.delete({
             userId: userId,
             channelId: +channelId,
           });
+        }
       }
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -399,22 +406,22 @@ export class ChannelsService {
   }
 
   async addToMutelist(
-    roomId: number,
+    channelId: number,
     userId: number,
     ttl: number,
   ): Promise<void> {
-    const key = `chatroom:${roomId}:mutelist`;
+    const key = `chatroom:${channelId}:mutelist`;
     const mutelist = (await this.cacheManager.get<number[]>(key)) || [];
 
     if (!mutelist.includes(userId)) {
       mutelist.push(userId);
-      await this.cacheManager.set(key, mutelist, 50000);
+      await this.cacheManager.set(key, mutelist, 50000); // 임시
     }
     this.logger.log(`check mutelist : ${mutelist}`);
   }
 
-  async getMutelist(roomId: number): Promise<number[]> {
-    const key = `chatroom:${roomId}:mutelist`;
+  async getMutelist(channelId: number): Promise<number[]> {
+    const key = `chatroom:${channelId}:mutelist`;
     const mutelist = (await this.cacheManager.get<number[]>(key)) || [];
     return mutelist;
   }
