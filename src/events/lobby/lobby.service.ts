@@ -5,7 +5,7 @@ import { Server, Socket } from 'socket.io';
 import { GameService } from '../../game/game.service';
 import { GameType } from '../../game/game.interface';
 import { v4 as uuidv4 } from 'uuid';
-import { ClientStatus } from '../client/client.interface';
+import { ClientStatus, PongClient } from '../client/client.interface';
 import { ClientService } from '../client/client.service';
 import { CreateFriendlyMatchDto } from '../dto/create-friendly-match.dto';
 import { InvitationDto } from '../dto/invitation.dto';
@@ -13,6 +13,7 @@ import { MatchDto } from '../dto/match.dto';
 
 @Injectable()
 export class LobbyService {
+  private invitations : Map<number, InvitationDto[]> = new Map();
   private logger: Logger = new Logger(LobbyService.name);
 
   constructor(
@@ -22,8 +23,10 @@ export class LobbyService {
   ) {}
 
   invite(server: Server, client: Socket, matchInfo: CreateFriendlyMatchDto) {
-    const player = this.clientService.get(client.id);
-    const otherPlayer = this.clientService.getByUserId(matchInfo.to);
+    const player : PongClient | null = this.clientService.get(client.id);
+    const otherPlayer : PongClient | null = this.clientService.getByUserId(matchInfo.to);
+
+    this.logger.log(`초대 이벤트 발생. from ${player.user.nickname} to ${otherPlayer.user.nickname}`);
 
     if (!otherPlayer || otherPlayer.status !== ClientStatus.ONLINE) {
       throw new WsException('현재 게임 초대를 받을 수 없습니다.');
@@ -34,7 +37,6 @@ export class LobbyService {
         );
       }
       const roomId = `game_${uuidv4()}`;
-      player.room = roomId;
 
       const invitation: InvitationDto = {
         from: player,
@@ -42,7 +44,15 @@ export class LobbyService {
         mode: matchInfo.mode,
         roomId,
       };
-      server.sockets.sockets.get(otherPlayer.id).emit('invited', invitation);
+
+      if (this.invitations.has(matchInfo.to)) {
+        this.invitations.get(matchInfo.to).push(invitation);
+      } else {
+        this.invitations.set(matchInfo.to, [invitation]);
+      }
+      this.sendAllInvitations(server, otherPlayer.id);
+    }
+  }
     }
   }
 
