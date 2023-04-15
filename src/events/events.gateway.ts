@@ -99,7 +99,7 @@ export class EventGateway
   }
 
   /** Lobby */
-
+ 
   @SubscribeMessage('invite')
   handleInviteEvent(
     @ConnectedSocket() client: Socket,
@@ -155,4 +155,11 @@ export class EventGateway
     this.lobbyService.sendAllInvitations(this.server, client.id);
   }
 
+  @SubscribeMessage('cancleInvitation')
+  handleCancleInvitationEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() inviteeId: number,
+  ) : void {
+    this.lobbyService.cancelInvitation(this.server, client, inviteeId);
+  }
 }

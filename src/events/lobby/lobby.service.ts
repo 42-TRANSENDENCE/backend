@@ -65,6 +65,35 @@ export class LobbyService {
     }
   }
 
+  cancelInvitation(server : Server, client : Socket, inviteeId : number) {
+    this.logger.log(`invitation cancle event occurs. invitee user id : ${inviteeId}`);
+
+    const invitationsList : InvitationDto[] | undefined = this.invitations.get(inviteeId);
+    if (invitationsList === undefined) 
+      return ;
+
+    for (let i = invitationsList.length - 1; i >= 0; i--) {
+      const singleInvitation : InvitationDto = invitationsList[i];
+      if (singleInvitation.from.id === client.id) {
+        invitationsList.splice(i, 1);
+        const inviterClient : PongClient | null = this.clientService.getByUserId(singleInvitation.from.user.id);
+        if (inviterClient != null) {
+          server.to(inviterClient.id).emit('invitationCanceled');
+        }
+      }
+    }
+
+    const inviteeSocketId : string | undefined = this.clientService.getByUserId(inviteeId)?.id;
+    if (inviteeSocketId === undefined)
+      return ;
+    if (invitationsList.length === 0) {
+      this.invitations.delete(inviteeId);
+      server.to(inviteeSocketId).emit('updateInviteList', null);
+    } else {
+      server.to(inviteeSocketId).emit('updateInviteList', invitationsList);
+    }
+  }
+
   refuse(server: Server, invitation: InvitationDto) {
     server.in(invitation.roomId).socketsLeave(invitation.roomId);
     const fromSocket = server.sockets.sockets.get(invitation.from.id);
