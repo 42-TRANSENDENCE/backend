@@ -151,7 +151,9 @@ export class ChannelsGateway
   async EmitChannelInfo(channelReturned) {
     return this.nsp.emit('newChannel', channelReturned);
   }
-
+  async EmitDeletChannelInfo(channelReturned) {
+    return this.nsp.emit('removeChannel', channelReturned);
+  }
   @SubscribeMessage('leaveChannel')
   handleLeaveRoom(
     @ConnectedSocket() socket: Socket,

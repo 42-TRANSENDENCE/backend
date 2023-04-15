@@ -75,14 +75,18 @@ export class ChannelsService {
     if (members.length === 0)
       throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
     // return members;
-    this.logger.log(members)
+    return members;
+  }
+  // getChannelMembersDto
+  async getChannelMembersDto(channelId: number): Promise<ChannelMemberDto[]> {
+    const members = await this.channelMemberRepository.find({
+      where: { channelId: channelId },
+      relations: { user: true },
+    });
+    // this.logger.log(JSON.stringify(members[0].user));
     const memberDtos = members.map((member) => new ChannelMemberDto(member));
     return memberDtos;
   }
-  // getChannelMembersDto
-  // async getChannelMembersDto(channelId: number) {
-
-  // }
 
   // 나의 채팅목록
   async getMyChannels(user: User) {
@@ -300,6 +304,7 @@ export class ChannelsService {
       if (+curChannel.owner === +userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
         await this.channelMemberRepository.delete({ channelId: +channelId });
+        this.channelsGateway.EmitDeletChannelInfo(curChannel);
         await this.channelsRepository.delete({ id: +channelId });
       } else {
         // 멤버에서만 delete

@@ -90,14 +90,14 @@ export class ChannelsController {
     return await this.channelsService.getChannelMembers(channelId);
   }
 
-  // @ApiOperation({ summary: '채팅방 멤버 조회1111111' })
-  // @UseGuards(JwtTwoFactorGuard)
-  // @Get(':channelId/memberss')
-  // async getChannelMembersDto(
-  //   @Param('channelId', ParseIntPipe) channelId: number,
-  // ) {
-  //   return await this.channelsService.getChannelMembersDto(channelId);
-  // }
+  @ApiOperation({ summary: '채팅방 멤버 조회1111111' })
+  @UseGuards(JwtTwoFactorGuard)
+  @Get(':channelId/memberss')
+  async getChannelMembersDto(
+    @Param('channelId', ParseIntPipe) channelId: number,
+  ) {
+    return await this.channelsService.getChannelMembersDto(channelId);
+  }
 
   @ApiOperation({ summary: '채팅방 최초 입장' })
   @Post(':channelId')
