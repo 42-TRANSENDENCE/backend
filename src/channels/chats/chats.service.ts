@@ -54,8 +54,8 @@ export class ChatsService {
   //   return new ChatResponseDto(user, chat);
   // }
   //TODO: 채팅창 연결해서 User.id랑 연결해서 테스트 , 인자들 정리, entity 도 정리
-  async isMutted(roomId: number, userId: number): Promise<boolean> {
-    const mutelist = await this.channelsService.getMutelist(roomId);
+  async isMutted(channelId: number, userId: number): Promise<boolean> {
+    const mutelist = await this.channelsService.getMutelist(channelId);
     this.logger.log(`this is mutelist  :  ${mutelist} , ${mutelist.length}`);
     for (const Id of mutelist) {
       if (+Id === userId) {
@@ -65,12 +65,12 @@ export class ChatsService {
     }
     return false;
   }
-  async sendChatToChannel(roomId: number, chat: string, user: User) {
-    if (await this.isMutted(roomId, user.id))
+  async sendChatToChannel(channelId: number, chat: string, user: User) {
+    if (await this.isMutted(channelId, user.id))
       throw new UnauthorizedException('YOU ARE MUTED');
 
     const channelMember = await this.channelMembersRepository.find({
-      where: { channelId: roomId, userId: user.id },
+      where: { channelId: channelId, userId: user.id },
     });
 
     if (channelMember.length === 0)
@@ -79,7 +79,7 @@ export class ChatsService {
     const chats = this.chatsRepository.create({
       senderUserId: user.id,
       sender: user,
-      channelId: roomId,
+      channelId: channelId,
       content: chat,
     });
     // this.logger.log(chats.sender.id);
