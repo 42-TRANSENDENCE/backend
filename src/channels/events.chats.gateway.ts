@@ -85,7 +85,7 @@ export class ChannelsGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody('channelId') channelId: string,
   ) {
-    if (!channelId) throw new WsException('There is no user or roomId here');
+    if (!channelId) throw new WsException('There is no user or channelId here');
     this.logger.debug(socket.id);
     socket.leave(channelId);
     this.logger.log(
@@ -96,7 +96,7 @@ export class ChannelsGateway
     this.logger.log(
       `소켓에 연결된 사람수 : ${this.getClientsInRoom(channelId)}`,
     );
-    this.nsp.to(channelId).emit('message', {
+    this.nsp.to(channelId).emit('byeChannel', {
       message: `${socket.id} 가 ${channelId} 에서 나갔다 ! Well Done ! `,
     });
 
@@ -109,7 +109,7 @@ export class ChannelsGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody('channelId') channelId: string,
   ) {
-    if (!channelId) throw new WsException('There is no user or roomId here');
+    if (!channelId) throw new WsException('There is no user or channelId here');
     this.logger.debug(socket.id);
     socket.join(channelId);
     this.logger.log(`${socket.id} 가 ${channelId} 에 들어왔다 Well Done ! `);
@@ -118,7 +118,7 @@ export class ChannelsGateway
     this.logger.log(
       `소켓에 연결된 사람수 : ${this.getClientsInRoom(channelId)}`,
     );
-    this.nsp.to(channelId).emit('message', {
+    this.nsp.to(channelId).emit('welcomeChannel', {
       message: `${socket.id} 가 ${channelId} 에 들어왔다 Well Done ! `,
     });
 
@@ -138,14 +138,14 @@ export class ChannelsGateway
 
   async sendEmitMessage(sendChat: Chat) {
     // Get the chat room ID from the `sendChat` object
-    const roomId = sendChat.channelId;
+    const channelId = sendChat.channelId;
 
     // Emit the chat message to the corresponding room using the `to` method
     // and broadcast it to all connected clients in the room using the `broadcast` method
-    this.nsp.to(roomId.toString()).emit('message', sendChat);
+    this.nsp.to(channelId.toString()).emit('message', sendChat);
 
-    // this.nsp.to(roomId.toString()).broadcast.emit('message', sendChat);
-    // this.server.to(roomId.toString()).broadcast.emit('message', sendChat.content);
+    // this.nsp.to(channelId.toString()).broadcast.emit('message', sendChat);
+    // this.server.to(channelId.toString()).broadcast.emit('message', sendChat.content);
   }
 
   async EmitChannelInfo(channelReturned) {
@@ -158,7 +158,7 @@ export class ChannelsGateway
     @MessageBody() leaveDto: leaveDto,
   ) {
     //소켓 연결 끊기 **
-    //roomId,userId가 없을때 예외 처리
+    //channelId,userId가 없을때 예외 처리
     // this.logger.debug(`----${leaveDto.channelId} , ${leaveDto.userId}`)
     if (!leaveDto.channelId || !leaveDto.userId)
       throw new WsException('There is no user or channelId here');
