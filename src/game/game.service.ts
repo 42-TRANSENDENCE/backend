@@ -223,8 +223,8 @@ export class GameService {
       }
 
       server.in(game.gameId).socketsLeave(game.gameId);
-      // server.sockets.get(game.players.p1.id).disconnect();
-      // server.sockets.get(game.players.p2.id).disconnect();
+      this.clientService.getByUserId(game.users.p1.id).status = ClientStatus.ONLINE;
+      this.clientService.getByUserId(game.users.p2.id).status = ClientStatus.ONLINE;
       this.games.delete(game.gameId);
     }
   }
