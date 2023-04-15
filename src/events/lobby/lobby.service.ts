@@ -27,7 +27,7 @@ export class LobbyService {
     const otherPlayer : PongClient | null = this.clientService.getByUserId(matchInfo.to);
 
     this.logger.log(`초대 이벤트 발생. from ${player.user.nickname} to ${otherPlayer.user.nickname}`);
-
+    
     if (!otherPlayer || otherPlayer.status !== ClientStatus.ONLINE) {
       throw new WsException('현재 게임 초대를 받을 수 없습니다.');
     } else {
@@ -94,6 +94,8 @@ export class LobbyService {
     }
   }
 
+  // cancelAllInvitations(server : Server, client : Socket) {
+  // }
   refuse(server: Server, invitation: InvitationDto) {
     server.in(invitation.roomId).socketsLeave(invitation.roomId);
     const fromSocket = server.sockets.sockets.get(invitation.from.id);
@@ -111,10 +113,11 @@ export class LobbyService {
       p1.status !== ClientStatus.ONLINE ||
       p2.status !== ClientStatus.ONLINE
     ) {
-      server.to(invitation.roomId).socketsLeave(invitation.roomId);
+      // server.to(invitation.roomId).socketsLeave(invitation.roomId);
       throw new WsException('상대방이 게임을 할 수 없는 상태입니다.');
     }
 
+    p1.room = invitation.roomId;
     p2.room = invitation.roomId;
 
     const matchInfo: MatchDto = {
@@ -123,7 +126,13 @@ export class LobbyService {
       roomId: invitation.roomId,
       mode: invitation.mode,
     };
-    server.to(invitation.roomId).emit('match_maked', matchInfo);
+    
+    this.logger.log(`1v1 matched : ${p1.user.nickname} vs ${p2.user.nickname}`);
+    this.logger.log(`game_room ID : ${invitation.roomId}`);
     this.gameService.init(matchInfo, GameType.PRACTICE);
+    server.to(p1.id).emit('accepted', matchInfo);
+    server.to(p2.id).emit('match_maked', matchInfo);
+    p1.status = ClientStatus.INGAME;
+    p2.status = ClientStatus.INGAME;
   }
 }
