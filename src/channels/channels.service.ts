@@ -75,7 +75,7 @@ export class ChannelsService {
     if (members.length === 0)
       throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
     // return members;
-    this.logger.log(members);
+    this.logger.log(members)
     const memberDtos = members.map((member) => new ChannelMemberDto(member));
     return memberDtos;
   }
@@ -305,22 +305,18 @@ export class ChannelsService {
         // 멤버에서만 delete
         //TODO:채널 안의 멤버 가 존재 하는지 안 하는지 쿼리
         // const curChannelMembers = this.channelMemberRepository.findOne({ChannelId: })
-        // const curChannelMembers = await this.channelMemberRepository
-        //   .createQueryBuilder('channel_member')
-        //   .where('channel_member.userId = :userId', { userId: userId }) // 1 -> user.id
-        //   .getOne();
+        const curChannelMembers = await this.channelMemberRepository
+          .createQueryBuilder('channel_member')
+          .where('channel_member.userId = :userId', { userId: userId }) // 1 -> user.id
+          .getOne();
         // const curChannelMembers = await this.findById(+channelId)
-        const curChannelMembers = await this.channelMemberRepository.findOne({
-          where: { channelId: +channelId, userId: userId },
-        });
         if (!curChannelMembers)
           throw new NotFoundException('Member in this Channel does not exist!');
-        else {
+        else
           await this.channelMemberRepository.delete({
             userId: userId,
             channelId: +channelId,
           });
-        }
       }
     } catch (error) {
       if (error instanceof NotFoundException) {
