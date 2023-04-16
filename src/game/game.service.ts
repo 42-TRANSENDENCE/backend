@@ -27,7 +27,7 @@ import {
   ReadyDto,
 } from './game.interface';
 import { HistoryService } from './history/history.service';
-import { ClientStatus } from 'src/events/client/client.interface';
+import { ClientStatus, PongClient } from 'src/events/client/client.interface';
 import { WsException } from '@nestjs/websockets';
 import { ClientService } from 'src/events/client/client.service';
 import { FriendsService } from 'src/users/friends/friends.service';
@@ -72,6 +72,7 @@ export class GameService {
     const user = await this.clientService.getUserFromClient(gameClient);
     const roomId: string = readyInfo.roomId;
     const game = this.games.get(roomId);
+    let isPlayer = true;
 
     if (!game) {
       throw new WsException('잘못된 게임 준비 요청입니다.');
@@ -87,15 +88,25 @@ export class GameService {
       game.isReady.p2 = true;
       game.players.p2 = gameClient;
       gameClient.join(roomId);
+    } else {
+      isPlayer = false;
+      const Stranger : PongClient = this.clientService.getByUserId(user.id);
+      if (game.spectators.includes(Stranger) === true) {
+        gameClient.join(roomId);
+      } else {
+        return ;
+      }
     }
 
+    
     if (game.isReady.p1 && game.isReady.p2) {
       server.to(roomId).emit('game_start', {
-        p1Id: game.players.p1.id,
+        p1Id: game.players.p1?.id,
         p1Name: game.users.p1.nickname,
         p2Name: game.users.p2.nickname,
       });
-      this.__game_start(server, game);
+      if (isPlayer)
+        this.__game_start(server, game);
     }
   }
 
@@ -111,7 +122,7 @@ export class GameService {
 
   addSpectator(gameId : string, spectator : PongClient) {
     this.games.get(gameId)?.spectators.push(spectator);
-    }
+  }
 
 
   handleKeyPressed(client: Socket, gameInfo: GamePlayDto): void {
