@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString, Length } from 'class-validator';
 
 export class ChatsDto {
   @IsNotEmpty()
-  @Length(100)
+  @Length(1, 100)
   @IsString()
   @ApiProperty({
     example: '채팅 문자열',

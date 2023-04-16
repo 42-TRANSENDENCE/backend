@@ -53,20 +53,24 @@ export class ChatsService {
   async sendChatToChannel(roomId: number, chat: string, user: User) {
     if (await this.isMutted(roomId, user.id))
       throw new UnauthorizedException('YOU ARE MUTED');
-    // 이거 따로 빼서 함수로 만들기. 민준's repository 참고
-    const channelMember = this.channelMembersRepository.find({
-      where: { channelId: roomId },
-      relations: ['userId'],
+
+    const channelMember = await this.channelMembersRepository.find({
+      where: { channelId: roomId, userId: user.id },
     });
-    if (!channelMember) throw new NotFoundException('YOU ARE NOT MEMBER');
-    // 채팅 저장 , 일단 캐시에 다 넣고 나중에 한번에 저장 ?
+
+    if (channelMember.length === 0)
+      throw new NotFoundException('YOU ARE NOT A MEMBER');
+
     const chats = this.chatsRepository.create({
-      // sender: user.id, //user.id,
+      senderUserId: user.id,
       channelId: roomId,
       content: chat,
     });
-    //savechat
-    this.chatsRepository.save(chats);
-    this.channelsGateway.sendEmitMessage(chats);
+
+    await this.chatsRepository.save(chats);
+
+    this.channelsGateway.sendEmitMessage(chats).catch((error) => {
+      console.error('Failed to send message:', error);
+    });
   }
 }

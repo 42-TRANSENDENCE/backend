@@ -81,7 +81,7 @@ export class ChannelsGateway
     }
   }
 
-  @SubscribeMessage('join-channel')
+  @SubscribeMessage('joinChannel')
   handleJoinRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody('channelId') channelId: string,
@@ -91,7 +91,6 @@ export class ChannelsGateway
     socket.join(channelId);
     this.logger.log(`${socket.id} 가 ${channelId} 에 들어왔다 Well Done ! `);
     // socket.emit('message',{message: `${socket.id} 가 들어왔다 Well Done ! `})
-
     // 잘 보내지나 확인용
     this.logger.log(
       `소켓에 연결된 사람수 : ${this.getClientsInRoom(channelId)}`,
