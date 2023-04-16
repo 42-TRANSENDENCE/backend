@@ -109,23 +109,10 @@ export class GameService {
     return game.gameId;
   }
 
-    if (
-      !watcher ||
-      !gamePlayer ||
-      !this.friendsService.isFriend(watcher.user.id, gamePlayer.user.id) ||
-      gamePlayer.status !== ClientStatus.INGAME ||
-      watcher.status !== ClientStatus.ONLINE
-    ) {
-      throw new WsException('잘못된 관전 요청입니다.');
+  addSpectator(gameId : string, spectator : PongClient) {
+    this.games.get(gameId)?.spectators.push(spectator);
     }
 
-    const gameId = this.__find_game(userId);
-    if (!gameId) {
-      throw new WsException('게임을 찾을 수 없습니다.');
-    }
-    this.games.get(gameId).spectators.push(watcher);
-    client.join(gameId);
-  }
 
   handleKeyPressed(client: Socket, gameInfo: GamePlayDto): void {
     const game = this.games.get(gameInfo.roomId);
