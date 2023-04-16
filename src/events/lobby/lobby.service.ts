@@ -161,4 +161,18 @@ export class LobbyService {
     p1.status = ClientStatus.INGAME;
     p2.status = ClientStatus.INGAME;
   }
+  
+  spectate(server : Server, client : Socket, playerId : number) {
+    this.logger.log(`관전 시도 이벤트 발생 to , ${playerId}`);
+    const roomId : string | null | undefined = this.gameService.canWatch(playerId);
+    console.log("canWatch ret : ", roomId);
+    if (roomId === undefined)
+      client.emit("spectate", {roomId : null, msg : "잘못 된 관전 시도"});
+    else if (roomId === null)
+      client.emit("spectate", {roomId : null, msg : "최대 3명까지 관전 가능합니다."});
+    else {
+      this.gameService.addSpectator(roomId, this.clientService.get(client.id));
+      client.emit("spectate", {roomId : roomId, msg : ""});
+    }
+  }
 }
