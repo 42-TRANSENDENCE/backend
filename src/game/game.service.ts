@@ -190,6 +190,13 @@ export class GameService {
       game.data.score.p1 = -1;
     } else if (game.players.p2.id === client.id) {
       game.data.score.p2 = -1;
+    } else {
+      const Stranger : PongClient| null  = this.clientService.get(client.id);
+      if (game.spectators.includes(Stranger) === true) {
+        const index : number = game.spectators.indexOf(Stranger);
+        if (index > -1) game.spectators.splice(index, 1);
+        client.leave(game.gameId);
+      }
     }
 
     server.to(game.gameId).emit('update_score', game.data.score);
