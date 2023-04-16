@@ -98,7 +98,7 @@ export class GameService {
         return ;
       }
     }
-
+    
     
     if (game.isReady.p1 && game.isReady.p2) {
       server.to(roomId).emit('game_start', {
@@ -106,6 +106,7 @@ export class GameService {
         p1Name: game.users.p1.nickname,
         p2Name: game.users.p2.nickname,
       });
+      gameClient.emit("update_score", game.data.score);
       if (isPlayer)
         this.__game_start(server, game);
     }
