@@ -234,8 +234,10 @@ export class GameService {
       }
 
       server.in(game.gameId).socketsLeave(game.gameId);
-      this.clientService.getByUserId(game.users.p1.id).status = ClientStatus.ONLINE;
-      this.clientService.getByUserId(game.users.p2.id).status = ClientStatus.ONLINE;
+      const Player1 = this.clientService.getByUserId(game.users.p1.id);
+      if (Player1) Player1.status = ClientStatus.ONLINE;
+      const Player2 = this.clientService.getByUserId(game.users.p2.id);
+      if (Player2) Player2.status = ClientStatus.ONLINE
       this.games.delete(game.gameId);
     }
   }
