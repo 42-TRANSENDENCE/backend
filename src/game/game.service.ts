@@ -7,6 +7,7 @@ import {
   BALL_RAD,
   BALL_VEL_INIT_X,
   BALL_VEL_INIT_Y,
+  BALL_MAX_SPEED,
   PADDLE_H,
   PADDLE_L,
   PADDLE_R,
@@ -162,21 +163,20 @@ export class GameService {
   private __find_game(userId: number): string | null {
     const values = this.games.values();
     for (const value of values) {
-      if (value.users.p1.id === userId || value.users.p2.id === userId) {
+      if (value.users.p1?.id === userId || value.users.p2?.id === userId) {
         return value.gameId;
       }
     }
     return null;
   }
 
-  private findGameBySocketId(id: string) {
+  private findGameBySocketId(id: string) : string | null {
     const values = this.games.values();
     for (const value of values) {
-      if (value.players.p1.id === id || value.players.p2.id === id) {
+      if (value.players.p1?.id === id || value.players.p2?.id === id) {
         return value.gameId;
       }
     }
-    return null;
   }
 
   quitGame(server: Namespace, client: Socket): void {
@@ -326,13 +326,20 @@ export class GameService {
 
   private __paddle_collision(player: Socket, game: Game): void {
     let paddle_center;
+    let paddle_size;
     const vel = game.data.ballVel;
     const ball = game.data.ballPos;
 
     if (player === game.players.p1)
+    {
       paddle_center = { x: TABLE_LEFT + PADDLE_L, y: game.data.paddlePos.p1 };
+      paddle_size = game.data.paddleSize.p1;
+    }
     else if (player === game.players.p2)
+    {
       paddle_center = { x: TABLE_RIGHT - PADDLE_R, y: game.data.paddlePos.p2 };
+      paddle_size = game.data.paddleSize.p2;
+    }
     else return;
 
     const rad = PADDLE_W / 2;
@@ -341,10 +348,17 @@ export class GameService {
     const left = paddle_center.x - PADDLE_W / 2 - BALL_RAD;
     const right = paddle_center.x + PADDLE_W / 2 + BALL_RAD;
 
+    // 평평한 부분에 부딪히는 경우
     if (left <= ball.x && ball.x <= right && top <= ball.y && ball.y <= bot) {
-      game.data.ballVel = { x: -vel.x, y: vel.y };
+      const speed : number = Math.sqrt(game.data.ballVel.x**2 +  game.data.ballVel.y**2);
+      const hitPositionRatio : number = (game.data.ballPos.y - paddle_center.y) / (paddle_size / 2);
+      const reflectRadis : number = Math.PI / 3 * hitPositionRatio;
+      const new_vel_x = Math.cos(reflectRadis) * speed * ((vel.x > 0) ? (-1) : (1));
+      const new_vel_y = Math.sin(reflectRadis) * speed;
+      game.data.ballVel = { x: new_vel_x, y: new_vel_y };
       game.data.ballPos.x = player === game.players.p1 ? right + 1 : left - 1;
-    } else {
+    } 
+    else { // 둥근 부분에 부딪히는 경우
       let circle_center : number | undefined;
 
       if (this.__circle_collision({ x: ball.x, y: ball.y }, { x: paddle_center.x, y: top })) {
@@ -364,11 +378,12 @@ export class GameService {
       game.data.ballPos.y = circle_center + dy * R_ratio;
       game.data.ballPos.x += (game.data.ballPos.x >= paddle_center) ? 1 : -1;
 
-      if (game.data.ballVel.x**2 + game.data.ballVel.y**2 <= 625)
-      {
-        game.data.ballVel.x *= ACCEL_RATIO;
-        game.data.ballVel.y *= ACCEL_RATIO;
-      }
+    }
+    const new_vel_x : number = game.data.ballVel.x * ACCEL_RATIO;
+    const new_vel_y : number = game.data.ballVel.y * ACCEL_RATIO;
+    if (new_vel_x**2 + new_vel_y**2 <= BALL_MAX_SPEED**2)
+    {
+      game.data.ballVel = {x : new_vel_x, y : new_vel_y};
     }
   }
 
