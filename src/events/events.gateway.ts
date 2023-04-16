@@ -19,6 +19,7 @@ import { User } from 'src/users/users.entity';
 import { QueueService } from './queue/queue.service';
 import { CreateFriendlyMatchDto } from './dto/create-friendly-match.dto';
 import { InvitationDto } from './dto/invitation.dto';
+import { SpectateDto } from './dto/spectate.dto';
 import { QueueDto } from './dto/queue.dto';
 import { FriendsStatusDto } from './dto/friends-status.dto';
 
@@ -122,6 +123,14 @@ export class EventGateway
     @MessageBody() invitaton: InvitationDto,
   ) {
     this.lobbyService.accept(this.server, client, invitaton);
+  }
+
+  @SubscribeMessage('spectate')
+  handelSpectateEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() spectateDto: SpectateDto,
+  ) {
+    this.lobbyService.spectate(this.server, client, spectateDto.playerId);
   }
 
   /** Queue */
