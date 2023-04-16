@@ -99,9 +99,15 @@ export class GameService {
     }
   }
 
-  watch(client: Socket, userId: number) {
-    const watcher = this.clientService.get(client.id);
-    const gamePlayer = this.clientService.getByUserId(userId);
+  canWatch(userId : number) : string | null | undefined {
+    const gameId : string | null = this.__find_game(userId);
+    if (gameId === null)
+      return undefined;
+    const game : Game = this.games.get(gameId);
+    if (game.spectators.length >= 3)
+      return null;
+    return game.gameId;
+  }
 
     if (
       !watcher ||
