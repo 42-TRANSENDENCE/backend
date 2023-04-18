@@ -12,7 +12,7 @@ import {
 import { ChannelMember } from './channelmember.entity';
 import { ChannelBanMember } from './channelbanmember.entity';
 import { Exclude } from 'class-transformer';
-import { Chat } from './chats/chats.entity';
+import { Chat } from '../chats/chats.entity';
 import { User } from 'src/users/users.entity';
 
 export enum ChannelStatus {
