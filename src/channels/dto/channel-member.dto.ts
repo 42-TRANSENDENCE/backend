@@ -23,7 +23,6 @@ export class ChannelMemberDto {
   constructor(member: ChannelMember) {
     this.userId = member.userId;
     this.channelId = member.channelId;
-    console.log(member.user);
     this.nickname = member.user.nickname;
     this.type = member.type;
     this.avatar = member.user.avatar;
