@@ -35,8 +35,8 @@ describe('ClientService', () => {
     achievements: [],
     wins: [],
     loses: [],
-    memberchannels: [],
-    bannedChannels: [],
+    channelMembers: [],
+    channelBanMembers: [],
   };
 
   const socketId = '4242';

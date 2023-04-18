@@ -12,7 +12,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Channel, ChannelStatus } from 'src/channels/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember, MemberType } from 'src/channels/channelmember.entity';
@@ -22,6 +22,7 @@ import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
 import { ChannelBanMember } from './channelbanmember.entity';
+// import { ChannelMemberDto } from './dto/channel-member.dto';
 
 import { Cache } from 'cache-manager';
 @Injectable()
@@ -124,10 +125,17 @@ export class ChannelsService {
 
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
   async getChannelMembers(channelId: number) {
-    return this.channelMemberRepository.find({
+    const members = await this.channelMemberRepository.find({
       where: { channelId: channelId },
     });
+    if (members.length === 0)
+      throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
+    return members;
   }
+  // getChannelMembersDto
+  // async getChannelMembersDto(channelId: number) {
+
+  // }
 
   // 나의 채팅목록
   async getMyChannels(user: User) {
@@ -140,7 +148,9 @@ export class ChannelsService {
         // If the user isn't a member of any channels, return an empty array
         return [];
       }
-      const channels = await this.channelsRepository.findByIds(channelIds);
+      const channels = await this.channelsRepository.find({
+        where: { id: In(channelIds) }, // Use In operator here
+      });
       return channels;
     } catch (error) {
       // Handle any errors that occur during the database queries
@@ -273,37 +283,36 @@ export class ChannelsService {
   }
 
   // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
-  async userExitChannel(socket: Socket, roomId: string, userId: number) {
+  async userExitChannel(socket: Socket, channelId: string, userId: number) {
     // 이러면 내가 무슨 user 인지 알수 있나 .. ?
-    // roomId  가 채널의 id 이겠지 ?
+    // channelId  가 채널의 id 이겠지 ?
     // 채팅방 오너가 나가면 채팅방 삭제.
     try {
-      const curChannel = await this.findById(+roomId);
+      const curChannel = await this.findById(+channelId);
       // 근데 만약 그 채널에 없는 사람이 leave-room 이벤트 보내는 경우도 생각.
-      this.logger.log(`curChannel : ${curChannel}`);
+      // this.logger.log(`curChannel : ${JSON.stringify(curChannel)}`);
       if (!curChannel) {
         throw new NotFoundException('CHANNEL DOSE NOT EXIST');
       }
-
-      if (curChannel.owner === userId) {
+      if (+curChannel.owner === +userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
-        this.channelMemberRepository.delete({ channelId: +roomId });
-        this.channelsRepository.delete({ id: +roomId });
+        await this.channelMemberRepository.delete({ channelId: +channelId });
+        await this.channelsRepository.delete({ id: +channelId });
       } else {
         // 멤버에서만 delete
         //TODO:채널 안의 멤버 가 존재 하는지 안 하는지 쿼리
         // const curChannelMembers = this.channelMemberRepository.findOne({ChannelId: })
         const curChannelMembers = await this.channelMemberRepository
           .createQueryBuilder('channel_member')
-          .where('channel_member.UserId = :userId', { userId: userId }) // 1 -> user.id
+          .where('channel_member.userId = :userId', { userId: userId }) // 1 -> user.id
           .getOne();
-        // const curChannelMembers = await this.findById(+roomId)
+        // const curChannelMembers = await this.findById(+channelId)
         if (!curChannelMembers)
           throw new NotFoundException('Member in this Channel does not exist!');
         else
-          this.channelMemberRepository.delete({
+          await this.channelMemberRepository.delete({
             userId: userId,
-            channelId: +roomId,
+            channelId: +channelId,
           });
       }
     } catch (error) {
@@ -366,7 +375,7 @@ export class ChannelsService {
       );
       if (Number(ban.expiresAt) - Number(new Date(Date.now())) > 0) return true;
       else {
-        this.channelBanMemberRepository.delete({
+        await this.channelBanMemberRepository.delete({
           userId: userId,
           channelId: channelId,
         });
@@ -376,11 +385,11 @@ export class ChannelsService {
   }
 
   async addToKicklist(
-    roomId: number,
+    channelId: number,
     userId: number,
     ttl: number,
   ): Promise<void> {
-    const key = `chatroom:${roomId}:kicklist`;
+    const key = `chatroom:${channelId}:kicklist`;
     const kicklist = (await this.cacheManager.get<number[]>(key)) || [];
     if (!kicklist.includes(userId)) {
       kicklist.push(userId);

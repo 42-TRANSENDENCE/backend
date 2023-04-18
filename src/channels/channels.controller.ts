@@ -11,7 +11,12 @@ import {
   ParseIntPipe,
   HttpCode,
 } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ChannelsService } from './channels.service';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
@@ -66,8 +71,7 @@ export class ChannelsController {
   }
 
   @ApiOperation({
-    summary:
-      '채팅방 입장을 위한 정보 가져오기: [{ 멤버 }, { 밴리스트 }, private]',
+    summary: '채팅방 에대한 정보: [{ 멤버 + avatar + nickname}]',
   })
   @UseGuards(JwtTwoFactorGuard)
   @Get(':channelId')
@@ -79,6 +83,21 @@ export class ChannelsController {
     // private 인지 알러면 채팅방 에 쿼리로 접근해서 알아와야 하는데.
     return result;
   }
+  @ApiOperation({ summary: '채팅방 멤버 조회' })
+  @UseGuards(JwtTwoFactorGuard)
+  @Get(':channelId/members')
+  async getChannelMembers(@Param('channelId', ParseIntPipe) channelId: number) {
+    return await this.channelsService.getChannelMembers(channelId);
+  }
+
+  // @ApiOperation({ summary: '채팅방 멤버 조회1111111' })
+  // @UseGuards(JwtTwoFactorGuard)
+  // @Get(':channelId/memberss')
+  // async getChannelMembersDto(
+  //   @Param('channelId', ParseIntPipe) channelId: number,
+  // ) {
+  //   return await this.channelsService.getChannelMembersDto(channelId);
+  // }
 
   @ApiOperation({ summary: '채팅방 최초 입장' })
   @Post(':channelId')

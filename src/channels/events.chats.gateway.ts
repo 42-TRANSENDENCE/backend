@@ -80,7 +80,30 @@ export class ChannelsGateway
       return 0;
     }
   }
+  @SubscribeMessage('closeChannel')
+  handlecloseRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody('channelId') channelId: string,
+  ) {
+    if (!channelId) throw new WsException('There is no user or roomId here');
+    this.logger.debug(socket.id);
+    socket.leave(channelId);
+    this.logger.log(
+      `${socket.id} 가 ${channelId} 에 서 나갔다 !  Well Done ! `,
+    );
+    // socket.emit('message',{message: `${socket.id} 가 들어왔다 Well Done ! `})
+    // 잘 보내지나 확인용
+    this.logger.log(
+      `소켓에 연결된 사람수 : ${this.getClientsInRoom(channelId)}`,
+    );
+    this.nsp.to(channelId).emit('message', {
+      message: `${socket.id} 가 ${channelId} 에서 나갔다 ! Well Done ! `,
+    });
 
+    // socket.broadcast
+    //   .to(channelId)
+    //   .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
+  }
   @SubscribeMessage('joinChannel')
   handleJoinRoom(
     @ConnectedSocket() socket: Socket,
@@ -95,13 +118,13 @@ export class ChannelsGateway
     this.logger.log(
       `소켓에 연결된 사람수 : ${this.getClientsInRoom(channelId)}`,
     );
-    // this.nsp.to(channelId).emit('message', {
-    //   message: `${socket.id} 가 ${channelId} 에 들어왔다 Well Done ! `,
-    // });
-    //
-    socket.broadcast
-      .to(channelId)
-      .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
+    this.nsp.to(channelId).emit('message', {
+      message: `${socket.id} 가 ${channelId} 에 들어왔다 Well Done ! `,
+    });
+
+    // socket.broadcast
+    //   .to(channelId)
+    //   .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
   }
 
   @SubscribeMessage('message')
@@ -114,29 +137,37 @@ export class ChannelsGateway
   }
 
   async sendEmitMessage(sendChat: Chat) {
-    // 이부분 해당 방에 해당하는 broadcast로 하는걸로 수정하자 테스트 하면서
-    // 방 넘버 가지고 소켓아이디 알아내서 to로 에밋 하고 broadcast해줘야함.
-    return this.nsp.emit('meesage', sendChat);
+    // Get the chat room ID from the `sendChat` object
+    const roomId = sendChat.channelId;
+
+    // Emit the chat message to the corresponding room using the `to` method
+    // and broadcast it to all connected clients in the room using the `broadcast` method
+    this.nsp.to(roomId.toString()).emit('message', sendChat);
+
+    // this.nsp.to(roomId.toString()).broadcast.emit('message', sendChat);
+    // this.server.to(roomId.toString()).broadcast.emit('message', sendChat.content);
   }
+
   async EmitChannelInfo(channelReturned) {
     return this.nsp.emit('newChannel', channelReturned);
   }
 
-  @SubscribeMessage('leave-channel')
+  @SubscribeMessage('leaveChannel')
   handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() leaveDto: leaveDto,
   ) {
     //소켓 연결 끊기 **
     //roomId,userId가 없을때 예외 처리
-    if (!leaveDto.roomId || !leaveDto.userId)
-      throw new WsException('There is no user or roomId here');
+    // this.logger.debug(`----${leaveDto.channelId} , ${leaveDto.userId}`)
+    if (!leaveDto.channelId || !leaveDto.userId)
+      throw new WsException('There is no user or channelId here');
     // 해당 방에대해 소켓 연결 끊는부분 연결하고 테스트를 해봐야 할듯.!!!!!
-    socket.leave(leaveDto.roomId);
-    this.logger.log(`Client ${socket.id} left room ${leaveDto.roomId}`);
+    socket.leave(leaveDto.channelId);
+    this.logger.log(`Client ${socket.id} left room ${leaveDto.channelId}`);
     this.channelsService.userExitChannel(
       socket,
-      leaveDto.roomId,
+      leaveDto.channelId,
       leaveDto.userId,
     );
   }

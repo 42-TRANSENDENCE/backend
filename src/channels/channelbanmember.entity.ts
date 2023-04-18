@@ -35,7 +35,9 @@ export class ChannelBanMember {
   })
   expiresAt: Date;
 
-  @ManyToOne(() => User, (user) => user.bannedChannels, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.channelBanMembers, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 
   @ManyToOne(
