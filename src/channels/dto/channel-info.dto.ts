@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ChannelStatus } from '../channels.entity';
-import { Channel } from '../channels.entity';
+import { ChannelStatus } from '../entity/channels.entity';
+import { Channel } from '../entity/channels.entity';
 
 export class ChannelIfoDto {
   @ApiProperty()

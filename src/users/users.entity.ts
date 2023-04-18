@@ -1,6 +1,6 @@
 import { Exclude } from 'class-transformer';
-import { ChannelMember } from 'src/channels/channelmember.entity';
-import { ChannelBanMember } from 'src/channels/channelbanmember.entity';
+import { ChannelMember } from 'src/channels/entity/channelmember.entity';
+import { ChannelBanMember } from 'src/channels/entity/channelbanmember.entity';
 import {
   Column,
   Entity,

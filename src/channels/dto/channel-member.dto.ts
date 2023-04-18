@@ -1,9 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { ChannelMember, MemberType } from '../channelmember.entity';
-import { ChannelStatus } from '../channels.entity';
-import { User } from 'src/users/users.entity';
-import { Channel } from 'diagnostics_channel';
+import { ChannelMember, MemberType } from '../entity/channelmember.entity';
+import { ChannelStatus } from '../entity/channels.entity';
 export class ChannelMemberDto {
   @ApiProperty()
   userId: number;

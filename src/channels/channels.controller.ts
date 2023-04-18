@@ -10,6 +10,7 @@ import {
   ClassSerializerInterceptor,
   ParseIntPipe,
   HttpCode,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -143,5 +144,13 @@ export class ChannelsController {
     return this.channelsService.addToMutelist(channelId, userId, 3000);
   }
 
-  // @ApiOperation({ summary : '비밀번호 변경' })
+  @ApiOperation({ summary: '채널 비밀번호 변경' })
+  @Patch(':channelid')
+  @UseGuards(JwtTwoFactorGuard)
+  async patchChannelPassword(
+    @Param('channelid') channelId: number,
+    @GetUser() user: User,
+  ) {
+    // return this.channelsService.patchChannelPassword(channelId, user);
+  }
 }

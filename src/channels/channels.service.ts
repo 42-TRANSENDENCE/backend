@@ -11,15 +11,15 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Channel, ChannelStatus } from 'src/channels/channels.entity';
+import { Channel, ChannelStatus } from './entity/channels.entity';
 import { User } from 'src/users/users.entity';
-import { ChannelMember, MemberType } from 'src/channels/channelmember.entity';
+import { ChannelMember, MemberType } from './entity/channelmember.entity';
 import { ChannelsGateway } from './events.chats.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
-import { ChannelBanMember } from './channelbanmember.entity';
+import { ChannelBanMember } from './entity/channelbanmember.entity';
 // import { ChannelMemberDto } from './dto/channel-member.dto';
 
 import { Cache } from 'cache-manager';
@@ -76,9 +76,9 @@ export class ChannelsService {
         where: { channelId: channelId, userId: user.id },
       });
       const result = {
-        channelstatus: channel.status,
+        channelStatus: channel.status,
         channelMembers,
-        mytype: whoami.type,
+        mytType: whoami.type,
       };
       return result;
     } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
@@ -455,4 +455,23 @@ export class ChannelsService {
     const mutelist = (await this.cacheManager.get<number[]>(key)) || [];
     return mutelist;
   }
+
+  // async generatePassword() {
+
+  // }
+  // async patchChannelPassword(channelId: number, user: User) {
+  //   const curChannel = await this.channelsRepository.findOne({
+  //     where: { id: channelId },
+  //   });
+  //   if (!curChannel) {
+  //     throw new NotFoundException('CHANNEL DOSE NOT EXIST');
+  //   }
+  //   if (+curChannel.owner.id !== +user.id) {
+  //     throw new UnauthorizedException('You are not owner of this channel');
+  //   }
+  //   const password = await this.generatePassword();
+  //   curChannel.password = password;
+  //   await this.channelsRepository.save(curChannel);
+  //   return password;
+  // }
 }

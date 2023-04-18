@@ -12,10 +12,10 @@ import { DataSource, Repository } from 'typeorm';
 import { Chat } from './chats.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelsGateway } from 'src/channels/events.chats.gateway';
-import { Channel } from 'src/channels/channels.entity';
+import { Channel } from 'src/channels/entity/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
 import { Cache } from 'cache-manager';
-import { ChannelMember } from '../channelmember.entity';
+import { ChannelMember } from '../entity/channelmember.entity';
 // import { ChatResponseDto } from './dto/chats-response.dto';
 
 @Injectable()

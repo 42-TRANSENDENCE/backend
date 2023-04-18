@@ -2,12 +2,12 @@ import { CacheModule, Module } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { ChannelsController } from './channels.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Channel } from 'src/channels/channels.entity';
+import { Channel } from 'src/channels/entity/channels.entity';
 import { User } from 'src/users/users.entity';
-import { ChannelMember } from 'src/channels/channelmember.entity';
+import { ChannelMember } from 'src/channels/entity/channelmember.entity';
 import { EventsModules } from './events.module';
 import { forwardRef } from '@nestjs/common';
-import { ChannelBanMember } from './channelbanmember.entity';
+import { ChannelBanMember } from './entity/channelbanmember.entity';
 import { ChatsModule } from './chats/chats.module';
 @Module({
   imports: [
