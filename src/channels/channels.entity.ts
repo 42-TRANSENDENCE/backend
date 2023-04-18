@@ -5,9 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-  OneToOne,
-  ManyToMany,
-  JoinTable,
+  ManyToOne,
   JoinColumn,
   Unique,
 } from 'typeorm';
@@ -38,9 +36,10 @@ export class Channel {
   // @ManyToMany(() => ChannelMember)
   // @JoinTable()
   // admins: ChannelMember[];
+  @ManyToOne(() => User) // Add this relation
+  @JoinColumn({ name: 'owner' }) // Specify the column name for the owner relationship
+  owner: User;
 
-  @Column()
-  owner: number;
 
   @Column('varchar', { length: 1000, nullable: true })
   @Exclude()
