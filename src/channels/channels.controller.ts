@@ -38,7 +38,6 @@ export class ChannelsController {
   @UseGuards(JwtTwoFactorGuard)
   @Get()
   async getChannels() {
-    // return this.channelsService.getMyChannels(u)
     return this.channelsService.getChannels();
   }
 
@@ -62,7 +61,6 @@ export class ChannelsController {
   @Get('mychannels')
   @UseGuards(JwtTwoFactorGuard)
   async getMyChannels(@GetUser() user) {
-    // return this.channelsService.getMyChannels(user);
     return this.channelsService.getMyChannels(user);
   }
 
@@ -71,10 +69,11 @@ export class ChannelsController {
   })
   @UseGuards(JwtTwoFactorGuard)
   @Get(':channelId')
-  // @Param('id', ParseIntPipe) id: number
-  // async getCahnnelInfo(@Param('channelId') channelId: number) {
-  async getChannelInfo(@Param('channelId', ParseIntPipe) channelId: number) {
-    const result = await this.channelsService.getChannelInfo(channelId);
+  async getChannelInfo(
+    @Param('channelId', ParseIntPipe) channelId: number,
+    @GetUser() user: User,
+  ) {
+    const result = await this.channelsService.getChannelInfo(channelId, user);
     // banMember 도 추가
     // private 인지 알러면 채팅방 에 쿼리로 접근해서 알아와야 하는데.
     return result;
@@ -143,4 +142,6 @@ export class ChannelsController {
   ) {
     return this.channelsService.addToMutelist(channelId, userId, 3000);
   }
+
+  // @ApiOperation({ summary : '비밀번호 변경' })
 }

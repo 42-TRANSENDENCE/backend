@@ -61,23 +61,25 @@ export class ChannelsService {
       })
       .getMany();
     //여기엔 유저 닉네임만 넣어주면 됨 .
-    // this.logger.log(JSON.stringify(channels));
-    // this.logger.log(channels[0].owner);
     // const user
     const channelDtos = channels.map((channel) => new ChannelIfoDto(channel));
     return channelDtos;
   }
   // 채팅방 하나에 대한 정보 요청 .
   // 멤버 안에 아바타 ,
-  async getChannelInfo(channelId: number) {
+  async getChannelInfo(channelId: number, user: User) {
     const channel = await this.findById(channelId);
     if (channel) {
       const channelMembers = await this.getChannelMembersDto(channelId);
-      // const channelmember = channelMembers.map((member) => member.userId);
-      // const result = { memberId: user_ids, status: channel.status };
-      this.logger.log(JSON.stringify(channelMembers));
       // 이놈도 DTO로 ?
-      const result = { channelstatus: channel.status, channelMembers };
+      const whoami = await this.channelMemberRepository.findOne({
+        where: { channelId: channelId, userId: user.id },
+      });
+      const result = {
+        channelstatus: channel.status,
+        channelMembers,
+        mytype: whoami.type,
+      };
       return result;
     } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
   }
@@ -99,7 +101,6 @@ export class ChannelsService {
       where: { channelId: channelId },
       relations: { user: true },
     });
-    // this.logger.log(JSON.stringify(members[0].user));
     const memberDtos = members.map((member) => new ChannelMemberDto(member));
     return memberDtos;
   }
@@ -115,10 +116,16 @@ export class ChannelsService {
         // If the user isn't a member of any channels, return an empty array
         return [];
       }
-      const channels = await this.channelsRepository.find({
-        where: { id: In(channelIds) }, // Use In operator here
-      });
-      return channels;
+      // const channels = await this.channelsRepository.find({
+      //   where: { id: In(channelIds) ,relations:['owner']}, // Use In operator here
+      // });
+      const channels = await this.channelsRepository
+        .createQueryBuilder('channel')
+        .where('channel.id IN (:...channelIds)', { channelIds })
+        .leftJoinAndSelect('channel.owner', 'owner') // Specify the relationship name ('owner' in this case)
+        .getMany();
+      const channelDtos = channels.map((channel) => new ChannelIfoDto(channel));
+      return channelDtos;
     } catch (error) {
       // Handle any errors that occur during the database queries
       this.logger.error('Error retrieving channels:', error);
