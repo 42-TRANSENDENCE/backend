@@ -134,9 +134,8 @@ export class ChannelsService {
   }
 
   // 똑같은 title 이 중복 되는거 예외처리
-  async createChannels(title: string, password: string, user: User) {
+  async createChannel(title: string, password: string, user: User) {
     // 이거 환경변수로 관리
-    const saltRounds = 10;
     const isDuplicate = await this.channelsRepository.findOneBy({
       title,
     });
@@ -151,7 +150,7 @@ export class ChannelsService {
       status: ChannelStatus.PUBLIC,
     });
     if (password) {
-      const hashedPassword = await bcrypt.hash(password.toString(), saltRounds);
+      const hashedPassword = await this.generatePassword(password);
       channel.status = ChannelStatus.PROTECTED;
       channel.password = hashedPassword;
     }
@@ -164,7 +163,6 @@ export class ChannelsService {
       type: MemberType.OWNER,
     });
     await this.channelMemberRepository.save(channelMember);
-    // return channelReturned; // 이게 맞나?
   }
 
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
@@ -456,22 +454,34 @@ export class ChannelsService {
     return mutelist;
   }
 
-  // async generatePassword() {
-
-  // }
-  // async patchChannelPassword(channelId: number, user: User) {
-  //   const curChannel = await this.channelsRepository.findOne({
-  //     where: { id: channelId },
-  //   });
-  //   if (!curChannel) {
-  //     throw new NotFoundException('CHANNEL DOSE NOT EXIST');
-  //   }
-  //   if (+curChannel.owner.id !== +user.id) {
-  //     throw new UnauthorizedException('You are not owner of this channel');
-  //   }
-  //   const password = await this.generatePassword();
-  //   curChannel.password = password;
-  //   await this.channelsRepository.save(curChannel);
-  //   return password;
-  // }
+  async generatePassword(password: string) {
+    //환경변수로 바꾸자.
+    const saltRounds = 10;
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password.toString(), saltRounds);
+      return hashedPassword;
+    }
+  }
+  async patchChannelPassword(channelId: number, user: User, password: string) {
+    const curChannel = await this.channelsRepository.findOne({
+      where: { id: channelId },
+      relations: ['owner'],
+    });
+    if (+curChannel.owner.id !== +user.id) {
+      throw new UnauthorizedException('You are not owner of this channel');
+    }
+    if (!curChannel) {
+      throw new NotFoundException('CHANNEL DOSE NOT EXIST');
+    }
+    if (!password) {
+      curChannel.password = '';
+      curChannel.status = ChannelStatus.PUBLIC;
+      await this.channelsRepository.save(curChannel);
+    } else {
+      const hashedPassword = await this.generatePassword(password);
+      curChannel.password = hashedPassword;
+      curChannel.status = ChannelStatus.PROTECTED;
+      await this.channelsRepository.save(curChannel);
+    }
+  }
 }

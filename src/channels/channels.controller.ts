@@ -47,8 +47,8 @@ export class ChannelsController {
   @ApiBadRequestResponse({ description: '이미 존재하는 채널 이름' })
   @Post()
   @UseGuards(JwtTwoFactorGuard)
-  async createChannels(@Body() body: CreateChannelDto, @GetUser() user: User) {
-    return this.channelsService.createChannels(body.title, body.password, user);
+  async createChannel(@Body() body: CreateChannelDto, @GetUser() user: User) {
+    return this.channelsService.createChannel(body.title, body.password, user);
   }
 
   @ApiOperation({ summary: 'DM방 만들기' })
@@ -150,7 +150,8 @@ export class ChannelsController {
   async patchChannelPassword(
     @Param('channelid') channelId: number,
     @GetUser() user: User,
+    @Body('password') password: string,
   ) {
-    // return this.channelsService.patchChannelPassword(channelId, user);
+    return this.channelsService.patchChannelPassword(channelId, user, password);
   }
 }
