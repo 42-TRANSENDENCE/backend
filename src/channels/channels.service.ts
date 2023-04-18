@@ -78,7 +78,7 @@ export class ChannelsService {
       const result = {
         channelStatus: channel.status,
         channelMembers,
-        mytType: whoami.type,
+        myType: whoami.type,
       };
       return result;
     } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
