@@ -53,6 +53,7 @@ export class ChannelsService {
       })
       .getMany();
     //여기엔 유저 닉네임만 넣어주면 됨 .
+    this.logger.log(JSON.stringify(channels));
     return channels;
   }
   // 채팅방 하나에 대한 정보 요청 .
@@ -60,9 +61,12 @@ export class ChannelsService {
   async getChannelInfo(channelId: number) {
     const channel = await this.findById(channelId);
     if (channel) {
-      const channelMembers = await this.getChannelMembers(channelId);
-      const user_ids = channelMembers.map((member) => member.userId);
-      const result = { memberId: user_ids, status: channel.status };
+      const channelMembers = await this.getChannelMembersDto(channelId);
+      // const channelmember = channelMembers.map((member) => member.userId);
+      // const result = { memberId: user_ids, status: channel.status };
+      this.logger.log(JSON.stringify(channelMembers));
+      // 이놈도 DTO로 ?
+      const result = { channelstatus: channel.status, channelMembers };
       return result;
     } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
   }
@@ -77,6 +81,7 @@ export class ChannelsService {
     // return members;
     return members;
   }
+
   // getChannelMembersDto
   async getChannelMembersDto(channelId: number): Promise<ChannelMemberDto[]> {
     const members = await this.channelMemberRepository.find({
@@ -145,6 +150,10 @@ export class ChannelsService {
   }
 
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
+  // TODO: A가 B에게 DM 보내면 방 1 생성, B가 A에게 DM 보내면 방 2 생성 되면 안됨!
+  // 한채팅방에 2명이 있는지 확인 해야함.
+  // 그리고 두명 이상 못들어가게 막아야함.
+  // 나가는경우 어떻게 처리 할지 생각
   async createDMChannel(user: User, reciver: User) {
     const channel = this.channelsRepository.create({
       title: user.nickname + reciver.nickname + 'DM',
