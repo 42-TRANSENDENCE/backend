@@ -91,41 +91,40 @@ export class GameService {
       gameClient.join(roomId);
     } else {
       isPlayer = false;
-      const Stranger : PongClient = this.clientService.getByUserId(user.id);
+      const Stranger: PongClient = this.clientService.getByUserId(user.id);
       if (game.spectators.includes(Stranger) === true) {
         gameClient.join(roomId);
       } else {
-        return ;
+        return;
       }
     }
-    
-    
+
     if (game.isReady.p1 && game.isReady.p2) {
       server.to(roomId).emit('game_start', {
         p1Id: game.players.p1?.id,
         p1Name: game.users.p1.nickname,
         p2Name: game.users.p2.nickname,
       });
-      gameClient.emit("update_score", game.data.score);
-      if (isPlayer)
+      gameClient.emit('update_score', game.data.score);
+      if (isPlayer) {
         this.__game_start(server, game);
+      }
     }
   }
 
-  canWatch(userId : number) : string | null | undefined {
-    const gameId : string | null = this.__find_game(userId);
-    if (gameId === null)
-      return undefined;
-    const game : Game = this.games.get(gameId);
-    if (game.spectators.length >= 3)
+  canWatch(userId: number): string | null | undefined {
+    const gameId: string | null = this.__find_game(userId);
+    if (gameId === null) return undefined;
+    const game: Game = this.games.get(gameId);
+    if (game.spectators.length >= 3) {
       return null;
+    }
     return game.gameId;
   }
 
-  addSpectator(gameId : string, spectator : PongClient) {
+  addSpectator(gameId: string, spectator: PongClient) {
     this.games.get(gameId)?.spectators.push(spectator);
   }
-
 
   handleKeyPressed(client: Socket, gameInfo: GamePlayDto): void {
     const game = this.games.get(gameInfo.roomId);
@@ -171,7 +170,7 @@ export class GameService {
     return null;
   }
 
-  private findGameBySocketId(id: string) : string | null {
+  private findGameBySocketId(id: string): string | null {
     const values = this.games.values();
     for (const value of values) {
       if (value.players.p1?.id === id || value.players.p2?.id === id) {
@@ -192,10 +191,12 @@ export class GameService {
     } else if (game.players.p2.id === client.id) {
       game.data.score.p2 = -1;
     } else {
-      const Stranger : PongClient| null  = this.clientService.get(client.id);
+      const Stranger: PongClient | null = this.clientService.get(client.id);
       if (game.spectators.includes(Stranger) === true) {
-        const index : number = game.spectators.indexOf(Stranger);
-        if (index > -1) game.spectators.splice(index, 1);
+        const index: number = game.spectators.indexOf(Stranger);
+        if (index > -1) {
+          game.spectators.splice(index, 1);
+        }
         client.leave(game.gameId);
       }
     }
@@ -238,7 +239,7 @@ export class GameService {
       const Player1 = this.clientService.getByUserId(game.users.p1.id);
       if (Player1) Player1.status = ClientStatus.ONLINE;
       const Player2 = this.clientService.getByUserId(game.users.p2.id);
-      if (Player2) Player2.status = ClientStatus.ONLINE
+      if (Player2) Player2.status = ClientStatus.ONLINE;
       this.games.delete(game.gameId);
     }
   }
@@ -248,7 +249,7 @@ export class GameService {
     this.__collid_check(game);
     this.__keyboard_check(game);
     if (game.mode == GameMode.SPECIAL) this.__apply_gravity(game.data);
-    
+
     server.to(game.gameId).emit('update_game', {
       ballPos: game.data.ballPos,
       paddlePos: game.data.paddlePos,
@@ -322,13 +323,11 @@ export class GameService {
       if (vel.y > 0) vel.y = -BALL_VEL_INIT_Y;
       else vel.y = BALL_VEL_INIT_Y;
     }
-    if (pos.y <= TABLE_TOP + BALL_RAD)
-    {
+    if (pos.y <= TABLE_TOP + BALL_RAD) {
       vel.y = -vel.y;
       positions.ballPos.y = TABLE_TOP + BALL_RAD + 1;
     }
-    if (pos.y >= TABLE_BOTTOM - BALL_RAD)
-    {
+    if (pos.y >= TABLE_BOTTOM - BALL_RAD) {
       vel.y = -vel.y;
       positions.ballPos.y = TABLE_BOTTOM - BALL_RAD - 1;
     }
@@ -340,17 +339,13 @@ export class GameService {
     const vel = game.data.ballVel;
     const ball = game.data.ballPos;
 
-    if (player === game.players.p1)
-    {
+    if (player === game.players.p1) {
       paddle_center = { x: TABLE_LEFT + PADDLE_L, y: game.data.paddlePos.p1 };
       paddle_size = game.data.paddleSize.p1;
-    }
-    else if (player === game.players.p2)
-    {
+    } else if (player === game.players.p2) {
       paddle_center = { x: TABLE_RIGHT - PADDLE_R, y: game.data.paddlePos.p2 };
       paddle_size = game.data.paddleSize.p2;
-    }
-    else return;
+    } else return;
 
     const rad = PADDLE_W / 2;
     const top = paddle_center.y - PADDLE_H / 2 + rad;
@@ -360,40 +355,52 @@ export class GameService {
 
     // 평평한 부분에 부딪히는 경우
     if (left <= ball.x && ball.x <= right && top <= ball.y && ball.y <= bot) {
-      const speed : number = Math.sqrt(game.data.ballVel.x**2 +  game.data.ballVel.y**2);
-      const hitPositionRatio : number = (game.data.ballPos.y - paddle_center.y) / (paddle_size / 2);
-      const reflectRadis : number = Math.PI / 3 * hitPositionRatio;
-      const new_vel_x = Math.cos(reflectRadis) * speed * ((vel.x > 0) ? (-1) : (1));
+      const speed: number = Math.sqrt(
+        game.data.ballVel.x ** 2 + game.data.ballVel.y ** 2,
+      );
+      const hitPositionRatio: number =
+        (game.data.ballPos.y - paddle_center.y) / (paddle_size / 2);
+      const reflectRadis: number = (Math.PI / 3) * hitPositionRatio;
+      const new_vel_x = Math.cos(reflectRadis) * speed * (vel.x > 0 ? -1 : 1);
       const new_vel_y = Math.sin(reflectRadis) * speed;
       game.data.ballVel = { x: new_vel_x, y: new_vel_y };
       game.data.ballPos.x = player === game.players.p1 ? right + 1 : left - 1;
-    } 
-    else { // 둥근 부분에 부딪히는 경우
-      let circle_center : number | undefined;
+    } else {
+      // 둥근 부분에 부딪히는 경우
+      let circle_center: number | undefined;
 
-      if (this.__circle_collision({ x: ball.x, y: ball.y }, { x: paddle_center.x, y: top })) {
+      if (
+        this.__circle_collision(
+          { x: ball.x, y: ball.y },
+          { x: paddle_center.x, y: top },
+        )
+      ) {
         circle_center = top;
-      } else if (this.__circle_collision({ x: ball.x, y: ball.y }, { x: paddle_center.x, y: bot })) {
+      } else if (
+        this.__circle_collision(
+          { x: ball.x, y: ball.y },
+          { x: paddle_center.x, y: bot },
+        )
+      ) {
         circle_center = bot;
       } else {
         return;
       }
-      
+
       game.data.ballVel = { x: -vel.x, y: -vel.y };
-      const dx : number = (game.data.ballPos.x - paddle_center.x);
-      const dy : number = (game.data.ballPos.y - circle_center);
-      const R_ratio: number = (BALL_RAD + PADDLE_W / 2) /  Math.sqrt(dx ** 2 + dy ** 2);
+      const dx: number = game.data.ballPos.x - paddle_center.x;
+      const dy: number = game.data.ballPos.y - circle_center;
+      const R_ratio: number =
+        (BALL_RAD + PADDLE_W / 2) / Math.sqrt(dx ** 2 + dy ** 2);
 
       game.data.ballPos.x = paddle_center.x + dx * R_ratio;
       game.data.ballPos.y = circle_center + dy * R_ratio;
-      game.data.ballPos.x += (game.data.ballPos.x >= paddle_center) ? 1 : -1;
-
+      game.data.ballPos.x += game.data.ballPos.x >= paddle_center ? 1 : -1;
     }
-    const new_vel_x : number = game.data.ballVel.x * ACCEL_RATIO;
-    const new_vel_y : number = game.data.ballVel.y * ACCEL_RATIO;
-    if (new_vel_x**2 + new_vel_y**2 <= BALL_MAX_SPEED**2)
-    {
-      game.data.ballVel = {x : new_vel_x, y : new_vel_y};
+    const new_vel_x: number = game.data.ballVel.x * ACCEL_RATIO;
+    const new_vel_y: number = game.data.ballVel.y * ACCEL_RATIO;
+    if (new_vel_x ** 2 + new_vel_y ** 2 <= BALL_MAX_SPEED ** 2) {
+      game.data.ballVel = { x: new_vel_x, y: new_vel_y };
     }
   }
 
@@ -411,9 +418,12 @@ export class GameService {
 
   private __apply_gravity(gameData: GameData) {
     const yPos: number = gameData.ballPos.y;
-    if (gameData.ballVel.y >= 20)
+    if (gameData.ballVel.y >= 20) {
       return;
-    if (yPos > TABLE_BOTTOM * 0.2) gameData.ballVel.y += 0.2;
-    else if (yPos < TABLE_TOP * 0.2) gameData.ballVel.y -= 0.2;
+    } else if (yPos > TABLE_BOTTOM * 0.2) {
+      gameData.ballVel.y += 0.2;
+    } else if (yPos < TABLE_TOP * 0.2) {
+      gameData.ballVel.y -= 0.2;
+    }
   }
 }

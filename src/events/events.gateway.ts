@@ -100,7 +100,7 @@ export class EventGateway
   }
 
   /** Lobby */
- 
+
   @SubscribeMessage('invite')
   handleInviteEvent(
     @ConnectedSocket() client: Socket,
@@ -112,7 +112,7 @@ export class EventGateway
   @SubscribeMessage('refuse')
   handleRefuseEvent(
     @ConnectedSocket() client: Socket,
-    @MessageBody() invitation: InvitationDto
+    @MessageBody() invitation: InvitationDto,
   ): void {
     this.lobbyService.refuse(this.server, client, invitation);
   }
@@ -161,9 +161,7 @@ export class EventGateway
   }
 
   @SubscribeMessage('getinvitaionlist')
-  handleGetInviteListEvent(
-    @ConnectedSocket() client: Socket,
-  ): void {
+  handleGetInviteListEvent(@ConnectedSocket() client: Socket): void {
     this.lobbyService.sendAllInvitations(this.server, client.id);
   }
 
@@ -171,7 +169,7 @@ export class EventGateway
   handleCancleInvitationEvent(
     @ConnectedSocket() client: Socket,
     @MessageBody() inviteeId: number,
-  ) : void {
+  ): void {
     this.lobbyService.cancelInvitation(this.server, client, inviteeId);
   }
 }
