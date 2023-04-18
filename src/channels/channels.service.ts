@@ -24,6 +24,7 @@ import { ChannelBanMember } from './channelbanmember.entity';
 
 import { Cache } from 'cache-manager';
 import { ChannelMemberDto } from './dto/channel-member.dto';
+import { ChannelIfoDto } from './dto/channel-info.dto';
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -40,6 +41,12 @@ export class ChannelsService {
   ) {}
   private logger = new Logger(ChannelsService.name);
 
+  async findByIdWithUser(id: number) {
+    return this.channelsRepository.findOne({
+      where: { id },
+      relations: ['owner'],
+    });
+  }
   async findById(id: number) {
     return this.channelsRepository.findOneBy({ id });
   }
@@ -48,13 +55,17 @@ export class ChannelsService {
     const statuses = [ChannelStatus.PUBLIC, ChannelStatus.PROTECTED];
     const channels = await this.channelsRepository
       .createQueryBuilder('channel')
+      .leftJoinAndSelect('channel.owner', 'owner')
       .where('channel.status IN (:...statuses)', {
         statuses,
       })
       .getMany();
     //여기엔 유저 닉네임만 넣어주면 됨 .
-    this.logger.log(JSON.stringify(channels));
-    return channels;
+    // this.logger.log(JSON.stringify(channels));
+    // this.logger.log(channels[0].owner);
+    // const user
+    const channelDtos = channels.map((channel) => new ChannelIfoDto(channel));
+    return channelDtos;
   }
   // 채팅방 하나에 대한 정보 요청 .
   // 멤버 안에 아바타 ,
@@ -116,7 +127,7 @@ export class ChannelsService {
   }
 
   // 똑같은 title 이 중복 되는거 예외처리
-  async createChannels(title: string, password: string, myId: number) {
+  async createChannels(title: string, password: string, user: User) {
     // 이거 환경변수로 관리
     const saltRounds = 10;
     const isDuplicate = await this.channelsRepository.findOneBy({
@@ -129,7 +140,7 @@ export class ChannelsService {
     const channel = this.channelsRepository.create({
       title: title,
       password,
-      owner: myId,
+      owner: user,
       status: ChannelStatus.PUBLIC,
     });
     if (password) {
@@ -141,7 +152,7 @@ export class ChannelsService {
     // this.logger.log(JSON.stringify(channelReturned))
     this.channelsGateway.EmitChannelInfo(channelReturned);
     const channelMember = this.channelMemberRepository.create({
-      userId: myId,
+      userId: user.id,
       channelId: channelReturned.id,
       type: MemberType.OWNER,
     });
@@ -157,7 +168,7 @@ export class ChannelsService {
   async createDMChannel(user: User, reciver: User) {
     const channel = this.channelsRepository.create({
       title: user.nickname + reciver.nickname + 'DM',
-      owner: user.id,
+      owner: user,
       status: ChannelStatus.PRIVATE,
     });
     const channelReturned = await this.channelsRepository.save(channel);
@@ -275,12 +286,12 @@ export class ChannelsService {
       throw new MethodNotAllowedException('YOU HAVE NO PERMISSION');
     const curChannel = await this.findById(channelId);
     if (!curChannel) throw new NotFoundException(`${channelId} IS NOT EXIST`);
-    if (curChannel.owner == toUserId)
+    if (curChannel.owner.id == toUserId)
       throw new MethodNotAllowedException('OWNER CAN NOT BE ADMIN');
     // owner 가 admin을 자기 자신한테 주면 그냥 owner되게 하기
     // 해당 채널의 멤버가 admin인지 확인하는것도 추가 해야함
     if (
-      user.id === curChannel.owner ||
+      user.id === curChannel.owner.id ||
       this.isAdmininChannel(channelId, user.id)
     ) {
       // curChannel.admin = toUserId;
@@ -304,13 +315,16 @@ export class ChannelsService {
     // channelId  가 채널의 id 이겠지 ?
     // 채팅방 오너가 나가면 채팅방 삭제.
     try {
-      const curChannel = await this.findById(+channelId);
+      const curChannel = await this.findByIdWithUser(+channelId);
       // 근데 만약 그 채널에 없는 사람이 leave-room 이벤트 보내는 경우도 생각.
       // this.logger.log(`curChannel : ${JSON.stringify(curChannel)}`);
       if (!curChannel) {
         throw new NotFoundException('CHANNEL DOSE NOT EXIST');
       }
-      if (+curChannel.owner === +userId) {
+      this.logger.log(
+        `curChannel.owner.id : ${curChannel.owner.id}, userId : ${userId}`,
+      );
+      if (+curChannel.owner.id === +userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
         await this.channelMemberRepository.delete({ channelId: +channelId });
         this.channelsGateway.EmitDeletChannelInfo(curChannel);

@@ -48,11 +48,7 @@ export class ChannelsController {
   @Post()
   @UseGuards(JwtTwoFactorGuard)
   async createChannels(@Body() body: CreateChannelDto, @GetUser() user: User) {
-    return this.channelsService.createChannels(
-      body.title,
-      body.password,
-      user.id,
-    );
+    return this.channelsService.createChannels(body.title, body.password, user);
   }
 
   @ApiOperation({ summary: 'DM방 만들기' })
@@ -89,15 +85,6 @@ export class ChannelsController {
   async getChannelMembers(@Param('channelId', ParseIntPipe) channelId: number) {
     return await this.channelsService.getChannelMembersDto(channelId);
   }
-
-  // @ApiOperation({ summary: '채팅방 멤버 조회1111111' })
-  // @UseGuards(JwtTwoFactorGuard)
-  // @Get(':channelId/memberss')
-  // async getChannelMembersDto(
-  //   @Param('channelId', ParseIntPipe) channelId: number,
-  // ) {
-  //   return await this.channelsService.getChannelMembersDto(channelId);
-  // }
 
   @ApiOperation({ summary: '채팅방 최초 입장' })
   @Post(':channelId')

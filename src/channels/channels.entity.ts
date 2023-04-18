@@ -40,7 +40,6 @@ export class Channel {
   @JoinColumn({ name: 'owner' }) // Specify the column name for the owner relationship
   owner: User;
 
-
   @Column('varchar', { length: 1000, nullable: true })
   @Exclude()
   password?: string;
