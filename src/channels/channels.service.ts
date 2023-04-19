@@ -87,7 +87,6 @@ export class ChannelsService {
         where: { channelId: channelId, userId: user.id },
       });
       // 밴된 멤버가 안에 있을경우 에러남.
-      this.logger.log(JSON.stringify(whoami));
       if (!whoami)
         throw new NotFoundException('CHECK MemberId ID IF IT IS EXIST');
       const result = {
@@ -185,10 +184,12 @@ export class ChannelsService {
   // 한채팅방에 2명이 있는지 확인 해야함.
   // 그리고 두명 이상 못들어가게 막아야함.
   // 나가는경우 어떻게 처리 할지 생각
-  async createDMChannel(user: User, reciver: CreateDmDto) {
+  async createDMChannel(user: User, receiver: CreateDmDto) {
+    // 뭐가 오든간에 알파벳 순으로 디엠 생성
+    const sortedNicknames = [user.nickname, receiver.nickname].sort();
     const channel = this.channelsRepository.create({
-      title: user.nickname + reciver.nickname + 'DM',
-      owner: user,
+      title: sortedNicknames[0] + ' + ' + sortedNicknames[1] + ' DM',
+      owner: null,
       status: ChannelStatus.PRIVATE,
     });
     const channelReturned = await this.channelsRepository.save(channel);
@@ -198,7 +199,7 @@ export class ChannelsService {
       type: MemberType.MEMBER,
     });
     const channelMember2 = this.channelMemberRepository.create({
-      userId: reciver.id,
+      userId: receiver.id,
       channelId: channelReturned.id,
       type: MemberType.MEMBER,
     });
@@ -306,25 +307,6 @@ export class ChannelsService {
   // 내가 이 채팅방에 owner 권한이 있는지
   // 없으면  cut 있으면  admin 권한을  toUserid 에게 준다.
   async ownerGiveAdmin(channelId: number, toUserId: number, user: User) {
-    // const isInUser = await this.channelMemberRepository
-    //   .createQueryBuilder('channel_member')
-    //   .where('channel_member.userId = :userId', { userId: toUserId })
-    //   .getOne();
-    const you = await this.channelMemberRepository.findOneBy({
-      channelId: channelId,
-      userId: toUserId,
-    });
-    if (!you) throw new NotFoundException('TOUSER IS NOT IN THIS CHANNEL');
-    const me = await this.channelMemberRepository.findOneBy({
-      channelId: channelId,
-      userId: user.id,
-    });
-    if (!me) throw new NotFoundException('ME IS NOT IN THIS CHANNEL');
-    // if (!isInUser)
-    //   throw new NotFoundException(`In this room ${toUserId} is not exsit`);
-    if (me.type !== MemberType.OWNER)
-      throw new MethodNotAllowedException('YOU HAVE NO PERMISSION');
-    // const curChannel = await this.findByIdWithOwner(channelId);
     const curChannel = await this.channelsRepository.findOne({
       where: { id: channelId },
       relations: {
@@ -359,7 +341,6 @@ export class ChannelsService {
     try {
       // const curChannel = await this.findByIdWithOwner(+channelId);
       const curChannel = await this.findByIdwithOwnerMember(+channelId);
-      this.logger.log(`;;:${JSON.stringify(curChannel.members.length)}`);
       // 근데 만약 그 채널에 없는 사람이 leave-room 이벤트 보내는 경우도 생각.
       // this.logger.log(`curChannel : ${JSON.stringify(curChannel)}`);
       if (!curChannel) {
