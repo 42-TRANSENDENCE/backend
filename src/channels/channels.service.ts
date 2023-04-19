@@ -298,7 +298,7 @@ export class ChannelsService {
   async ownerGiveAdmin(channelId: number, toUserId: number, user: User) {
     const isInUser = await this.channelMemberRepository
       .createQueryBuilder('channel_member')
-      .where('channel_member.UserId = :userId', { userId: toUserId })
+      .where('channel_member.userId = :userId', { userId: toUserId })
       .getOne();
     if (!isInUser)
       throw new NotFoundException(`In this room ${toUserId} is not exsit`);
@@ -382,9 +382,10 @@ export class ChannelsService {
   // Ban Post요청
   async postBanInChannel(channelId: number, userId: number, user: User) {
     this.logger.log(userId);
+    this.logger.log("--------------")
     // 내가 owner 인지 확인! 아니면 admin 인지 확인
-    this.logger.log(this.isOwnerinChannel(channelId, user.id));
-    if (this.isOwnerinChannel(channelId, user.id))
+    this.logger.log(await this.isOwnerinChannel(channelId, user.id));
+    if (!this.isOwnerinChannel(channelId, user.id))
       throw new MethodNotAllowedException('YOU HAVE NO PERMISSION');
     // const isInUser = await this.channelBanMemberRepository
     //   .createQueryBuilder('channel_ban_member')
