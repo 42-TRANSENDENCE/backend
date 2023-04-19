@@ -143,11 +143,11 @@ export class ChannelsGateway
   }
 
   async emitOutMember(userId: number, channelId: number) {
-    this.nsp.to(channelId.toString()).emit('outMember', { userId: userId });
+    this.nsp.to(channelId.toString()).emit('outMember', userId);
   }
 
   async emitMuteMember(userId: number, channelId: number) {
-    this.nsp.to(channelId.toString()).emit('muteMember', { userId: userId });
+    this.nsp.to(channelId.toString()).emit('muteMember', userId);
   }
 
   async EmitChannelInfo(channelReturned) {
