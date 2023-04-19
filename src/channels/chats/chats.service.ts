@@ -70,7 +70,7 @@ export class ChatsService {
   }
   async sendChatToChannel(channelId: number, chat: string, user: User) {
     if (await this.isMutted(channelId, user.id))
-      throw new UnauthorizedException('YOU ARE MUTED');
+      throw new NotAcceptableException('YOU ARE MUTED');
 
     const channelMember = await this.channelMembersRepository.find({
       where: { channelId: channelId, userId: user.id },
