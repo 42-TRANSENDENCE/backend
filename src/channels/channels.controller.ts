@@ -104,6 +104,7 @@ export class ChannelsController {
 
   @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌' })
   @Post(':channelid/admin/:userid') // body 엔 아무것도 안 옴
+  @UseGuards(JwtTwoFactorGuard)
   async ownerGiveAdmin(
     @Param('channelid') channelId: number,
     @Param('userid') toUserId: number,
@@ -115,6 +116,8 @@ export class ChannelsController {
   //TODO: 권한 설정으로 깔끔하게 처리 해야함.
   @ApiOperation({ summary: 'Ban 요청' })
   @Post(':channelid/ban/:userId')
+  @HttpCode(200)
+  @UseGuards(JwtTwoFactorGuard)
   async postBanInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
@@ -125,6 +128,7 @@ export class ChannelsController {
 
   @ApiOperation({ summary: 'Kick 요청' })
   @Post(':channelid/kick/:userId')
+  @UseGuards(JwtTwoFactorGuard)
   async postKickInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
@@ -136,6 +140,7 @@ export class ChannelsController {
 
   @ApiOperation({ summary: 'mute 요청' })
   @Post(':channelid/mute/:userId')
+  @UseGuards(JwtTwoFactorGuard)
   async postMuteInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,

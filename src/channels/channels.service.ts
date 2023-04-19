@@ -75,6 +75,8 @@ export class ChannelsService {
       const whoami = await this.channelMemberRepository.findOne({
         where: { channelId: channelId, userId: user.id },
       });
+      // 밴된 멤버가 안에 있을경우 에러남.
+      if (!whoami.type) throw new NotFoundException('CHECK MemberId ID IF IT IS EXIST');
       const result = {
         channelStatus: channel.status,
         channelMembers,
@@ -278,6 +280,7 @@ export class ChannelsService {
     if (curChannelMember.type === 'ADMIN') return true;
     return false;
   }
+
   // 내가 이 채팅방에 owner 권한이 있는지
   // 없으면  cut 있으면  admin 권한을  toUserid 에게 준다.
   async ownerGiveAdmin(channelId: number, toUserId: number, user: User) {
@@ -289,7 +292,7 @@ export class ChannelsService {
       throw new NotFoundException(`In this room ${toUserId} is not exsit`);
     if (isInUser.type === 'MEMBER')
       throw new MethodNotAllowedException('YOU HAVE NO PERMISSION');
-    const curChannel = await this.findById(channelId);
+    const curChannel = await this.findByIdWithUser(channelId);
     if (!curChannel) throw new NotFoundException(`${channelId} IS NOT EXIST`);
     if (curChannel.owner.id == toUserId)
       throw new MethodNotAllowedException('OWNER CAN NOT BE ADMIN');
@@ -344,11 +347,12 @@ export class ChannelsService {
         // const curChannelMembers = await this.findById(+channelId)
         if (!curChannelMembers)
           throw new NotFoundException('Member in this Channel does not exist!');
-        else
+        else {
           await this.channelMemberRepository.delete({
             userId: userId,
             channelId: +channelId,
           });
+        }
       }
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -364,17 +368,31 @@ export class ChannelsService {
   // TODO: 권한 설정해서 Owner, admin이 이거 요청할시에 컷 해야함 if 문말고 깔끔하게 !
   // Ban Post요청
   async postBanInChannel(channelId: number, userId: number, user: User) {
-    const isInUser = await this.channelBanMemberRepository
-      .createQueryBuilder('channel_ban_member')
-      .where('channel_ban_member.UserId = :userId', { userId: user.id }) // 1 -> user.id
-      .getOne();
-    this.logger.log(`in this room banned in user : ${isInUser}`);
+    this.logger.log(userId);
+    // const isInUser = await this.channelBanMemberRepository
+    //   .createQueryBuilder('channel_ban_member')
+    //   .where('channel_ban_member.userId = :userId', {
+    //     userId: userId,
+    //     channelId: channelId,
+    //   }) // 1 -> user.id
+    //   // .leftJoinAndSelect('channel_ban_member.user', 'user')
+    //   .getOne();
+    // 내가 owner 인지 확인! 아니면 admin 인지 확인
+    const isInUser = await this.channelBanMemberRepository.findOne({
+      where: { userId: userId, channelId: channelId },
+    });
+    if (isInUser) throw new MethodNotAllowedException('ALREADY BANNED');
+    this.logger.log(
+      `in this room banned in user : ${JSON.stringify(isInUser)}`,
+    );
     if (!isInUser) {
-      const cm = this.channelBanMemberRepository.create({
+      this.channelsGateway.emitOutMember(userId, channelId);
+      const cm = await this.channelBanMemberRepository.create({
         userId: userId, // user.id
         channelId: channelId,
         expiresAt: new Date('9999-12-31T23:59:59.999Z'),
       });
+      // this.logger.log(JSON.stringify(cm));
       this.channelBanMemberRepository.save(cm);
     }
     // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
@@ -385,7 +403,7 @@ export class ChannelsService {
   async postKickInChannel(channelId: number, userId: number, user: User) {
     const isInUser = await this.channelBanMemberRepository
       .createQueryBuilder('channel_ban_member')
-      .where('channel_ban_member.UserId = :userId', { userId: userId })
+      .where('channel_ban_member.userId = :userId', { userId: userId })
       .getOne();
     this.logger.log(`in this room kicked in user : ${isInUser}`);
     if (!isInUser) {
