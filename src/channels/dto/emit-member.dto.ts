@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class emitMemberDto {
   @ApiProperty()
-  userId: number;
+  id: number;
   constructor(userId: number) {
-    this.userId = userId;
+    this.id = userId;
   }
 }
