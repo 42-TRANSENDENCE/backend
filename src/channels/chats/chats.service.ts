@@ -6,6 +6,7 @@ import {
   CACHE_MANAGER,
   Logger,
   NotFoundException,
+  NotAcceptableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -38,7 +39,7 @@ export class ChatsService {
 
   async getChats(channelId: number, user: User) {
     if (await this.channelsService.isBanned(channelId, user.id))
-      throw new UnauthorizedException('YOU ARE BANNED');
+      throw new NotAcceptableException('YOU ARE BANNED');
     return this.chatsRepository.find({ where: { channelId: channelId } });
   }
   // async getChats(id: number, user): Promise<ChatResponseDto> {

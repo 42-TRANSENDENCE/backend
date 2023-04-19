@@ -8,6 +8,7 @@ import {
   MethodNotAllowedException,
   BadRequestException,
   ForbiddenException,
+  NotAcceptableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -76,7 +77,8 @@ export class ChannelsService {
         where: { channelId: channelId, userId: user.id },
       });
       // 밴된 멤버가 안에 있을경우 에러남.
-      if (!whoami.type) throw new NotFoundException('CHECK MemberId ID IF IT IS EXIST');
+      this.logger.log(JSON.stringify(whoami));
+      if (whoami) throw new NotFoundException('CHECK MemberId ID IF IT IS EXIST');
       const result = {
         channelStatus: channel.status,
         channelMembers,
@@ -260,7 +262,7 @@ export class ChannelsService {
     });
     // this.logger.log(await this.isBanned(channelId, user.id));
     if (await this.isBanned(channelId, user.id))
-      throw new UnauthorizedException('YOU ARE BANNED');
+      throw new NotAcceptableException('YOU ARE BANNED');
     if (!curChannel) throw new NotFoundException('PLZ ENTER EXIST CHANNEL');
     if (curChannel.status === ChannelStatus.PROTECTED)
       return this.userEnterPrivateChannel(
