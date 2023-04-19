@@ -382,10 +382,10 @@ export class ChannelsService {
     const isInUser = await this.channelBanMemberRepository.findOne({
       where: { userId: userId, channelId: channelId },
     });
-    if (isInUser) throw new MethodNotAllowedException('ALREADY BANNED');
     this.logger.log(
       `in this room banned in user : ${JSON.stringify(isInUser)}`,
     );
+    if (isInUser) throw new MethodNotAllowedException('ALREADY BANNED');
     if (!isInUser) {
       // this.channelsGateway.emitOutMember(userId, channelId);
       const cm = await this.channelBanMemberRepository.create({

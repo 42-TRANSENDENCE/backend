@@ -28,7 +28,7 @@ export class ChatsController {
     @Param('channelId', ParseIntPipe) channelId: number,
     @GetUser() user: User,
   ) {
-    return this.chatsService.getChats(channelId, user.id);
+    return this.chatsService.getChats(channelId, user);
   }
 
   @ApiOperation({ summary: '해당 채팅방에 채팅 전송' })

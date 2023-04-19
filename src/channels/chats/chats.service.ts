@@ -36,7 +36,9 @@ export class ChatsService {
   ) {}
   private logger = new Logger(ChatsService.name);
 
-  async getChats(channelId: number, myId: number) {
+  async getChats(channelId: number, user: User) {
+    if (await this.channelsService.isBanned(channelId, user.id))
+      throw new UnauthorizedException('YOU ARE BANNED');
     return this.chatsRepository.find({ where: { channelId: channelId } });
   }
   // async getChats(id: number, user): Promise<ChatResponseDto> {
