@@ -128,18 +128,20 @@ export class ChannelsController {
 
   @ApiOperation({ summary: 'Kick 요청' })
   @Post(':channelid/kick/:userId')
+  @HttpCode(200)
   @UseGuards(JwtTwoFactorGuard)
   async postKickInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
     @GetUser() user: User,
   ) {
-    // return this.channelsService.postKickInChannel(channelId, userId, user)
-    return this.channelsService.addToKicklist(channelId, userId, 3000);
+    return this.channelsService.postKickInChannel(channelId, userId, user);
+    // return this.channelsService.addToKicklist(channelId, userId, 3000);
   }
 
   @ApiOperation({ summary: 'mute 요청' })
   @Post(':channelid/mute/:userId')
+  @HttpCode(200)
   @UseGuards(JwtTwoFactorGuard)
   async postMuteInChannel(
     @Param('channelid') channelId: number,

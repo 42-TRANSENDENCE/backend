@@ -78,11 +78,12 @@ export class ChannelsService {
       });
       // 밴된 멤버가 안에 있을경우 에러남.
       this.logger.log(JSON.stringify(whoami));
-      if (whoami) throw new NotFoundException('CHECK MemberId ID IF IT IS EXIST');
+      if (!whoami)
+        throw new NotFoundException('CHECK MemberId ID IF IT IS EXIST');
       const result = {
         channelStatus: channel.status,
         channelMembers,
-        myType: whoami.type,
+        myType: whoami.type || null,
       };
       return result;
     } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
@@ -283,6 +284,15 @@ export class ChannelsService {
     return false;
   }
 
+  async isOwnerinChannel(channelId: number, userId: number) {
+    const curChannelMember = await this.channelMemberRepository.findOneBy({
+      channelId: channelId,
+      userId: userId,
+    });
+    if (curChannelMember.type === 'OWNER') return true;
+    return false;
+  }
+
   // 내가 이 채팅방에 owner 권한이 있는지
   // 없으면  cut 있으면  admin 권한을  toUserid 에게 준다.
   async ownerGiveAdmin(channelId: number, toUserId: number, user: User) {
@@ -372,6 +382,10 @@ export class ChannelsService {
   // Ban Post요청
   async postBanInChannel(channelId: number, userId: number, user: User) {
     this.logger.log(userId);
+    // 내가 owner 인지 확인! 아니면 admin 인지 확인
+    this.logger.log(this.isOwnerinChannel(channelId, user.id));
+    if (this.isOwnerinChannel(channelId, user.id))
+      throw new MethodNotAllowedException('YOU HAVE NO PERMISSION');
     // const isInUser = await this.channelBanMemberRepository
     //   .createQueryBuilder('channel_ban_member')
     //   .where('channel_ban_member.userId = :userId', {
@@ -409,6 +423,7 @@ export class ChannelsService {
       .where('channel_ban_member.userId = :userId', { userId: userId })
       .getOne();
     this.logger.log(`in this room kicked in user : ${isInUser}`);
+    if (isInUser) throw new MethodNotAllowedException('ALREADY BANNED');
     if (!isInUser) {
       const cm = this.channelBanMemberRepository.create({
         userId: userId, // user.id
