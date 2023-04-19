@@ -27,6 +27,7 @@ import { User } from 'src/users/users.entity';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
+import { CreateDmDto } from './dto/create-dm.dto';
 
 @ApiTags('CHAT')
 @Controller('channels')
@@ -54,7 +55,10 @@ export class ChannelsController {
   @ApiOperation({ summary: 'DM방 만들기' })
   @Post('dm')
   @UseGuards(JwtTwoFactorGuard)
-  async createDMChannels(@GetUser() user: User, @Body() reciveUser: User) {
+  async createDMChannels(
+    @GetUser() user: User,
+    @Body() reciveUser: CreateDmDto,
+  ) {
     return this.channelsService.createDMChannel(user, reciveUser);
   }
 
@@ -104,6 +108,7 @@ export class ChannelsController {
 
   @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌' })
   @Post(':channelid/admin/:userid') // body 엔 아무것도 안 옴
+  @HttpCode(200)
   @UseGuards(JwtTwoFactorGuard)
   async ownerGiveAdmin(
     @Param('channelid') channelId: number,

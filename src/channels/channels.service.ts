@@ -26,6 +26,7 @@ import { ChannelBanMember } from './entity/channelbanmember.entity';
 import { Cache } from 'cache-manager';
 import { ChannelMemberDto } from './dto/channel-member.dto';
 import { ChannelIfoDto } from './dto/channel-info.dto';
+import { CreateDmDto } from './dto/create-dm.dto';
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -42,10 +43,19 @@ export class ChannelsService {
   ) {}
   private logger = new Logger(ChannelsService.name);
 
-  async findByIdWithUser(id: number) {
+  async findByIdWithOwner(id: number) {
     return this.channelsRepository.findOne({
       where: { id },
       relations: ['owner'],
+    });
+  }
+  async findByIdwithOwnerMember(id: number) {
+    return await this.channelsRepository.findOne({
+      where: { id },
+      relations: {
+        members: true,
+        owner: true,
+      },
     });
   }
   async findById(id: number) {
@@ -175,7 +185,7 @@ export class ChannelsService {
   // 한채팅방에 2명이 있는지 확인 해야함.
   // 그리고 두명 이상 못들어가게 막아야함.
   // 나가는경우 어떻게 처리 할지 생각
-  async createDMChannel(user: User, reciver: User) {
+  async createDMChannel(user: User, reciver: CreateDmDto) {
     const channel = this.channelsRepository.create({
       title: user.nickname + reciver.nickname + 'DM',
       owner: user,
@@ -185,7 +195,7 @@ export class ChannelsService {
     const channelMember = this.channelMemberRepository.create({
       userId: user.id,
       channelId: channelReturned.id,
-      type: MemberType.OWNER,
+      type: MemberType.MEMBER,
     });
     const channelMember2 = this.channelMemberRepository.create({
       userId: reciver.id,
@@ -296,27 +306,39 @@ export class ChannelsService {
   // 내가 이 채팅방에 owner 권한이 있는지
   // 없으면  cut 있으면  admin 권한을  toUserid 에게 준다.
   async ownerGiveAdmin(channelId: number, toUserId: number, user: User) {
-    const isInUser = await this.channelMemberRepository
-      .createQueryBuilder('channel_member')
-      .where('channel_member.userId = :userId', { userId: toUserId })
-      .getOne();
-    if (!isInUser)
-      throw new NotFoundException(`In this room ${toUserId} is not exsit`);
-    if (isInUser.type === 'MEMBER')
+    // const isInUser = await this.channelMemberRepository
+    //   .createQueryBuilder('channel_member')
+    //   .where('channel_member.userId = :userId', { userId: toUserId })
+    //   .getOne();
+    const you = await this.channelMemberRepository.findOneBy({
+      channelId: channelId,
+      userId: toUserId,
+    });
+    if (!you) throw new NotFoundException('TOUSER IS NOT IN THIS CHANNEL');
+    const me = await this.channelMemberRepository.findOneBy({
+      channelId: channelId,
+      userId: user.id,
+    });
+    if (!me) throw new NotFoundException('ME IS NOT IN THIS CHANNEL');
+    // if (!isInUser)
+    //   throw new NotFoundException(`In this room ${toUserId} is not exsit`);
+    if (me.type !== MemberType.OWNER)
       throw new MethodNotAllowedException('YOU HAVE NO PERMISSION');
-    const curChannel = await this.findByIdWithUser(channelId);
+    // const curChannel = await this.findByIdWithOwner(channelId);
+    const curChannel = await this.channelsRepository.findOne({
+      where: { id: channelId },
+      relations: {
+        members: true,
+        owner: true,
+      },
+    });
     if (!curChannel) throw new NotFoundException(`${channelId} IS NOT EXIST`);
-    if (curChannel.owner.id == toUserId)
-      throw new MethodNotAllowedException('OWNER CAN NOT BE ADMIN');
-    // owner 가 admin을 자기 자신한테 주면 그냥 owner되게 하기
-    // 해당 채널의 멤버가 admin인지 확인하는것도 추가 해야함
     if (
       user.id === curChannel.owner.id ||
       this.isAdmininChannel(channelId, user.id)
     ) {
-      // curChannel.admin = toUserId;
       const member = curChannel.members.find(
-        (member) => member.userId === toUserId,
+        (member) => member.userId == toUserId,
       );
       if (!member)
         throw new NotFoundException(`IN THIS CHANNEL ${toUserId} IS NOT EXIST`);
@@ -335,7 +357,9 @@ export class ChannelsService {
     // channelId  가 채널의 id 이겠지 ?
     // 채팅방 오너가 나가면 채팅방 삭제.
     try {
-      const curChannel = await this.findByIdWithUser(+channelId);
+      // const curChannel = await this.findByIdWithOwner(+channelId);
+      const curChannel = await this.findByIdwithOwnerMember(+channelId);
+      this.logger.log(`;;:${JSON.stringify(curChannel.members.length)}`);
       // 근데 만약 그 채널에 없는 사람이 leave-room 이벤트 보내는 경우도 생각.
       // this.logger.log(`curChannel : ${JSON.stringify(curChannel)}`);
       if (!curChannel) {
@@ -344,7 +368,10 @@ export class ChannelsService {
       this.logger.log(
         `curChannel.owner.id : ${curChannel.owner.id}, userId : ${userId}`,
       );
-      if (+curChannel.owner.id === +userId) {
+      if (
+        +curChannel.owner.id === +userId ||
+        +curChannel.members.length === 1
+      ) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
         await this.channelMemberRepository.delete({ channelId: +channelId });
         this.channelsGateway.EmitDeletChannelInfo(curChannel);
@@ -381,8 +408,6 @@ export class ChannelsService {
   // TODO: 권한 설정해서 Owner, admin이 이거 요청할시에 컷 해야함 if 문말고 깔끔하게 !
   // Ban Post요청
   async postBanInChannel(channelId: number, userId: number, user: User) {
-    this.logger.log(userId);
-    this.logger.log("--------------")
     // 내가 owner 인지 확인! 아니면 admin 인지 확인
     this.logger.log(await this.isOwnerinChannel(channelId, user.id));
     if (!this.isOwnerinChannel(channelId, user.id))
@@ -483,6 +508,7 @@ export class ChannelsService {
       await this.cacheManager.set(key, mutelist, 50000); // 임시
     }
     this.logger.log(`check mutelist : ${mutelist}`);
+    this.channelsGateway.emitMuteMember(userId, channelId);
   }
 
   async getMutelist(channelId: number): Promise<number[]> {
