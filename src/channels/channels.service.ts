@@ -352,6 +352,7 @@ export class ChannelsService {
             userId: userId,
             channelId: +channelId,
           });
+          this.channelsGateway.emitOutMember(userId, +channelId);
         }
       }
     } catch (error) {
@@ -386,7 +387,7 @@ export class ChannelsService {
       `in this room banned in user : ${JSON.stringify(isInUser)}`,
     );
     if (!isInUser) {
-      this.channelsGateway.emitOutMember(userId, channelId);
+      // this.channelsGateway.emitOutMember(userId, channelId);
       const cm = await this.channelBanMemberRepository.create({
         userId: userId, // user.id
         channelId: channelId,

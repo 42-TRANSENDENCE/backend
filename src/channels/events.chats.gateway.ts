@@ -141,9 +141,9 @@ export class ChannelsGateway
     const channelId = sendChat.channelId;
     this.nsp.to(channelId.toString()).emit('message', sendChat);
   }
-  
+
   async emitOutMember(userId: number, channelId: number) {
-    this.nsp.to(channelId.toString()).emit('outMember', userId);
+    this.nsp.to(channelId.toString()).emit('outMember');
   }
 
   async EmitChannelInfo(channelReturned) {
