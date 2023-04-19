@@ -23,6 +23,7 @@ import { Server, Socket, Namespace } from 'socket.io';
 import { ChannelsService } from 'src/channels/channels.service';
 import { leaveDto } from './dto/leave.dto';
 import { EmitChannelInfoDto } from './dto/emit-channel.dto';
+import { emitMemberDto } from './dto/emit-member.dto';
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
@@ -147,8 +148,9 @@ export class ChannelsGateway
   }
 
   async emitMuteMember(userId: number, channelId: number) {
-    this.nsp.to(channelId.toString()).emit('muteMember', { userId: userId });
-  }
+    const emitmember = new emitMemberDto(userId);
+    this.nsp.to(channelId.toString()).emit('muteMember', emitmember);
+  }s
 
   async EmitChannelInfo(channelReturned) {
     const curChannel = new EmitChannelInfoDto(channelReturned);
