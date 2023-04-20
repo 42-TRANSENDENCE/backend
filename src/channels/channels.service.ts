@@ -330,6 +330,7 @@ export class ChannelsService {
       {
         member.type = MemberType.ADMIN; // Update the member's type to ADMIN
         await this.channelMemberRepository.save(member); // Save the updated Channel entity to the database
+        this.channelsGateway.emitAdminInfo(toUserId, channelId);
       }
     }
   }

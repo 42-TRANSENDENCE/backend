@@ -153,6 +153,10 @@ export class ChannelsGateway
     const emitmember = new emitMemberDto(userId);
     this.nsp.to(channelId.toString()).emit('muteMember', emitmember);
   }
+  async emitAdminInfo(userId: number, channelId: number) {
+    const emitmember = new emitMemberDto(userId);
+    this.nsp.to(channelId.toString()).emit('adminMember', emitmember);
+  }
 
   async EmitChannelInfo(channelReturned) {
     const curChannel = new EmitChannelInfoDto(channelReturned);
