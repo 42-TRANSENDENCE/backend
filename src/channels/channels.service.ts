@@ -218,7 +218,10 @@ export class ChannelsService {
       title,
     });
     if (isDuplicate) {
-      throw new BadRequestException('YOU ARE AREADY IN DM');
+      throw new BadRequestException({
+        message: 'YOU ARE AREADY IN DM',
+        channelId: isDuplicate.id,
+      });
     }
     const channel = this.channelsRepository.create({
       title: title,
