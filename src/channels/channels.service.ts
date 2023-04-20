@@ -370,7 +370,7 @@ export class ChannelsService {
             userId: userId,
             channelId: +channelId,
           });
-          this.channelsGateway.emitOutMember(userId, +channelId);
+          // this.channelsGateway.emitOutMember(userId, +channelId);
         }
       }
     } catch (error) {
@@ -417,6 +417,7 @@ export class ChannelsService {
       // this.logger.log(JSON.stringify(cm));
       this.channelBanMemberRepository.save(cm);
     }
+    this.channelsGateway.emitOutMember(userId, channelId);
     // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
     // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
   }
@@ -425,7 +426,12 @@ export class ChannelsService {
   async postKickInChannel(channelId: number, userId: number, user: User) {
     const isInUser = await this.channelBanMemberRepository
       .createQueryBuilder('channel_ban_member')
-      .where('channel_ban_member.userId = :userId', { userId: userId })
+      .where('channel_ban_member.userId = :userId', {
+        userId: userId,
+      })
+      .andWhere('channel_ban_member.channelId = :channelId', {
+        channelId: channelId,
+      })
       .getOne();
     this.logger.log(`in this room kicked in user : ${isInUser}`);
     if (isInUser) throw new MethodNotAllowedException('ALREADY BANNED');
@@ -437,6 +443,7 @@ export class ChannelsService {
       });
       this.channelBanMemberRepository.save(cm);
     }
+    this.channelsGateway.emitOutMember(userId, channelId);
     // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
     // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
   }
