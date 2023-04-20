@@ -121,6 +121,30 @@ export class ChannelsService {
 
   // 나의 채팅목록
   async getMyChannels(user: User) {
+    // try {
+    //   const channelMembers = await this.channelMemberRepository.find({
+    //     where: { userId: user.id },
+    //   });
+    //   const channelIds = channelMembers.map((member) => member.channelId);
+    //   if (channelIds.length === 0) {
+    //     // If the user isn't a member of any channels, return an empty array
+    //     return [];
+    //   }
+    //   // const channels = await this.channelsRepository.find({
+    //   //   where: { id: In(channelIds) ,relations:['owner']}, // Use In operator here
+    //   // });
+    //   const channels = await this.channelsRepository
+    //     .createQueryBuilder('channel')
+    //     .where('channel.id IN (:...channelIds)', { channelIds })
+    //     .leftJoinAndSelect('channel.owner', 'owner') // Specify the relationship name ('owner' in this case)
+    //     .getMany();
+    //   const channelDtos = channels.map((channel) => new ChannelIfoDto(channel));
+    //   return channelDtos;
+    // } catch (error) {
+    //   // Handle any errors that occur during the database queries
+    //   this.logger.error('Error retrieving channels:', error);
+    //   throw new Error('Unable to retrieve channels');
+    // }
     try {
       const channelMembers = await this.channelMemberRepository.find({
         where: { userId: user.id },
@@ -130,16 +154,18 @@ export class ChannelsService {
         // If the user isn't a member of any channels, return an empty array
         return [];
       }
-      // const channels = await this.channelsRepository.find({
-      //   where: { id: In(channelIds) ,relations:['owner']}, // Use In operator here
-      // });
       const channels = await this.channelsRepository
         .createQueryBuilder('channel')
         .where('channel.id IN (:...channelIds)', { channelIds })
         .leftJoinAndSelect('channel.owner', 'owner') // Specify the relationship name ('owner' in this case)
         .getMany();
-      const channelDtos = channels.map((channel) => new ChannelIfoDto(channel));
-      return channelDtos;
+      const channelDtos = channels.map((channel) => {
+        if (channel.owner) {
+          // Add null check before accessing 'nickname' property
+          return new ChannelIfoDto(channel);
+        }
+      });
+      return channelDtos.filter(Boolean); // Filter out any null or undefined values
     } catch (error) {
       // Handle any errors that occur during the database queries
       this.logger.error('Error retrieving channels:', error);
@@ -187,9 +213,16 @@ export class ChannelsService {
   async createDMChannel(user: User, receiver: CreateDmDto) {
     // 뭐가 오든간에 알파벳 순으로 디엠 생성
     const sortedNicknames = [user.nickname, receiver.nickname].sort();
+    const title = sortedNicknames[0] + ' + ' + sortedNicknames[1] + ' DM';
+    const isDuplicate = await this.channelsRepository.findOneBy({
+      title,
+    });
+    if (isDuplicate) {
+      throw new BadRequestException('YOU ARE AREADY IN DM');
+    }
     const channel = this.channelsRepository.create({
-      title: sortedNicknames[0] + ' + ' + sortedNicknames[1] + ' DM',
-      owner: null,
+      title: title,
+      owner: undefined,
       status: ChannelStatus.PRIVATE,
     });
     const channelReturned = await this.channelsRepository.save(channel);
