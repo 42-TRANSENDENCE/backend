@@ -222,7 +222,7 @@ export class ChannelsService {
     }
     const channel = this.channelsRepository.create({
       title: title,
-      owner: undefined,
+      owner: user,
       status: ChannelStatus.PRIVATE,
     });
     const channelReturned = await this.channelsRepository.save(channel);
