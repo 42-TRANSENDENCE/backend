@@ -239,7 +239,7 @@ export class ChannelsService {
     await this.channelMemberRepository.save(channelMember);
     await this.channelMemberRepository.save(channelMember2);
     this.channelsGateway.EmitChannelDmInfo(channelReturned);
-    return channelReturned;
+    return { channelId: channelReturned.id };
   }
 
   async userEnterPrivateChannel(
