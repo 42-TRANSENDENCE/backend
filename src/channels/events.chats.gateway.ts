@@ -24,6 +24,7 @@ import { ChannelsService } from 'src/channels/channels.service';
 import { leaveDto } from './dto/leave.dto';
 import { EmitChannelInfoDto } from './dto/emit-channel.dto';
 import { emitMemberDto } from './dto/emit-member.dto';
+import { RateLimiterAbstract } from 'rate-limiter-flexible';
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
@@ -156,7 +157,12 @@ export class ChannelsGateway
     const curChannel = new EmitChannelInfoDto(channelReturned);
     return this.nsp.emit('newChannel', curChannel);
   }
-
+  async EmitChannelDmInfo(channelReturned) {
+    const curChannel = new EmitChannelInfoDto(channelReturned);
+    return this.nsp
+      .to(curChannel.id.toString())
+      .emit('newChannelDm', curChannel);
+  }
   async EmitDeletChannelInfo(channelReturned) {
     const curChannel = new EmitChannelInfoDto(channelReturned);
     return this.nsp.emit('removeChannel', curChannel);
@@ -171,8 +177,51 @@ export class ChannelsGateway
     // this.logger.debug(`----${leaveDto.channelId} , ${leaveDto.userId}`)
     if (!leaveDto.channelId || !leaveDto.userId)
       throw new WsException('There is no user or channelId here');
+    // const io = socket.server as Server;
+    // const room = io.sockets.adapter.rooms.get(leaveDto.channelId);
+    // if (room) {
+    //   for (const clientId of room) {
+    //     // Skip the current socket that triggered the leave event
+    //     if (clientId !== socket.id) {
+    //       io.sockets.sockets.get(clientId)?.disconnect(true);
+    //     }
+    //   }
+    // }
     socket.leave(leaveDto.channelId);
     this.logger.log(`Client ${socket.id} left room ${leaveDto.channelId}`);
+    this.logger.log(
+      `소켓에 연결된 사람수 : ${this.getClientsInRoom(leaveDto.channelId)}`,
+    );
+    this.channelsService.userExitChannel(
+      socket,
+      leaveDto.channelId,
+      leaveDto.userId,
+    );
+  }
+  @SubscribeMessage('kickChannel')
+  handleKickRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() leaveDto: leaveDto,
+  ) {
+    //소켓 연결 끊기 **
+    //channelId,userId가 없을때 예외 처리
+    // this.logger.debug(`----${leaveDto.channelId} , ${leaveDto.userId}`)
+    if (!leaveDto.channelId || !leaveDto.userId)
+      throw new WsException('There is no user or channelId here');
+    const room = this.server.sockets.adapter.rooms.get(leaveDto.channelId);
+    if (room) {
+      for (const clientId of room) {
+        // Skip the current socket that triggered the leave event
+        if (clientId !== socket.id) {
+          this.server.sockets.sockets.get(clientId)?.leave(leaveDto.channelId);
+        }
+      }
+    }
+    // socket.leave(leaveDto.channelId);
+    this.logger.log(`Client ${socket.id} left room ${leaveDto.channelId}`);
+    this.logger.log(
+      `소켓에 연결된 사람수 : ${this.getClientsInRoom(leaveDto.channelId)}`,
+    );
     this.channelsService.userExitChannel(
       socket,
       leaveDto.channelId,

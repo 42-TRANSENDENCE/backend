@@ -205,6 +205,7 @@ export class ChannelsService {
     });
     await this.channelMemberRepository.save(channelMember);
     await this.channelMemberRepository.save(channelMember2);
+    this.channelsGateway.EmitChannelDmInfo(channelReturned);
     return channelReturned;
   }
 
@@ -349,10 +350,7 @@ export class ChannelsService {
       this.logger.log(
         `curChannel.owner.id : ${curChannel.owner.id}, userId : ${userId}`,
       );
-      if (
-        +curChannel.owner.id === +userId ||
-        +curChannel.members.length === 1
-      ) {
+      if (+curChannel.owner.id === +userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
         await this.channelMemberRepository.delete({ channelId: +channelId });
         this.channelsGateway.EmitDeletChannelInfo(curChannel);
