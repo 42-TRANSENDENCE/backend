@@ -31,6 +31,7 @@ import { GetUser } from 'src/common/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 import { User } from 'src/users/users.entity';
 import { newChatResponseDto } from './chats/dto/newChats.dto';
+import { channel } from 'diagnostics_channel';
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
@@ -182,16 +183,16 @@ export class ChannelsGateway
   }
 
   async emitOutMember(userId: number, channelId: number) {
-    const emitmember = new emitMemberDto(userId);
+    const emitmember = new emitMemberDto(userId, channelId);
     this.nsp.to(channelId.toString()).emit('outMember', emitmember);
   }
 
   async emitMuteMember(userId: number, channelId: number) {
-    const emitmember = new emitMemberDto(userId);
+    const emitmember = new emitMemberDto(userId, channelId);
     this.nsp.to(channelId.toString()).emit('muteMember', emitmember);
   }
   async emitAdminInfo(userId: number, channelId: number) {
-    const emitmember = new emitMemberDto(userId);
+    const emitmember = new emitMemberDto(userId, channelId);
     this.nsp.to(channelId.toString()).emit('adminMember', emitmember);
   }
   async sendNewEmitMessage(sendChat: Chat) {
@@ -226,9 +227,10 @@ export class ChannelsGateway
   }
   async connectAlreadyChnnels(channels: number[], socket: Socket) {
     channels.forEach((channel) => {
-      socket.join(channel.toString());
-      this.logger.debug(this.getClientsInRoom(channel.toString()));
+      // socket.join(channel.toString());
+      this.logger.debug(
+        `이방에 연결된 사람${channel} : ${this.getClientsInRoom(channel.toString())}`,
+      );
     });
   }
-  
 }
