@@ -6,7 +6,7 @@ export class emitMemberDto {
 
   @ApiProperty()
   userId: number;
-  
+
   constructor(userId: number, channelId: number) {
     this.userId = userId;
     this.channelId = channelId;

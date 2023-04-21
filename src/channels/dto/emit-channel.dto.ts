@@ -24,19 +24,19 @@ export class EmitChannelInfoDto {
   @ApiProperty()
   createdAt: Date;
 
-  @ApiProperty()
-  howMany: HowMany;
+  // @ApiProperty()
+  // howMany: HowMany;
 
   @ApiProperty()
   updatedAt: Date;
 
-  constructor(channel, HowMany) {
+  constructor(channel) {
     this.id = channel.id;
     this.title = channel.title;
     this.owner = channel.owner;
     this.status = channel.status;
     this.createdAt = channel.createdAt;
     this.updatedAt = channel.updatedAt;
-    this.howMany = HowMany;
+    // this.howMany = HowMany;
   }
 }
