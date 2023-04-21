@@ -253,6 +253,7 @@ export class ChannelsService {
     });
     await this.channelMemberRepository.save(channelMember);
     await this.channelMemberRepository.save(channelMember2);
+    this.channelsGateway.emitInMember(user.id, channel.id);
     this.channelsGateway.EmitChannelDmInfo(channelReturned);
     return { channelId: channelReturned.id };
   }
@@ -284,6 +285,7 @@ export class ChannelsService {
             type: MemberType.MEMBER,
           });
           this.channelMemberRepository.save(cm);
+          this.channelsGateway.emitInMember(user.id, channelId);
         }
         return { message: 'Enter Channel in successfully', status: 200 };
         // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
@@ -309,6 +311,7 @@ export class ChannelsService {
         type: MemberType.MEMBER,
       });
       this.channelMemberRepository.save(cm);
+      this.channelsGateway.emitInMember(user.id, channelId);
     }
     return { message: 'Enter Channel in successfully', status: 200 };
   }
