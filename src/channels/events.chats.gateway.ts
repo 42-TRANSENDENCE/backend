@@ -32,6 +32,7 @@ import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 import { User } from 'src/users/users.entity';
 import { newChatResponseDto } from './chats/dto/newChats.dto';
 import { channel } from 'diagnostics_channel';
+
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
@@ -168,17 +169,9 @@ export class ChannelsGateway
     );
   }
 
-  @SubscribeMessage('message')
-  handleMessage(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() message: string,
-  ) {
-    socket.broadcast.emit('message', { username: socket.id, message });
-    return { username: socket.id, message };
-  }
-
   async sendEmitMessage(sendChat: Chat) {
     const channelId = sendChat.channelId;
+    // 방에 연결된 사람, 즉 멤버한테만 보내야 한다. 그 소켓에 직접 
     this.nsp.to(channelId.toString()).emit('message', sendChat);
   }
 
@@ -197,8 +190,8 @@ export class ChannelsGateway
   }
   async sendNewEmitMessage(sendChat: Chat) {
     const chatDto = new newChatResponseDto(sendChat);
-    // const channelId = sendChat.channelId;
-    this.nsp.to('channelchat').emit('newMessage', chatDto);
+    const channelId = sendChat.channelId;
+    this.nsp.to(channelId.toString()).emit('newMessage', chatDto);
     // this.nsp.emit('newMessage', channelId);
   }
 
@@ -227,7 +220,7 @@ export class ChannelsGateway
   }
   async connectAlreadyChnnels(channels: number[], socket: Socket) {
     channels.forEach((channel) => {
-      // socket.join(channel.toString());
+      socket.join(channel.toString());
       this.logger.debug(
         `이방에 연결된 사람${channel} : ${this.getClientsInRoom(channel.toString())}`,
       );
