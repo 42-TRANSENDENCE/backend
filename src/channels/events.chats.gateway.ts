@@ -193,6 +193,11 @@ export class ChannelsGateway
     const emitmember = new emitMemberDto(userId);
     this.nsp.to(channelId.toString()).emit('adminMember', emitmember);
   }
+  async sendNewEmitMessage(sendChat: Chat) {
+    const channelId = sendChat.channelId;
+    this.server.to('channelchat').emit('newMessage', channelId);
+    // this.nsp.emit('newMessage', channelId);
+  }
 
   async EmitChannelInfo(channelReturned) {
     const howMnay: HowMany = {
@@ -203,6 +208,7 @@ export class ChannelsGateway
     const curChannel = new EmitChannelInfoDto(channelReturned, howMnay);
     return this.nsp.emit('newChannel', curChannel);
   }
+
   async EmitChannelDmInfo(channelReturned) {
     const howMnay = this.getClientsInRoom(channelReturned.id.toString());
     const curChannel = new EmitChannelInfoDto(channelReturned, howMnay);
@@ -210,6 +216,7 @@ export class ChannelsGateway
       .to(curChannel.id.toString())
       .emit('newChannelDm', curChannel);
   }
+
   async EmitDeletChannelInfo(channelReturned) {
     const howMnay = this.getClientsInRoom(channelReturned.id.toString());
     const curChannel = new EmitChannelInfoDto(channelReturned, howMnay);
@@ -221,4 +228,5 @@ export class ChannelsGateway
       this.logger.debug(this.getClientsInRoom(channel.toString()));
     });
   }
+  
 }

@@ -101,5 +101,6 @@ export class ChatsService {
     this.channelsGateway.sendEmitMessage(chats).catch((error) => {
       console.error('Failed to send message:', error);
     });
+    this.channelsGateway.sendNewEmitMessage(chats);
   }
 }
