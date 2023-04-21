@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -25,6 +26,10 @@ import { leaveDto } from './dto/leave.dto';
 import { EmitChannelInfoDto } from './dto/emit-channel.dto';
 import { emitMemberDto } from './dto/emit-member.dto';
 import { RateLimiterAbstract } from 'rate-limiter-flexible';
+import { HowMany } from './dto/emit-channel.dto';
+import { GetUser } from 'src/common/decorator/user.decorator';
+import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
+import { User } from 'src/users/users.entity';
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
@@ -46,7 +51,8 @@ export class ChannelsGateway
   server: Server;
 
   // 클라이언트가, 프론트가 나한테 보내는 이벤트.
-  afterInit() {
+  afterInit(server: Server) {
+    this.server = server;
     // this.nsp.adapter.on('join-room', (room, id) => {
     //   this.logger.log(`"Socket:${id}"이 "Room:${room}"에 참여하였습니다.`);
     // });
@@ -62,8 +68,17 @@ export class ChannelsGateway
     this.logger.log('웹소켓 서버 초기화 ✅');
   }
 
-  handleConnection(@ConnectedSocket() socket: Socket) {
+  async handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 소켓 연결`);
+    const user: User = await this.channelsService.getUserFromClient(socket);
+    if (!user) throw new WsException('유저가 없습니다.');
+    this.logger.log(`${user.nickname} : ${socket.id}`);
+    this.channelsService.mappingUserToSocketId(user.id, socket.id);
+    this.channelsService.connectAlredyJoinedChannel(user, socket);
+    // this.logger.log(user.id)
+    // 여기서 다 연결 .
+    // this.channelsService.mappingUserSoket(user.id, socket.id);
+    // this.channelsService.getMyChannels();
     // socket.broadcast.emit('message', {
     //   message: `${socket.id}가 들어왔습니다.`,
     // });
@@ -129,6 +144,27 @@ export class ChannelsGateway
     //   .to(channelId)
     //   .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
   }
+  @SubscribeMessage('leaveChannel')
+  handleLeaveRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() leaveDto: leaveDto,
+  ) {
+    //소켓 연결 끊기 **
+    //channelId,userId가 없을때 예외 처리
+    // this.logger.debug(`----${leaveDto.channelId} , ${leaveDto.userId}`)
+    if (!leaveDto.channelId || !leaveDto.userId)
+      throw new WsException('There is no user or channelId here');
+    socket.leave(leaveDto.channelId);
+    this.logger.log(`Client ${socket.id} left room ${leaveDto.channelId}`);
+    this.logger.log(
+      `소켓에 연결된 사람수 : ${this.getClientsInRoom(leaveDto.channelId)}`,
+    );
+    this.channelsService.userExitChannel(
+      socket,
+      leaveDto.channelId,
+      leaveDto.userId,
+    );
+  }
 
   @SubscribeMessage('message')
   handleMessage(
@@ -159,68 +195,30 @@ export class ChannelsGateway
   }
 
   async EmitChannelInfo(channelReturned) {
-    const curChannel = new EmitChannelInfoDto(channelReturned);
+    const howMnay: HowMany = {
+      connectedSocket: this.getClientsInRoom(channelReturned.id.toString()),
+      joinMember: 2,
+    };
+
+    const curChannel = new EmitChannelInfoDto(channelReturned, howMnay);
     return this.nsp.emit('newChannel', curChannel);
   }
   async EmitChannelDmInfo(channelReturned) {
-    const curChannel = new EmitChannelInfoDto(channelReturned);
+    const howMnay = this.getClientsInRoom(channelReturned.id.toString());
+    const curChannel = new EmitChannelInfoDto(channelReturned, howMnay);
     return this.nsp
       .to(curChannel.id.toString())
       .emit('newChannelDm', curChannel);
   }
   async EmitDeletChannelInfo(channelReturned) {
-    const curChannel = new EmitChannelInfoDto(channelReturned);
+    const howMnay = this.getClientsInRoom(channelReturned.id.toString());
+    const curChannel = new EmitChannelInfoDto(channelReturned, howMnay);
     return this.nsp.emit('removeChannel', curChannel);
   }
-  @SubscribeMessage('leaveChannel')
-  handleLeaveRoom(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() leaveDto: leaveDto,
-  ) {
-    //소켓 연결 끊기 **
-    //channelId,userId가 없을때 예외 처리
-    // this.logger.debug(`----${leaveDto.channelId} , ${leaveDto.userId}`)
-    if (!leaveDto.channelId || !leaveDto.userId)
-      throw new WsException('There is no user or channelId here');
-    socket.leave(leaveDto.channelId);
-    this.logger.log(`Client ${socket.id} left room ${leaveDto.channelId}`);
-    this.logger.log(
-      `소켓에 연결된 사람수 : ${this.getClientsInRoom(leaveDto.channelId)}`,
-    );
-    this.channelsService.userExitChannel(
-      socket,
-      leaveDto.channelId,
-      leaveDto.userId,
-    );
+  async connectAlreadyChnnels(channels: number[], socket: Socket) {
+    channels.forEach((channel) => {
+      socket.join(channel.toString());
+      this.logger.debug(this.getClientsInRoom(channel.toString()));
+    });
   }
-  // @SubscribeMessage('kickChannel')
-  // handleKickRoom(
-  //   @ConnectedSocket() socket: Socket,
-  //   @MessageBody() leaveDto: leaveDto,
-  // ) {
-  //   //소켓 연결 끊기 **
-  //   //channelId,userId가 없을때 예외 처리
-  //   // this.logger.debug(`----${leaveDto.channelId} , ${leaveDto.userId}`)
-  //   if (!leaveDto.channelId || !leaveDto.userId)
-  //     throw new WsException('There is no user or channelId here');
-  //   const room = this.server.sockets.adapter.rooms.get(leaveDto.channelId);
-  //   if (room) {
-  //     for (const clientId of room) {
-  //       // Skip the current socket that triggered the leave event
-  //       if (clientId !== socket.id) {
-  //         this.server.sockets.sockets.get(clientId)?.leave(leaveDto.channelId);
-  //       }
-  //     }
-  //   }
-  //   // socket.leave(leaveDto.channelId);
-  //   this.logger.log(`Client ${socket.id} left room ${leaveDto.channelId}`);
-  //   this.logger.log(
-  //     `소켓에 연결된 사람수 : ${this.getClientsInRoom(leaveDto.channelId)}`,
-  //   );
-  //   this.channelsService.userExitChannel(
-  //     socket,
-  //     leaveDto.channelId,
-  //     leaveDto.userId,
-  //   );
-  // }
 }

@@ -9,12 +9,14 @@ import { EventsModules } from './events.module';
 import { forwardRef } from '@nestjs/common';
 import { ChannelBanMember } from './entity/channelbanmember.entity';
 import { ChatsModule } from './chats/chats.module';
+import { AuthModule } from 'src/auth/auth.module';
 @Module({
   imports: [
     CacheModule.register(),
     TypeOrmModule.forFeature([Channel, User, ChannelMember, ChannelBanMember]),
     forwardRef(() => ChatsModule),
     forwardRef(() => EventsModules),
+    AuthModule,
   ],
   providers: [ChannelsService],
   controllers: [ChannelsController],

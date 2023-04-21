@@ -27,6 +27,9 @@ import { Cache } from 'cache-manager';
 import { ChannelMemberDto } from './dto/channel-member.dto';
 import { ChannelIfoDto } from './dto/channel-info.dto';
 import { CreateDmDto } from './dto/create-dm.dto';
+
+import { parse } from 'cookie';
+import { AuthService } from 'src/auth/auth.service';
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -40,6 +43,7 @@ export class ChannelsService {
     @Inject(forwardRef(() => ChannelsGateway))
     private readonly channelsGateway: ChannelsGateway,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly authService: AuthService,
   ) {}
   private logger = new Logger(ChannelsService.name);
 
@@ -55,6 +59,14 @@ export class ChannelsService {
       relations: {
         members: true,
         owner: true,
+      },
+    });
+  }
+  async findByIdwithMember(id: number) {
+    return await this.channelsRepository.findOne({
+      where: { id },
+      relations: {
+        members: true,
       },
     });
   }
@@ -581,5 +593,44 @@ export class ChannelsService {
       curChannel.status = ChannelStatus.PROTECTED;
       await this.channelsRepository.save(curChannel);
     }
+  }
+
+  async getUserFromClient(client: Socket): Promise<User> {
+    try {
+      const cookie = client.handshake.headers.cookie;
+      const { Authentication: authenticationToken } = parse(cookie);
+      this.logger.debug(`authenticationToken: ${authenticationToken}`);
+      const user: User = await this.authService.getUserFromAuthenticationToken(
+        authenticationToken,
+      );
+      return user;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async mappingUserToSocketId(userId: number, socketId: string): Promise<void> {
+    const key = `userTosocket:${userId}`;
+    const mappingList = (await this.cacheManager.get<string[]>(key)) || [];
+    this.logger.log(`check before value  mappingList : ${mappingList}`);
+    // if (!mappingList.includes(socketId)) {
+    mappingList.splice(0);
+    mappingList.push(socketId);
+    await this.cacheManager.set(key, mappingList);
+    // }
+    this.logger.log(`check mappingList : ${mappingList}`);
+  }
+
+  async connectAlredyJoinedChannel(user: User, socket: Socket) {
+    this.logger.log(user.id)
+    const myChannels = await this.getMyChannels(user);
+    // this.logger.debug(JSON.stringify(await this.getMyChannels(user)));
+    const channelIds: number[] = [];
+    for (const channel of myChannels) {
+      this.logger.log(channel.id)
+      channelIds.push(channel.id);
+    }
+    // this.logger.log(channelIds, socketId)
+    this.channelsGateway.connectAlreadyChnnels(channelIds, socket);
   }
 }
