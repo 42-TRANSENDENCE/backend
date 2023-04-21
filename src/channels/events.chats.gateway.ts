@@ -30,6 +30,7 @@ import { HowMany } from './dto/emit-channel.dto';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 import { User } from 'src/users/users.entity';
+import { newChatResponseDto } from './chats/dto/newChats.dto';
 // interface MessagePayload {
 //   roomName: string;
 //   message: string;
@@ -194,8 +195,9 @@ export class ChannelsGateway
     this.nsp.to(channelId.toString()).emit('adminMember', emitmember);
   }
   async sendNewEmitMessage(sendChat: Chat) {
-    const channelId = sendChat.channelId;
-    this.server.to('channelchat').emit('newMessage', channelId);
+    const chatDto = new newChatResponseDto(sendChat);
+    // const channelId = sendChat.channelId;
+    this.server.to('channelchat').emit('newMessage', chatDto);
     // this.nsp.emit('newMessage', channelId);
   }
 
