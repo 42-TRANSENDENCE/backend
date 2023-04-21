@@ -197,7 +197,7 @@ export class ChannelsGateway
   async sendNewEmitMessage(sendChat: Chat) {
     const chatDto = new newChatResponseDto(sendChat);
     // const channelId = sendChat.channelId;
-    this.server.to('channelchat').emit('newMessage', chatDto);
+    this.nsp.to('channelchat').emit('newMessage', chatDto);
     // this.nsp.emit('newMessage', channelId);
   }
 
