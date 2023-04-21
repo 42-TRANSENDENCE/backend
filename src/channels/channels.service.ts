@@ -225,7 +225,7 @@ export class ChannelsService {
   async createDMChannel(user: User, receiver: CreateDmDto) {
     // 뭐가 오든간에 알파벳 순으로 디엠 생성
     const sortedNicknames = [user.nickname, receiver.nickname].sort();
-    const title = sortedNicknames[0] + ' + ' + sortedNicknames[1] + ' DM';
+    const title = sortedNicknames[0] + sortedNicknames[1];
     const isDuplicate = await this.channelsRepository.findOneBy({
       title,
     });
@@ -622,15 +622,20 @@ export class ChannelsService {
   }
 
   async connectAlredyJoinedChannel(user: User, socket: Socket) {
-    this.logger.log(user.id)
+    this.logger.log(user.id);
     const myChannels = await this.getMyChannels(user);
     // this.logger.debug(JSON.stringify(await this.getMyChannels(user)));
     const channelIds: number[] = [];
     for (const channel of myChannels) {
-      this.logger.log(channel.id)
+      this.logger.log(channel.id);
       channelIds.push(channel.id);
     }
     // this.logger.log(channelIds, socketId)
     this.channelsGateway.connectAlreadyChnnels(channelIds, socket);
+  }
+  async getSocketList(userId: number): Promise<string[]> {
+    const key = `userTosocket:${userId}`;
+    const socketlist = (await this.cacheManager.get<string[]>(key)) || [];
+    return socketlist;
   }
 }
