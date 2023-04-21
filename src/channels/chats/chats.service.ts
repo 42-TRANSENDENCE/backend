@@ -17,7 +17,7 @@ import { Channel } from 'src/channels/entity/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
 import { Cache } from 'cache-manager';
 import { ChannelMember } from '../entity/channelmember.entity';
-// import { ChatResponseDto } from './dto/chats-response.dto';
+import { ChatResponseDto } from './dto/chats-response.dto';
 
 @Injectable()
 export class ChatsService {
@@ -37,25 +37,21 @@ export class ChatsService {
   ) {}
   private logger = new Logger(ChatsService.name);
 
+  async getChatsDto(channelId: number): Promise<ChatResponseDto[]> {
+    const chatWithSender = await this.chatsRepository.find({
+      where: { channelId: channelId },
+      relations: { sender: true },
+    });
+    const memberDtos = chatWithSender.map(
+      (sender) => new ChatResponseDto(sender),
+    );
+    return memberDtos;
+  }
   async getChats(channelId: number, user: User) {
     if (await this.channelsService.isBanned(channelId, user.id))
       throw new NotAcceptableException('YOU ARE BANNED');
-    return this.chatsRepository.find({ where: { channelId: channelId } });
+    return await this.getChatsDto(channelId);
   }
-  // async getChats(id: number, user): Promise<ChatResponseDto> {
-  //   // const user = await this.userRepository.findOne({
-  //   //   where: { id },
-  //   //   relations: { achievements: true, wins: true, loses: true },
-  //   // });
-  //   // if (!user) {
-  //   //   throw new NotFoundException(userNotFoundErr);
-  //   // }
-  //   const chat = await this.chatsRepository.findOne({
-  //     where: { id },
-  //     relations: { sender: true },
-  //   });
-  //   return new ChatResponseDto(user, chat);
-  // }
   //TODO: 채팅창 연결해서 User.id랑 연결해서 테스트 , 인자들 정리, entity 도 정리
   async isMutted(channelId: number, userId: number): Promise<boolean> {
     const mutelist = await this.channelsService.getMutelist(channelId);
