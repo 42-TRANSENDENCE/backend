@@ -32,6 +32,7 @@ import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 import { User } from 'src/users/users.entity';
 import { newChatResponseDto } from './chats/dto/newChats.dto';
 import { channel } from 'diagnostics_channel';
+import { ChatResponseDto } from './chats/dto/chats-response.dto';
 
 // interface MessagePayload {
 //   roomName: string;
@@ -55,7 +56,7 @@ export class ChannelsGateway
 
   // 클라이언트가, 프론트가 나한테 보내는 이벤트.
   afterInit(server: Server) {
-    this.server = server;
+    // this.server = server;/
     // this.nsp.adapter.on('join-room', (room, id) => {
     //   this.logger.log(`"Socket:${id}"이 "Room:${room}"에 참여하였습니다.`);
     // });
@@ -74,17 +75,12 @@ export class ChannelsGateway
   async handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 소켓 연결`);
     const user: User = await this.channelsService.getUserFromClient(socket);
-    if (!user) throw new WsException('유저가 없습니다.');
-    this.logger.log(`${user.nickname} : ${socket.id}`);
-    this.channelsService.mappingUserToSocketId(user.id, socket.id);
-    this.channelsService.connectAlredyJoinedChannel(user, socket);
-    // this.logger.log(user.id)
-    // 여기서 다 연결 .
-    // this.channelsService.mappingUserSoket(user.id, socket.id);
-    // this.channelsService.getMyChannels();
-    // socket.broadcast.emit('message', {
-    //   message: `${socket.id}가 들어왔습니다.`,
-    // });
+    // if (!user) throw new NotFoundException('유저가 없습니다.');
+    if (user) {
+      this.logger.log(`${user.nickname} : ${socket.id}`);
+      this.channelsService.mappingUserToSocketId(user.id, socket.id);
+      this.channelsService.connectAlredyJoinedChannel(user, socket);
+    }
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -171,8 +167,9 @@ export class ChannelsGateway
 
   async sendEmitMessage(sendChat: Chat) {
     const channelId = sendChat.channelId;
-    // 방에 연결된 사람, 즉 멤버한테만 보내야 한다. 그 소켓에 직접 
-    this.nsp.to(channelId.toString()).emit('message', sendChat);
+    // 방에 연결된 사람, 즉 멤버한테만 보내야 한다. 그 소켓에 직접
+    const sendChatDto = new ChatResponseDto(sendChat);
+    this.nsp.to(channelId.toString()).emit('message', sendChatDto);
   }
 
   async emitOutMember(userId: number, channelId: number) {
@@ -190,7 +187,6 @@ export class ChannelsGateway
   }
   async sendNewEmitMessage(sendChat: Chat) {
     const chatDto = new newChatResponseDto(sendChat);
-    const channelId = sendChat.channelId;
     this.nsp.emit('newMessage', chatDto);
     // this.nsp.emit('newMessage', channelId);
   }
@@ -198,7 +194,9 @@ export class ChannelsGateway
   async EmitChannelInfo(channelReturned) {
     const howMnay: HowMany = {
       connectedSocket: this.getClientsInRoom(channelReturned.id.toString()),
-      joinMember: 2,
+      joinMember: (
+        await this.channelsService.getChannelMembers(channelReturned.id)
+      ).length,
     };
 
     const curChannel = new EmitChannelInfoDto(channelReturned, howMnay);
@@ -222,7 +220,9 @@ export class ChannelsGateway
     channels.forEach((channel) => {
       socket.join(channel.toString());
       this.logger.debug(
-        `이방에 연결된 사람${channel} : ${this.getClientsInRoom(channel.toString())}`,
+        `이방에 연결된 사람${channel} : ${this.getClientsInRoom(
+          channel.toString(),
+        )}`,
       );
     });
   }
