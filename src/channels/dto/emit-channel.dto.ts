@@ -3,11 +3,6 @@ import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { ChannelMember, MemberType } from '../entity/channelmember.entity';
 import { ChannelStatus } from '../entity/channels.entity';
 
-export interface HowMany {
-  connectedSocket: number;
-  joinMember: number;
-}
-
 export class EmitChannelInfoDto {
   @ApiProperty()
   id: number;
@@ -24,9 +19,6 @@ export class EmitChannelInfoDto {
   @ApiProperty()
   createdAt: Date;
 
-  // @ApiProperty()
-  // howMany: HowMany;
-
   @ApiProperty()
   updatedAt: Date;
 
@@ -37,6 +29,5 @@ export class EmitChannelInfoDto {
     this.status = channel.status;
     this.createdAt = channel.createdAt;
     this.updatedAt = channel.updatedAt;
-    // this.howMany = HowMany;
   }
 }

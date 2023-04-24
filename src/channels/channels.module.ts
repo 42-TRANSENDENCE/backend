@@ -10,12 +10,22 @@ import { forwardRef } from '@nestjs/common';
 import { ChannelBanMember } from './entity/channelbanmember.entity';
 import { ChatsModule } from './chats/chats.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { Blockship } from 'src/users/friends/blockship.entity';
+import { UsersModule } from 'src/users/users.module';
+import { FriendsService } from 'src/users/friends/friends.service';
 @Module({
   imports: [
     CacheModule.register(),
-    TypeOrmModule.forFeature([Channel, User, ChannelMember, ChannelBanMember]),
+    TypeOrmModule.forFeature([
+      Channel,
+      User,
+      ChannelMember,
+      ChannelBanMember,
+      Blockship,
+    ]),
     forwardRef(() => ChatsModule),
     forwardRef(() => EventsModules),
+    UsersModule,
     AuthModule,
   ],
   providers: [ChannelsService],

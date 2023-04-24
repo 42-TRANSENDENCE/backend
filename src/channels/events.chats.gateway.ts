@@ -26,7 +26,6 @@ import { leaveDto } from './dto/leave.dto';
 import { EmitChannelInfoDto } from './dto/emit-channel.dto';
 import { emitMemberDto } from './dto/emit-member.dto';
 import { RateLimiterAbstract } from 'rate-limiter-flexible';
-// import { HowMany } from './dto/emit-channel.dto';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
 import { User } from 'src/users/users.entity';
@@ -35,10 +34,10 @@ import { channel } from 'diagnostics_channel';
 import { ChatResponseDto } from './chats/dto/chats-response.dto';
 import { ChannelStatus } from './entity/channels.entity';
 
-// interface MessagePayload {
-//   roomName: string;
-//   message: string;
-// }
+export interface HowMany {
+  joinSockets: number;
+  joinMembers: number;
+}
 
 // FRONTEND_URL="http://localhost:5173"
 // const originUrl = process.env.FRONTEND_URL;
@@ -196,18 +195,11 @@ export class ChannelsGateway
   }
 
   async EmitChannelInfo(channelReturned) {
-    // const howMnay: HowMany = {
-    //   connectedSocket: this.getClientsInRoom(channelReturned.id.toString()),
-    //   joinMember: (
-    //     await this.channelsService.getChannelMembers(channelReturned.id)
-    //   ).length,
-    // };
     const curChannel = new EmitChannelInfoDto(channelReturned);
     return this.nsp.emit('newChannel', curChannel);
   }
 
   async EmitChannelDmInfo(channelReturned) {
-    const howMnay = this.getClientsInRoom(channelReturned.id.toString());
     const curChannel = new EmitChannelInfoDto(channelReturned);
     return this.nsp
       .to(curChannel.id.toString())
@@ -215,7 +207,6 @@ export class ChannelsGateway
   }
 
   async EmitDeletChannelInfo(channelReturned) {
-    const howMnay = this.getClientsInRoom(channelReturned.id.toString());
     const curChannel = new EmitChannelInfoDto(channelReturned);
     return this.nsp.emit('removeChannel', curChannel);
   }

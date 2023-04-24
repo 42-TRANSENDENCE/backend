@@ -15,13 +15,12 @@ import { In, Repository } from 'typeorm';
 import { Channel, ChannelStatus } from './entity/channels.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelMember, MemberType } from './entity/channelmember.entity';
-import { ChannelsGateway } from './events.chats.gateway';
+import { ChannelsGateway, HowMany } from './events.chats.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
 import { ChannelBanMember } from './entity/channelbanmember.entity';
-// import { ChannelMemberDto } from './dto/channel-member.dto';
 
 import { Cache } from 'cache-manager';
 import { ChannelMemberDto } from './dto/channel-member.dto';
@@ -30,6 +29,10 @@ import { CreateDmDto } from './dto/create-dm.dto';
 
 import { parse } from 'cookie';
 import { AuthService } from 'src/auth/auth.service';
+import { Blockship } from 'src/users/friends/blockship.entity';
+import { FriendsService } from 'src/users/friends/friends.service';
+import { ChannelTotalIfoDto } from './dto/chanel-total-info.dto';
+
 @Injectable()
 export class ChannelsService {
   constructor(
@@ -40,8 +43,15 @@ export class ChannelsService {
     @InjectRepository(ChannelBanMember)
     private channelBanMemberRepository: Repository<ChannelBanMember>,
 
+    @InjectRepository(Blockship) // Inject Blockship entity
+    private blockshipRepository: Repository<Blockship>,
+
+    @Inject(forwardRef(() => FriendsService))
+    private readonly friendsService: FriendsService,
+
     @Inject(forwardRef(() => ChannelsGateway))
     private readonly channelsGateway: ChannelsGateway,
+
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly authService: AuthService,
   ) {}
@@ -101,15 +111,29 @@ export class ChannelsService {
       // 밴된 멤버가 안에 있을경우 에러남.
       if (!whoami)
         throw new NotFoundException('CHECK MemberId ID IF IT IS EXIST');
-      const result = {
-        channelStatus: channel.status,
-        channelMembers,
-        myType: whoami.type || null,
+      // 여기에 title이랑 몇명 있는지 추가 (멤버 수 , 소켓 연결수 )
+      const howmany: HowMany = {
+        joinSockets: this.channelsGateway.getClientsInRoom(
+          channelId.toString(),
+        ),
+        joinMembers: (await this.getChannelMembers(channelId)).length,
       };
-      return result;
+      return await this.getOneChannelTotalInfoDto(
+        channel,
+        channelMembers,
+        howmany,
+        whoami.type || null,
+      );
     } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
   }
-
+  async getOneChannelTotalInfoDto(
+    channel: Channel,
+    channelMembers: ChannelMemberDto[],
+    howmany: HowMany,
+    myType?: MemberType,
+  ) {
+    return new ChannelTotalIfoDto(channel, channelMembers, howmany, myType);
+  }
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
   async getChannelMembers(channelId: number) {
     const members = await this.channelMemberRepository.find({
@@ -133,30 +157,6 @@ export class ChannelsService {
 
   // 나의 채팅목록
   async getMyChannels(user: User) {
-    // try {
-    //   const channelMembers = await this.channelMemberRepository.find({
-    //     where: { userId: user.id },
-    //   });
-    //   const channelIds = channelMembers.map((member) => member.channelId);
-    //   if (channelIds.length === 0) {
-    //     // If the user isn't a member of any channels, return an empty array
-    //     return [];
-    //   }
-    //   // const channels = await this.channelsRepository.find({
-    //   //   where: { id: In(channelIds) ,relations:['owner']}, // Use In operator here
-    //   // });
-    //   const channels = await this.channelsRepository
-    //     .createQueryBuilder('channel')
-    //     .where('channel.id IN (:...channelIds)', { channelIds })
-    //     .leftJoinAndSelect('channel.owner', 'owner') // Specify the relationship name ('owner' in this case)
-    //     .getMany();
-    //   const channelDtos = channels.map((channel) => new ChannelIfoDto(channel));
-    //   return channelDtos;
-    // } catch (error) {
-    //   // Handle any errors that occur during the database queries
-    //   this.logger.error('Error retrieving channels:', error);
-    //   throw new Error('Unable to retrieve channels');
-    // }
     try {
       const channelMembers = await this.channelMemberRepository.find({
         where: { userId: user.id },
@@ -224,6 +224,11 @@ export class ChannelsService {
   // 나가는경우 어떻게 처리 할지 생각
   async createDMChannel(user: User, receiver: CreateDmDto) {
     // 뭐가 오든간에 알파벳 순으로 디엠 생성
+    if (
+      this.friendsService.isBlocked(user.id, receiver.id) ||
+      this.friendsService.isBlocked(receiver.id, user.id)
+    )
+      throw new BadRequestException('YOU ARE BLOCKED BY THIS USER');
     const sortedNicknames = [user.nickname, receiver.nickname].sort();
     const title = sortedNicknames[0] + sortedNicknames[1];
     const isDuplicate = await this.channelsRepository.findOneBy({
