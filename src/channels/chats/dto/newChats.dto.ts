@@ -7,8 +7,12 @@ export class newChatResponseDto {
   @ApiProperty()
   content: string;
 
+  @ApiProperty()
+  nickname: string;
+
   constructor(chat: Chat) {
     this.channelId = chat.channelId;
     this.content = chat.content;
+    this.nickname = chat.sender.nickname;
   }
 }
