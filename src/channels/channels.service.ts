@@ -244,6 +244,25 @@ export class ChannelsService {
       title,
     });
     if (isDuplicate) {
+      // 멤버 없으면 넣고 있으면 넣지말고
+      const isMember = await this.channelMemberRepository.findOneBy({
+        channelId: isDuplicate.id,
+        userId: user.id,
+      });
+      // const excurChannel = await this.channelsRepository.findOneBy({
+      //   id: isDuplicate.id,
+      // });
+      if (!isMember) {
+        const channelMember = this.channelMemberRepository.create({
+          userId: user.id,
+          channelId: isDuplicate.id,
+          type: MemberType.MEMBER,
+        });
+        await this.channelMemberRepository.save(channelMember);
+        // 나한테나, 상대방한테만 emit해야한다..
+        // this.channelsGateway.emitInMember(user.id, isDuplicate.id);
+        // this.channelsGateway.EmitChannelInfo(isDuplicate);
+      }
       throw new BadRequestException({
         message: 'YOU ARE AREADY IN DM',
         channelId: isDuplicate.id,
