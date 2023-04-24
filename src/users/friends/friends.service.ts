@@ -1,10 +1,12 @@
 import {
   BadRequestException,
   ClassSerializerInterceptor,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
   UseInterceptors,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
@@ -20,7 +22,7 @@ import { FriendsRepository } from './friends.repository';
 import { AchievementService } from 'src/achievement/achievement.service';
 import { Title } from 'src/achievement/achievement.entity';
 import { Blockship } from './blockship.entity';
-
+import { ChannelsService } from 'src/channels/channels.service';
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
 export class FriendsService {
@@ -30,6 +32,9 @@ export class FriendsService {
     private readonly friendsRepository: FriendsRepository,
     @InjectRepository(Blockship)
     private BlocksRepository: Repository<Blockship>,
+    @Inject(forwardRef(() => ChannelsService))
+    private ChannelsService: ChannelsService,
+
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly achievementService: AchievementService,
@@ -101,6 +106,8 @@ export class FriendsService {
       user,
       otherUser,
     });
+    //
+    this.ChannelsService.leaveDmbySelf(user, otherUser);
     return this.BlocksRepository.save(blockship);
   }
 

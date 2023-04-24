@@ -53,6 +53,8 @@ export class ChannelsService {
     private readonly channelsGateway: ChannelsGateway,
 
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+
+    @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
   ) {}
   private logger = new Logger(ChannelsService.name);
@@ -228,13 +230,12 @@ export class ChannelsService {
   // 그리고 두명 이상 못들어가게 막아야함.
   // 나가는경우 어떻게 처리 할지 생각
   async createDMChannel(user: User, receiver: CreateDmDto) {
-    // 뭐가 오든간에 알파벳 순으로 디엠 생성
-    // this.logger.log(
-    //   `this is isBlocked : ${await this.friendsService.isBlocked(
-    //     user.id,
-    //     receiver.id,
-    //   )}`,
-    // );
+    this.logger.log(
+      `this is isBlocked : ${await this.friendsService.isBlocked(
+        user.id,
+        receiver.id,
+      )}`,
+    );
     if (await this.friendsService.isBlocked(user.id, receiver.id))
       throw new NotAcceptableException('YOU ARE BLOCK THIS USER'); // statuscode 중복
     const sortedNicknames = [user.nickname, receiver.nickname].sort();
@@ -272,7 +273,25 @@ export class ChannelsService {
     this.channelsGateway.EmitChannelDmInfo(channelReturned);
     return { channelId: channelReturned.id };
   }
-
+  async leaveDmbySelf(user: User, otherUser: User) {
+    // 닉네임 정렬해서 값찾기 ~ 똑같은거 찾아서 지우기
+    const sortedNicknames = [user.nickname, otherUser.nickname].sort();
+    const title = sortedNicknames[0] + sortedNicknames[1];
+    const channel = await this.channelsRepository.findOneBy({
+      title: title,
+    });
+    if (!channel) throw new NotFoundException('CHANNEL NOT FOUND');
+    const channelMember = await this.channelMemberRepository.findOneBy({
+      userId: user.id,
+      channelId: channel.id,
+    });
+    if (!channelMember) throw new NotFoundException('CHANNEL MEMBER NOT FOUND');
+    await this.channelMemberRepository.delete({
+      userId: user.id,
+      channelId: channel.id,
+    });
+    // this.channelsGateway.emitOutMember(user.id, channel.id);
+  }
   async userEnterPrivateChannel(
     channelId: number,
     password: string,
@@ -615,7 +634,7 @@ export class ChannelsService {
     }
   }
 
-  async getUserFromClient(client: Socket): Promise<User> {
+  async getUserFromSocket(client: Socket): Promise<User> {
     try {
       const cookie = client.handshake.headers.cookie;
       const { Authentication: authenticationToken } = parse(cookie);
