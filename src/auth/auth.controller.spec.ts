@@ -59,6 +59,7 @@ describe('AuthController', () => {
     isTwoFactorAuthenticationEnabled: false,
     achievements: [],
     friends: [],
+    blocks: [],
     wins: [],
     loses: [],
     channelBanMembers: [],

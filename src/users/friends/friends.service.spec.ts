@@ -8,6 +8,7 @@ import { FriendsService } from './friends.service';
 import { requestNotFoundErr } from './friends.constants';
 import { FriendsRepository } from './friends.repository';
 import { AchievementService } from 'src/achievement/achievement.service';
+import { Blockship } from './blockship.entity';
 
 describe('FriendsService', () => {
   function createRandomUser(): User {
@@ -20,6 +21,7 @@ describe('FriendsService', () => {
       wins: [],
       loses: [],
       friends: [],
+      blocks: [],
       channelMembers: [],
       channelBanMembers: [],
     };
@@ -42,6 +44,10 @@ describe('FriendsService', () => {
     findOne: jest.fn(),
   };
 
+  const mockedBlockshipRepository = {
+    findOne: jest.fn(),
+  };
+
   let friendsService: FriendsService;
 
   beforeEach(async () => {
@@ -53,6 +59,10 @@ describe('FriendsService', () => {
           useValue: mockedFriendshipRepository,
         },
         { provide: getRepositoryToken(User), useValue: mockedUserRepository },
+        {
+          provide: getRepositoryToken(Blockship),
+          useValue: mockedBlockshipRepository,
+        },
         { provide: AchievementService, useValue: { add: jest.fn() } },
       ],
     }).compile();

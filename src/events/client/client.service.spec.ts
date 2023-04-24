@@ -32,6 +32,7 @@ describe('ClientService', () => {
     avatar: new Uint8Array([]),
     isTwoFactorAuthenticationEnabled: false,
     friends: [],
+    blocks: [],
     achievements: [],
     wins: [],
     loses: [],
