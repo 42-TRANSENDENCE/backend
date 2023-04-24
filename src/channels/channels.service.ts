@@ -118,14 +118,18 @@ export class ChannelsService {
         ),
         joinMembers: (await this.getChannelMembers(channelId)).length,
       };
-      return await this.getOneChannelTotalInfoDto(
+      // this.logger.debug(JSON.stringify(howmany))
+      const total = await this.getOneChannelTotalInfoDto(
         channel,
         channelMembers,
         howmany,
         whoami.type || null,
       );
+      // this.logger.log(JSON.stringify(total));
+      return total;
     } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
   }
+
   async getOneChannelTotalInfoDto(
     channel: Channel,
     channelMembers: ChannelMemberDto[],
@@ -134,6 +138,7 @@ export class ChannelsService {
   ) {
     return new ChannelTotalIfoDto(channel, channelMembers, howmany, myType);
   }
+
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
   async getChannelMembers(channelId: number) {
     const members = await this.channelMemberRepository.find({
@@ -224,11 +229,8 @@ export class ChannelsService {
   // 나가는경우 어떻게 처리 할지 생각
   async createDMChannel(user: User, receiver: CreateDmDto) {
     // 뭐가 오든간에 알파벳 순으로 디엠 생성
-    if (
-      this.friendsService.isBlocked(user.id, receiver.id) ||
-      this.friendsService.isBlocked(receiver.id, user.id)
-    )
-      throw new BadRequestException('YOU ARE BLOCKED BY THIS USER');
+    if (this.friendsService.isBlocked(user.id, receiver.id))
+      throw new BadRequestException('YOU ARE BLOCKED THIS USER'); // statuscode 중복
     const sortedNicknames = [user.nickname, receiver.nickname].sort();
     const title = sortedNicknames[0] + sortedNicknames[1];
     const isDuplicate = await this.channelsRepository.findOneBy({

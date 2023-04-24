@@ -22,20 +22,20 @@ export class ChannelTotalIfoDto {
   howmany: HowMany;
 
   @ApiProperty()
-  myTpye: MemberType;
+  myType: MemberType;
 
   constructor(
     channel: Channel,
     channelMembers: ChannelMemberDto[],
     howmany: HowMany,
-    myTpye: MemberType,
+    myType: MemberType,
   ) {
     this.id = channel.id;
     this.title = channel.title;
     this.channelMembers = channelMembers;
     this.channelStatus = channel.status;
     this.howmany = howmany;
-    this.myTpye = myTpye;
+    this.myType = myType;
     // this.nickname = channel.owner.nickname;
     // this.owner = channel.owner.id;
   }
