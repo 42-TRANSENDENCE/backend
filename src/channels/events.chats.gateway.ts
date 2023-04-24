@@ -188,6 +188,7 @@ export class ChannelsGateway
     const emitmember = new emitMemberDto(userId, channelId);
     this.nsp.to(channelId.toString()).emit('adminMember', emitmember);
   }
+  // content +
   async sendNewEmitMessage(sendChat: Chat) {
     const chatDto = new newChatResponseDto(sendChat);
     this.nsp.emit('newMessage', chatDto);
