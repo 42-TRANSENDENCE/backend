@@ -1,5 +1,5 @@
 import { User } from 'src/users/users.entity';
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 @Entity()
 export class Blockship {
