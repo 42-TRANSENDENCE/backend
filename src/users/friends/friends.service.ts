@@ -19,6 +19,7 @@ import { userNotFoundErr } from '../users.constants';
 import { FriendsRepository } from './friends.repository';
 import { AchievementService } from 'src/achievement/achievement.service';
 import { Title } from 'src/achievement/achievement.entity';
+import { Blockship } from './blockship.entity';
 
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -27,6 +28,8 @@ export class FriendsService {
 
   constructor(
     private readonly friendsRepository: FriendsRepository,
+    @InjectRepository(Blockship)
+    private BlocksRepository: Repository<Blockship>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly achievementService: AchievementService,
@@ -78,6 +81,27 @@ export class FriendsService {
       status: FriendStatus.PENDING,
     });
     return this.friendsRepository.save(friendship);
+  }
+
+  async requestBlockship(user: User, id: number): Promise<Blockship> {
+    if (user.id === id) {
+      throw new BadRequestException('본인에게 친구 block 요청은 불가능합니다.');
+    }
+    const otherUser = await this.userRepository.findOneBy({ id });
+    if (!otherUser) {
+      throw new NotFoundException(userNotFoundErr);
+    }
+    const isExist = await this.BlocksRepository.findOne({
+      where: { userId: user.id, otherUserId: id },
+    });
+    if (isExist) {
+      throw new BadRequestException('이미 블락한 유저입니다.');
+    }
+    const blockship = await this.BlocksRepository.create({
+      user,
+      otherUser,
+    });
+    return this.BlocksRepository.save(blockship);
   }
 
   async deleteRequest(userId: number, id: number): Promise<Friendship> {
@@ -141,12 +165,32 @@ export class FriendsService {
     return this.friendsRepository.remove(friendship);
   }
 
+  async deleteBlockship(user: User, id: number): Promise<Blockship> {
+    const blockship = await this.BlocksRepository.findOne({
+      where: { userId: user.id, otherUserId: id },
+    });
+    if (!blockship) {
+      throw new NotFoundException(friendshipNotFoundErr);
+    }
+    return this.BlocksRepository.remove(blockship);
+  }
+
   async isFriend(userId: number, otherUserId: number): Promise<boolean> {
     const friendship = await this.friendsRepository.findOneApproved(
       userId,
       otherUserId,
     );
     if (friendship) {
+      return true;
+    }
+    return false;
+  }
+
+  async isBlocked(userId: number, otherUserId: number): Promise<boolean> {
+    const blockship = await this.BlocksRepository.findOne({
+      where: { userId, otherUserId },
+    });
+    if (blockship) {
       return true;
     }
     return false;

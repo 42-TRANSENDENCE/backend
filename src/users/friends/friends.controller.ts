@@ -114,4 +114,24 @@ export class FriendsController {
   deleteFriend(@GetUser() user, @Param('id') id: number) {
     return this.friendsService.deleteFriendship(user, id);
   }
+
+  @Post('request/block/:id')
+  @ApiOperation({
+    summary: '친구 block 요청',
+    description: '다른 사용자에게 친구 block 요청',
+  })
+  @ApiNotFoundResponse({ description: '사용자 정보 없음' })
+  requestBlockship(@GetUser() user, @Param('id') id: number) {
+    return this.friendsService.requestBlockship(user, id);
+  }
+
+  @Delete('block/:id')
+  @ApiOperation({
+    summary: '친구 block 삭제',
+    description: '친구 block 삭제 (이미 친구 block 관계)',
+  })
+  @ApiNotFoundResponse({ description: '친구 관계 정보 없음' })
+  deleteBlocked(@GetUser() user, @Param('id') id: number) {
+    return this.friendsService.deleteBlockship(user, id);
+  }
 }

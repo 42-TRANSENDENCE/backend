@@ -57,6 +57,7 @@ export class UsersService {
     const response = new UserSearchDto(
       found,
       await this.friendsService.isFriend(user.id, found.id),
+      await this.friendsService.isBlocked(user.id, found.id),
     );
     return response;
   }

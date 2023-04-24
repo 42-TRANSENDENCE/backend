@@ -10,10 +10,11 @@ import { Friendship } from './friends/friendship.entity';
 import { FriendsRepository } from './friends/friends.repository';
 import { Achievement } from 'src/achievement/achievement.entity';
 import { AchievementModule } from 'src/achievement/achievement.module';
+import { Blockship } from './friends/blockship.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Friendship, Achievement]),
+    TypeOrmModule.forFeature([User, Friendship, Achievement, Blockship]),
     HttpModule,
     AchievementModule,
   ],
