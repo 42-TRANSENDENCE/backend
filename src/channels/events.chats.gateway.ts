@@ -74,7 +74,7 @@ export class ChannelsGateway
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 소켓 연결`);
-    const user: User = await this.channelsService.getUserFromClient(socket);
+    const user: User = await this.channelsService.getUserFromSocket(socket);
     // if (!user) throw new NotFoundException('유저가 없습니다.');
     if (user) {
       this.logger.log(`${user.nickname} : ${socket.id}`);
@@ -138,11 +138,23 @@ export class ChannelsGateway
     this.nsp.to(channelId).emit('welcomeChannel', {
       message: `${socket.id} 가 ${channelId} 에 들어왔다 Well Done ! `,
     });
-
-    // socket.broadcast
-    //   .to(channelId)
-    //   .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
   }
+  @SubscribeMessage('reJoinDm')
+  handlereJoinRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody('channelId') channelId: string,
+  ) {
+    // 예외처리하려면 상대방의 id도 알아야 한다.
+    // const user = await this.channelsService.getUserFromSocket(socket);
+    // if (!user) throw new WsException('There is no user here');
+    // const curChannel = await this.channelsService.getChannel(channelId);
+    // if (!curChannel) throw new WsException('There is no channel here');
+    // if (curChannel.Members.find((v) => v.id === user.id)) {
+    // }
+  }
+  // socket.broadcast
+  //   .to(channelId)
+  //   .emit('message', { message: `${socket.id} 가 들어왔다 Well Done ! ` });
   @SubscribeMessage('leaveChannel')
   handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
@@ -192,7 +204,6 @@ export class ChannelsGateway
   async sendNewEmitMessage(sendChat: Chat) {
     const chatDto = new newChatResponseDto(sendChat);
     this.nsp.emit('newMessage', chatDto);
-    // this.nsp.emit('newMessage', channelId);
   }
 
   async EmitChannelInfo(channelReturned) {

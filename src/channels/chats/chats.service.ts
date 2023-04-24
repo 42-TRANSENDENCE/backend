@@ -83,21 +83,12 @@ export class ChatsService {
     });
     // this.logger.log(chats.sender.id);
     await this.chatsRepository.save(chats);
-    // this.logger.log(JSON.stringify(chats.sender.id));
-    // const test = await this.chatsRepository
-    //   .createQueryBuilder('chat')
-    //   .leftJoinAndSelect('chat.sender', 'sender')
-    //   .where('chat.id = :id', { id: chats.id })
-    //   .getOne();
-    // this.logger.log(test.sender.id);
-    const testChat = await this.chatsRepository.findOne({
-      where: { id: chats.id },
-      relations: {
-        sender: true,
-      },
-    });
-    // this.logger.log(`${testChat.content}`);
-    // this.logger.log(`${testChat.sender.id}`);
+    // const testChat = await this.chatsRepository.findOne({
+    //   where: { id: chats.id },
+    //   relations: {
+    //     sender: true,
+    //   },
+    // });
     this.channelsGateway.sendEmitMessage(chats).catch((error) => {
       console.error('Failed to send message:', error);
     });
