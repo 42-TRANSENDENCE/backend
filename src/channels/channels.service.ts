@@ -229,8 +229,14 @@ export class ChannelsService {
   // 나가는경우 어떻게 처리 할지 생각
   async createDMChannel(user: User, receiver: CreateDmDto) {
     // 뭐가 오든간에 알파벳 순으로 디엠 생성
-    if (this.friendsService.isBlocked(user.id, receiver.id))
-      throw new BadRequestException('YOU ARE BLOCKED THIS USER'); // statuscode 중복
+    // this.logger.log(
+    //   `this is isBlocked : ${await this.friendsService.isBlocked(
+    //     user.id,
+    //     receiver.id,
+    //   )}`,
+    // );
+    if (await this.friendsService.isBlocked(user.id, receiver.id))
+      throw new NotAcceptableException('YOU ARE BLOCK THIS USER'); // statuscode 중복
     const sortedNicknames = [user.nickname, receiver.nickname].sort();
     const title = sortedNicknames[0] + sortedNicknames[1];
     const isDuplicate = await this.channelsRepository.findOneBy({
@@ -253,13 +259,15 @@ export class ChannelsService {
       channelId: channelReturned.id,
       type: MemberType.MEMBER,
     });
+    await this.channelMemberRepository.save(channelMember);
+
     const channelMember2 = this.channelMemberRepository.create({
       userId: receiver.id,
       channelId: channelReturned.id,
       type: MemberType.MEMBER,
     });
-    await this.channelMemberRepository.save(channelMember);
     await this.channelMemberRepository.save(channelMember2);
+
     this.channelsGateway.emitInMember(user.id, channel.id);
     this.channelsGateway.EmitChannelDmInfo(channelReturned);
     return { channelId: channelReturned.id };
@@ -332,6 +340,8 @@ export class ChannelsService {
       id: channelId,
     });
     // this.logger.log(await this.isBanned(channelId, user.id));
+    if (curChannel.status === ChannelStatus.PRIVATE)
+      throw new NotAcceptableException('WRONG ACCESS');
     if (await this.isBanned(channelId, user.id))
       throw new NotAcceptableException('YOU ARE BANNED');
     if (!curChannel) throw new NotFoundException('PLZ ENTER EXIST CHANNEL');
