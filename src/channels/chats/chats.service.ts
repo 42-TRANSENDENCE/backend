@@ -41,6 +41,7 @@ export class ChatsService {
     const chatWithSender = await this.chatsRepository.find({
       where: { channelId: channelId },
       relations: { sender: true },
+      order: { createdAt: 'ASC' },
     });
     const memberDtos = chatWithSender.map(
       (sender) => new ChatResponseDto(sender),
@@ -71,12 +72,11 @@ export class ChatsService {
     const channelMember = await this.channelMembersRepository.find({
       where: { channelId: channelId, userId: user.id },
     });
-
     if (channelMember.length === 0)
       throw new NotFoundException('YOU ARE NOT A MEMBER');
 
     const chats = this.chatsRepository.create({
-      senderUserId: user.id,
+      // senderUserId: user.id,
       sender: user,
       channelId: channelId,
       content: chat,
