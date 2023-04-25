@@ -52,6 +52,36 @@ export class FriendsService {
     return friends;
   }
 
+  async getAllDoBlocks(user: User): Promise<User[]> {
+    const blockships = await this.BlocksRepository.find({
+      where: { userId: user.id },
+      relations: { user: true, otherUser: true },
+    }); // Find all blockships where userId matches the user's id
+    const friends: User[] = blockships.map((blockship) => {
+      if (blockship.user.id === user.id) {
+        return blockship.otherUser;
+      }
+      return blockship.user;
+    });
+    this.logger.debug(`${user.nickname}'s friend: ${friends.length}`);
+    return friends;
+  }
+
+  async getAllBlockedBy(user: User): Promise<User[]> {
+    const blockships = await this.BlocksRepository.find({
+      where: { otherUserId: user.id },
+      relations: { user: true, otherUser: true },
+    }); // Find all blockships where otherUserId matches the user's id
+    const blockedBy: User[] = blockships.map((blockship) => {
+      if (blockship.user.id === user.id) {
+        return blockship.otherUser;
+      }
+      return blockship.user;
+    });
+    this.logger.debug(`${user.nickname} is blocked by: ${blockedBy.length}`);
+    return blockedBy;
+  }
+
   async getPendingRequests(user: User): Promise<User[]> {
     const pendingRequests = await this.friendsRepository.findPendingRequests(
       user.id,
