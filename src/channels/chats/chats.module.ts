@@ -8,6 +8,7 @@ import { EventsModules } from '../events.module';
 import { Channel } from 'src/channels/entity/channels.entity';
 import { ChannelsModule } from 'src/channels/channels.module';
 import { ChannelMember } from '../entity/channelmember.entity';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ChannelMember } from '../entity/channelmember.entity';
     EventsModules,
     forwardRef(() => ChannelsModule),
     CacheModule.register(),
+    forwardRef(() => UsersModule),
   ],
   providers: [ChatsService],
   controllers: [ChatsController],
