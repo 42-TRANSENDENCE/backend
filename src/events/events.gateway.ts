@@ -19,6 +19,7 @@ import { User } from 'src/users/users.entity';
 import { QueueService } from './queue/queue.service';
 import { CreateFriendlyMatchDto } from './dto/create-friendly-match.dto';
 import { InvitationDto } from './dto/invitation.dto';
+import { SpectateDto } from './dto/spectate.dto';
 import { QueueDto } from './dto/queue.dto';
 import { FriendsStatusDto } from './dto/friends-status.dto';
 
@@ -109,8 +110,11 @@ export class EventGateway
   }
 
   @SubscribeMessage('refuse')
-  handleRefuseEvent(@MessageBody() invitation: InvitationDto) {
-    this.lobbyService.refuse(this.server, invitation);
+  handleRefuseEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() invitation: InvitationDto,
+  ): void {
+    this.lobbyService.refuse(this.server, client, invitation);
   }
 
   @SubscribeMessage('accept')
@@ -119,6 +123,14 @@ export class EventGateway
     @MessageBody() invitaton: InvitationDto,
   ) {
     this.lobbyService.accept(this.server, client, invitaton);
+  }
+
+  @SubscribeMessage('spectate')
+  handelSpectateEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() spectateDto: SpectateDto,
+  ) {
+    this.lobbyService.spectate(this.server, client, spectateDto.playerId);
   }
 
   /** Queue */
@@ -146,5 +158,18 @@ export class EventGateway
     const pongClient = this.clientService.get(client.id);
     pongClient.status = status;
     this.notify(pongClient, status);
+  }
+
+  @SubscribeMessage('getinvitaionlist')
+  handleGetInviteListEvent(@ConnectedSocket() client: Socket): void {
+    this.lobbyService.sendAllInvitations(this.server, client.id);
+  }
+
+  @SubscribeMessage('cancleInvitation')
+  handleCancleInvitationEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() inviteeId: number,
+  ): void {
+    this.lobbyService.cancelInvitation(this.server, client, inviteeId);
   }
 }
