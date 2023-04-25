@@ -374,6 +374,7 @@ export class ChannelsService {
     const channel = await this.channelsRepository.findOneBy({
       title: title,
     });
+    if (!channel) return ;
     const isAmIIn = await this.channelMemberRepository.findOneBy({
       channelId: channel.id,
       userId: user.id,
@@ -391,6 +392,7 @@ export class ChannelsService {
     });
     // this.channelsGateway.EmitBlockChannelOutSelf(channel, socket);
   }
+
   async userEnterPrivateChannel(
     channelId: number,
     password: string,
