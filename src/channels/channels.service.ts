@@ -329,9 +329,9 @@ export class ChannelsService {
     if (members.length === 1) {
       if (!(await this.usersService.getUser(curchannel.reciveId)))
         throw new NotFoundException('USER NOT FOUND');
-      if (!(await this.friendsService.isFriend(curchannel.reciveId, user.id)))
-        throw new NotFoundException('YOU ARE NOT FRIEND');
       if (curchannel.owner.id === user.id) {
+        if (!(await this.friendsService.isFriend(curchannel.reciveId, user.id)))
+          throw new NotFoundException('YOU ARE NOT FRIEND');
         if (await this.friendsService.isBlocked(curchannel.reciveId, user.id))
           return;
         const cm1 = await this.channelMemberRepository.create({
@@ -374,7 +374,7 @@ export class ChannelsService {
     const channel = await this.channelsRepository.findOneBy({
       title: title,
     });
-    if (!channel) return ;
+    if (!channel) return;
     const isAmIIn = await this.channelMemberRepository.findOneBy({
       channelId: channel.id,
       userId: user.id,
