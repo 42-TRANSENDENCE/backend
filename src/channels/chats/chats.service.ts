@@ -18,6 +18,7 @@ import { ChannelsService } from 'src/channels/channels.service';
 import { Cache } from 'cache-manager';
 import { ChannelMember } from '../entity/channelmember.entity';
 import { ChatResponseDto } from './dto/chats-response.dto';
+import { FriendsService } from 'src/users/friends/friends.service';
 
 @Injectable()
 export class ChatsService {
@@ -29,6 +30,9 @@ export class ChatsService {
     @InjectRepository(Channel)
     private channelsRepository: Repository<Channel>,
 
+    @Inject(forwardRef(() => FriendsService))
+    private readonly friendsService: FriendsService,
+
     @Inject(forwardRef(() => ChannelsService))
     private readonly channelsService: ChannelsService,
 
@@ -37,21 +41,30 @@ export class ChatsService {
   ) {}
   private logger = new Logger(ChatsService.name);
 
-  async getChatsDto(channelId: number): Promise<ChatResponseDto[]> {
+  async getChatsDto(channelId: number, user: User): Promise<ChatResponseDto[]> {
     const chatWithSender = await this.chatsRepository.find({
       where: { channelId: channelId },
       relations: { sender: true },
       order: { createdAt: 'ASC' },
     });
-    const memberDtos = chatWithSender.map(
-      (sender) => new ChatResponseDto(sender),
-    );
-    return memberDtos;
+    const doBlocks = await this.friendsService.getAllDoBlocks(user);
+    this.logger.debug(`get all block ${doBlocks}`);
+    const memberDtos = chatWithSender
+      .filter(
+        (chat) =>
+          !doBlocks.find((blockedUser) => blockedUser.id === chat.sender.id),
+      )
+      .map((sender) => {
+        if (sender && sender.sender) {
+          return new ChatResponseDto(sender);
+        }
+      });
+    return memberDtos.filter((dto) => dto !== undefined);
   }
   async getChats(channelId: number, user: User) {
     if (await this.channelsService.isBanned(channelId, user.id))
       throw new NotAcceptableException('YOU ARE BANNED');
-    return await this.getChatsDto(channelId);
+    return await this.getChatsDto(channelId, user);
   }
   //TODO: 채팅창 연결해서 User.id랑 연결해서 테스트 , 인자들 정리, entity 도 정리
   async isMutted(channelId: number, userId: number): Promise<boolean> {
