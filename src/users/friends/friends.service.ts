@@ -81,7 +81,15 @@ export class FriendsService {
     this.logger.debug(`${user.nickname} is blocked by: ${blockedBy.length}`);
     return blockedBy;
   }
-
+  async isBlocked(userId: number, otherUserId: number) {
+    const isblocked = await this.BlocksRepository.findOne({
+      where: { userId, otherUserId },
+    });
+    if (isblocked) {
+      return true;
+    }
+    return false;
+  }
   async getPendingRequests(user: User): Promise<User[]> {
     const pendingRequests = await this.friendsRepository.findPendingRequests(
       user.id,
@@ -218,16 +226,6 @@ export class FriendsService {
       otherUserId,
     );
     if (friendship) {
-      return true;
-    }
-    return false;
-  }
-
-  async isBlocked(userId: number, otherUserId: number): Promise<boolean> {
-    const blockship = await this.BlocksRepository.findOne({
-      where: { userId, otherUserId },
-    });
-    if (blockship) {
       return true;
     }
     return false;
