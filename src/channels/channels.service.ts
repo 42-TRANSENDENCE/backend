@@ -315,6 +315,8 @@ export class ChannelsService {
       if (!(await this.usersService.getUser(curchannel.reciveId)))
         throw new NotFoundException('USER NOT FOUND');
       if (curchannel.owner.id === user.id) {
+        if (await this.friendsService.isBlocked(curchannel.reciveId, user.id))
+          return;
         const cm1 = await this.channelMemberRepository.create({
           userId: curchannel.reciveId,
           channelId: curchannel.id,
@@ -324,6 +326,8 @@ export class ChannelsService {
       } else {
         if (!(await this.usersService.getUser(curchannel.owner.id)))
           throw new NotFoundException('USER NOT FOUND');
+        if (await this.friendsService.isBlocked(user.id, curchannel.owner.id))
+          return;
         const cm2 = await this.channelMemberRepository.create({
           userId: curchannel.owner.id,
           channelId: curchannel.id,
