@@ -791,6 +791,27 @@ export class ChannelsService {
     const joinChannel = await this.getMyChannels(user);
     for (const channel of joinChannel) {
       await this.userExitChannel(channel.id.toString(), user.id);
+      this.logger.log(`exit channel : ${channel.id}`);
+      const remainmember = await this.findByIdwithMember(channel.id);
+      if (
+        channel.status === ChannelStatus.PRIVATE &&
+        remainmember.members.length === 1
+      ) {
+        if (remainmember.members[0].userId === user.id) {
+          const curchannel = await this.channelsRepository.findOneBy({
+            id: channel.id,
+          });
+          await this.channelMemberRepository.delete({
+            userId: curchannel.reciveId,
+            channelId: channel.id,
+          });
+        }
+        await this.channelMemberRepository.delete({
+          userId: user.id,
+          channelId: channel.id,
+        });
+        await this.channelsRepository.delete(channel.id);
+      }
     }
   }
 }

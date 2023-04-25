@@ -24,7 +24,7 @@ export class ChannelMember {
   user: User;
 
   @ManyToOne(() => Channel, (channelMember) => channelMember.members, {
-    onDelete: 'SET NULL',
+    onDelete: 'CASCADE', // SET NULL
   })
   @JoinColumn({ name: 'channelId' })
   channel: Channel;
