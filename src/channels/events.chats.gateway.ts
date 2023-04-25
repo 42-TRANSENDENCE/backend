@@ -169,7 +169,7 @@ export class ChannelsGateway
     const sendChatDto = new ChatResponseDto(sendChat);
     // this.channelsService.get
     // block이 있으면 block배열 담아서
-    // 
+    //
     // socket
     //   .except(socket.id)
     //   .to(channelId.toString())
