@@ -12,13 +12,11 @@ import { Achievement } from 'src/achievement/achievement.entity';
 import { AchievementModule } from 'src/achievement/achievement.module';
 import { Blockship } from './friends/blockship.entity';
 import { ChannelsModule } from 'src/channels/channels.module';
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Friendship, Achievement, Blockship]),
     HttpModule,
     AchievementModule,
-    // ChannelsModule,
     forwardRef(() => ChannelsModule),
   ],
   providers: [UsersService, FriendsService, FriendsRepository],
