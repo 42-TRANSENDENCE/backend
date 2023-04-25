@@ -330,6 +330,7 @@ export class ChannelsService {
       if (!(await this.usersService.getUser(curchannel.reciveId)))
         throw new NotFoundException('USER NOT FOUND');
       if (curchannel.owner.id === user.id) {
+        this.logger.log('----------------------1');
         if (await this.friendsService.isBlocked(curchannel.reciveId, user.id))
           return;
         const cm1 = await this.channelMemberRepository.create({
@@ -339,6 +340,7 @@ export class ChannelsService {
         });
         await this.channelMemberRepository.save(cm1);
       } else {
+        this.logger.log('----------------------2');
         if (!(await this.usersService.getUser(curchannel.owner.id)))
           throw new NotFoundException('USER NOT FOUND');
         if (await this.friendsService.isBlocked(user.id, curchannel.owner.id))
@@ -360,6 +362,11 @@ export class ChannelsService {
     const channel = await this.channelsRepository.findOneBy({
       title: title,
     });
+    const isAmIIn = await this.channelMemberRepository.findOneBy({
+      channelId: channel.id,
+      userId: user.id,
+    });
+    if (!isAmIIn) return;
     if (!channel) throw new NotFoundException('CHANNEL NOT FOUND');
     const channelMember = await this.channelMemberRepository.findOneBy({
       userId: user.id,
@@ -370,7 +377,7 @@ export class ChannelsService {
       userId: user.id,
       channelId: channel.id,
     });
-    this.channelsGateway.EmitBlockChannelOutSelf(channel, socket);
+    // this.channelsGateway.EmitBlockChannelOutSelf(channel, socket);
   }
   async userEnterPrivateChannel(
     channelId: number,
