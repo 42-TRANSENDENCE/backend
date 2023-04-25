@@ -30,12 +30,6 @@ export class Channel {
   @Column('varchar', { length: 30, default: 'default' })
   title: string;
 
-  // @Column({ nullable: true })
-  // admin?: number[];
-  // userid 배열로 admin을 가지고 있을까 아니면 User객체 자체를 연결 할ㄲ ㅏ..  ? 굳이 객체를 연결할 필요가 있나?
-  // @ManyToMany(() => ChannelMember)
-  // @JoinTable()
-  // admins: ChannelMember[];
   @ManyToOne(() => User) // Add this relation
   @JoinColumn({ name: 'owner' }) // Specify the column name for the owner relationship
   owner: User;
@@ -52,6 +46,9 @@ export class Channel {
 
   @Column({ type: 'enum', enum: ChannelStatus })
   status: ChannelStatus;
+
+  @Column({ nullable: true })
+  reciveId: number;
 
   @OneToMany(() => ChannelMember, (channelmember) => channelmember.channel)
   members: ChannelMember[];
