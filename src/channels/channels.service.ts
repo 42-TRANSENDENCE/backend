@@ -330,7 +330,9 @@ export class ChannelsService {
       if (!(await this.usersService.getUser(curchannel.reciveId)))
         throw new NotFoundException('USER NOT FOUND');
       if (curchannel.owner.id === user.id) {
-        this.logger.log('----------------------1');
+        this.logger.log(
+          `1111 / reciveId: ${curchannel.reciveId}, userId: ${user.id}, curchannel.owner.id: ${curchannel.owner.id}`,
+        );
         if (await this.friendsService.isBlocked(curchannel.reciveId, user.id))
           return;
         const cm1 = await this.channelMemberRepository.create({
@@ -340,10 +342,14 @@ export class ChannelsService {
         });
         await this.channelMemberRepository.save(cm1);
       } else {
-        this.logger.log('----------------------2');
         if (!(await this.usersService.getUser(curchannel.owner.id)))
           throw new NotFoundException('USER NOT FOUND');
-        if (await this.friendsService.isBlocked(user.id, curchannel.owner.id))
+        if (
+          await this.friendsService.isBlocked(
+            curchannel.owner.id,
+            curchannel.reciveId,
+          )
+        )
           return;
         const cm2 = await this.channelMemberRepository.create({
           userId: curchannel.owner.id,
@@ -353,7 +359,7 @@ export class ChannelsService {
         await this.channelMemberRepository.save(cm2);
       }
     }
-    // this.channelsGateway.emitInMember(user.id, channel.id);
+    // this.channelsGateway.emitInMember(user.id, channel.id); reciveId: 99963, userId: 86806, curchannel.owner.id: 86806
   }
   async leaveDmbySelf(user: User, otherUser: User, socket: Socket) {
     // 닉네임 정렬해서 값찾기 ~ 똑같은거 찾아서 지우기
