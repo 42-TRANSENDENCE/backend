@@ -32,6 +32,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { Blockship } from 'src/users/friends/blockship.entity';
 import { FriendsService } from 'src/users/friends/friends.service';
 import { ChannelTotalIfoDto } from './dto/chanel-total-info.dto';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ChannelsService {
@@ -56,6 +57,9 @@ export class ChannelsService {
 
     @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
+
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
   private logger = new Logger(ChannelsService.name);
 
@@ -306,7 +310,10 @@ export class ChannelsService {
     });
     if (!channelMember) throw new NotFoundException('CHANNEL MEMBER NOT FOUND');
     const members = await this.getChannelMembers(channelId);
+    // 유저가 존재 하는지 안 하는지 체크해서 존재안 할때 예외처리
     if (members.length === 1) {
+      if (!(await this.usersService.getUser(curchannel.reciveId)))
+        throw new NotFoundException('USER NOT FOUND');
       if (curchannel.owner.id === user.id) {
         const cm1 = await this.channelMemberRepository.create({
           userId: curchannel.reciveId,
@@ -315,6 +322,8 @@ export class ChannelsService {
         });
         await this.channelMemberRepository.save(cm1);
       } else {
+        if (!(await this.usersService.getUser(curchannel.owner.id)))
+          throw new NotFoundException('USER NOT FOUND');
         const cm2 = await this.channelMemberRepository.create({
           userId: curchannel.owner.id,
           channelId: curchannel.id,
