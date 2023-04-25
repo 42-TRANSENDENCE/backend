@@ -130,24 +130,39 @@ export class ChannelsService {
         joinMembers: (await this.getChannelMembers(channelId)).length,
       };
       // this.logger.debug(JSON.stringify(howmany))
+      const blockedArray = await this.getBlockedArray(user);
+      this.logger.log(`this is blockedArray : ${JSON.stringify(blockedArray)}`);
       const total = await this.getOneChannelTotalInfoDto(
         channel,
         channelMembers,
         howmany,
         whoami.type || null,
+        blockedArray,
       );
       // this.logger.log(JSON.stringify(total));
       return total;
     } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
   }
 
+  async getBlockedArray(user: User) {
+    const blockships = await this.friendsService.getAllDoBlocks(user);
+    const blockedArray = blockships.map((blockship) => blockship.id);
+    return blockedArray;
+  }
   async getOneChannelTotalInfoDto(
     channel: Channel,
     channelMembers: ChannelMemberDto[],
     howmany: HowMany,
     myType?: MemberType,
+    blockedArray?: number[],
   ) {
-    return new ChannelTotalIfoDto(channel, channelMembers, howmany, myType);
+    return new ChannelTotalIfoDto(
+      channel,
+      channelMembers,
+      howmany,
+      myType,
+      blockedArray,
+    );
   }
 
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
@@ -338,7 +353,7 @@ export class ChannelsService {
     }
     // this.channelsGateway.emitInMember(user.id, channel.id);
   }
-  async leaveDmbySelf(user: User, otherUser: User) {
+  async leaveDmbySelf(user: User, otherUser: User, socket: Socket) {
     // 닉네임 정렬해서 값찾기 ~ 똑같은거 찾아서 지우기
     const sortedNicknames = [user.nickname, otherUser.nickname].sort();
     const title = sortedNicknames[0] + sortedNicknames[1];
@@ -355,7 +370,7 @@ export class ChannelsService {
       userId: user.id,
       channelId: channel.id,
     });
-    // this.channelsGateway.emitOutMember(user.id, channel.id);
+    this.channelsGateway.EmitBlockChannelOutSelf(channel, socket);
   }
   async userEnterPrivateChannel(
     channelId: number,
