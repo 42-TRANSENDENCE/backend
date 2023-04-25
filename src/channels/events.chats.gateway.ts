@@ -167,6 +167,13 @@ export class ChannelsGateway
     const channelId = sendChat.channelId;
     // 방에 연결된 사람, 즉 멤버한테만 보내야 한다. 그 소켓에 직접
     const sendChatDto = new ChatResponseDto(sendChat);
+    // this.channelsService.get
+    // block이 있으면 block배열 담아서
+    // 
+    // socket
+    //   .except(socket.id)
+    //   .to(channelId.toString())
+    //   .emit('message', sendChatDto);
     this.nsp.to(channelId.toString()).emit('message', sendChatDto);
   }
 
@@ -197,9 +204,10 @@ export class ChannelsGateway
     return this.nsp.emit('newChannel', curChannel);
   }
 
-  async EmitBlockChannelOutSelf(socketId: string, channelReturned) {
+  async EmitBlockChannelOutSelf(channelReturned, socket: Socket) {
     const curChannel = new EmitChannelInfoDto(channelReturned);
     // return this.io.to(socketId).emit('newChannel', curChannel);
+    return socket.emit('removeChannel', curChannel);
     // return this.sockets.emit('newChannel', curChannel);
   }
   async EmitChannelDmInfo(channelReturned) {

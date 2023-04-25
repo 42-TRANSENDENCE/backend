@@ -23,6 +23,7 @@ import { AchievementService } from 'src/achievement/achievement.service';
 import { Title } from 'src/achievement/achievement.entity';
 import { Blockship } from './blockship.entity';
 import { ChannelsService } from 'src/channels/channels.service';
+import { Socket } from 'socket.io';
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
 export class FriendsService {
@@ -126,7 +127,11 @@ export class FriendsService {
     return this.friendsRepository.save(friendship);
   }
 
-  async requestBlockship(user: User, id: number): Promise<Blockship> {
+  async requestBlockship(
+    user: User,
+    id: number,
+    socket: Socket,
+  ): Promise<Blockship> {
     if (user.id === id) {
       throw new BadRequestException('본인에게 친구 block 요청은 불가능합니다.');
     }
@@ -145,7 +150,7 @@ export class FriendsService {
       otherUser,
     });
     //
-    this.ChannelsService.leaveDmbySelf(user, otherUser);
+    this.ChannelsService.leaveDmbySelf(user, otherUser, socket);
     return this.BlocksRepository.save(blockship);
   }
 

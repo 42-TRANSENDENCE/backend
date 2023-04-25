@@ -21,6 +21,8 @@ import { FriendsService } from './friends.service';
 import { FriendResponseDto } from './dto/friend.response.dto';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
+import { ConnectedSocket } from '@nestjs/websockets';
+import { Socket } from 'socket.io';
 
 @Controller('users/friends')
 @UseGuards(JwtTwoFactorGuard)
@@ -121,8 +123,12 @@ export class FriendsController {
     description: '다른 사용자에게 친구 block 요청',
   })
   @ApiNotFoundResponse({ description: '사용자 정보 없음' })
-  requestBlockship(@GetUser() user, @Param('id') id: number) {
-    return this.friendsService.requestBlockship(user, id);
+  requestBlockship(
+    @GetUser() user,
+    @Param('id') id: number,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    return this.friendsService.requestBlockship(user, id, socket);
   }
 
   @Delete('block/:id')

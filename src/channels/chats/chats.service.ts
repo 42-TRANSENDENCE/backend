@@ -78,7 +78,12 @@ export class ChatsService {
     }
     return false;
   }
-  async sendChatToChannel(channelId: number, chat: string, user: User) {
+  async sendChatToChannel(
+    channelId: number,
+    chat: string,
+    user: User,
+    // socket: Socket,
+  ) {
     if (await this.isMutted(channelId, user.id))
       throw new NotAcceptableException('YOU ARE MUTED');
 
