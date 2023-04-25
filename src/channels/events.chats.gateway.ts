@@ -144,7 +144,6 @@ export class ChannelsGateway
   //   @ConnectedSocket() socket: Socket,
   //   @MessageBody('channelId') channelId: string,
   // ) {
-   
   // }
   @SubscribeMessage('leaveChannel')
   handleLeaveRoom(
