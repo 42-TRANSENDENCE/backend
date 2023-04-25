@@ -57,7 +57,7 @@ export class FriendsService {
     const blockships = await this.BlocksRepository.find({
       where: { userId: user.id },
       relations: { user: true, otherUser: true },
-    }); // Find all blockships where userId matches the user's id
+    });
     const friends: User[] = blockships.map((blockship) => {
       if (blockship.user.id === user.id) {
         return blockship.otherUser;
@@ -72,7 +72,7 @@ export class FriendsService {
     const blockships = await this.BlocksRepository.find({
       where: { otherUserId: user.id },
       relations: { user: true, otherUser: true },
-    }); // Find all blockships where otherUserId matches the user's id
+    });
     const blockedBy: User[] = blockships.map((blockship) => {
       if (blockship.user.id === user.id) {
         return blockship.otherUser;
