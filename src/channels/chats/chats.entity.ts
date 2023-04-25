@@ -14,8 +14,6 @@ import {
 import { User } from 'src/users/users.entity';
 import { isNotEmpty } from 'class-validator';
 
-// @Index('userId', ['senderId'], {})
-// @Index('channelId', ['channelId'], {})
 @Entity()
 export class Chat {
   @PrimaryGeneratedColumn()
@@ -36,11 +34,8 @@ export class Chat {
   @PrimaryColumn()
   channelId: number;
 
-  // @Column({ nullable: true })
-  // senderUserId: number;
-
   @ManyToOne(() => User, (user) => user.id, {
-    onDelete: 'SET NULL',
+    onDelete: 'CASCADE', // SET NULL
   })
   @JoinColumn({ name: 'senderId' })
   sender: User;
