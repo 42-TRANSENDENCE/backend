@@ -85,6 +85,11 @@ export class ChannelsService {
   async findById(id: number) {
     return this.channelsRepository.findOneBy({ id });
   }
+  async findOneChannelMember(channelId: number, userId: number) {
+    return this.channelMemberRepository.findOne({
+      where: { channelId: channelId, userId: userId },
+    });
+  }
 
   async getChannels() {
     const statuses = [ChannelStatus.PUBLIC, ChannelStatus.PROTECTED];
@@ -272,6 +277,7 @@ export class ChannelsService {
       title: title,
       owner: user,
       status: ChannelStatus.PRIVATE,
+      reciveId: receiver.id,
     });
     const channelReturned = await this.channelsRepository.save(channel);
     const channelMember = this.channelMemberRepository.create({
@@ -291,6 +297,33 @@ export class ChannelsService {
     this.channelsGateway.emitInMember(user.id, channel.id);
     this.channelsGateway.EmitChannelDmInfo(channelReturned);
     return { channelId: channelReturned.id };
+  }
+  async reJoinOtherUserOnlyDm(channelId: number, user: User) {
+    const curchannel = await this.findByIdWithOwner(channelId);
+    if (!curchannel) throw new NotFoundException('CHANNEL NOT FOUND');
+    const channelMember = await this.channelMemberRepository.findOneBy({
+      channelId: curchannel.id,
+    });
+    if (!channelMember) throw new NotFoundException('CHANNEL MEMBER NOT FOUND');
+    const members = await this.getChannelMembers(channelId);
+    if (members.length === 1) {
+      if (curchannel.owner.id === user.id) {
+        const cm1 = await this.channelMemberRepository.create({
+          userId: curchannel.reciveId,
+          channelId: curchannel.id,
+          type: MemberType.MEMBER,
+        });
+        await this.channelMemberRepository.save(cm1);
+      } else {
+        const cm2 = await this.channelMemberRepository.create({
+          userId: curchannel.owner.id,
+          channelId: curchannel.id,
+          type: MemberType.MEMBER,
+        });
+        await this.channelMemberRepository.save(cm2);
+      }
+    }
+    // this.channelsGateway.emitInMember(user.id, channel.id);
   }
   async leaveDmbySelf(user: User, otherUser: User) {
     // 닉네임 정렬해서 값찾기 ~ 똑같은거 찾아서 지우기
@@ -402,6 +435,14 @@ export class ChannelsService {
     return false;
   }
 
+  async isPrivate(channelId: number) {
+    const curChannel = await this.channelsRepository.findOne({
+      where: { id: channelId },
+    });
+    if (curChannel.status === ChannelStatus.PRIVATE) return true;
+    return false;
+  }
+
   async isOwnerinChannel(channelId: number, userId: number) {
     const curChannelMember = await this.channelMemberRepository.findOneBy({
       channelId: channelId,
@@ -442,7 +483,7 @@ export class ChannelsService {
   }
 
   // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
-  async userExitChannel(socket: Socket, channelId: string, userId: number) {
+  async userExitChannel(channelId: string, userId: number) {
     // 이러면 내가 무슨 user 인지 알수 있나 .. ?
     // channelId  가 채널의 id 이겠지 ?
     // 채팅방 오너가 나가면 채팅방 삭제.
@@ -695,5 +736,12 @@ export class ChannelsService {
     const key = `userTosocket:${userId}`;
     const socketlist = (await this.cacheManager.get<string[]>(key)) || [];
     return socketlist;
+  }
+
+  async exitAlljoinedChannel(user: User): Promise<void> {
+    const joinChannel = await this.getMyChannels(user);
+    for (const channel of joinChannel) {
+      await this.userExitChannel(channel.id.toString(), user.id);
+    }
   }
 }

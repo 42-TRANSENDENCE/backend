@@ -83,12 +83,12 @@ export class ChatsService {
     });
     // this.logger.log(chats.sender.id);
     await this.chatsRepository.save(chats);
-    // const testChat = await this.chatsRepository.findOne({
-    //   where: { id: chats.id },
-    //   relations: {
-    //     sender: true,
-    //   },
-    // });
+    //private 일때만 확인하게 하기
+    if (await this.channelsService.isPrivate(channelId))
+      await this.channelsService.reJoinOtherUserOnlyDm(channelId, user);
+
+    // 여기 에서 채널의 상태가 Private일때만 상대방이 채팅방에 없을때 자동으로 넣어주기만 하고 join은 안 시키기.
+    // Block이면 채팅안 보내기
     this.channelsGateway.sendEmitMessage(chats).catch((error) => {
       console.error('Failed to send message:', error);
     });
