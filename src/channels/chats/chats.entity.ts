@@ -5,14 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Entity,
-  Index,
   ManyToOne,
   JoinColumn,
   PrimaryColumn,
-  OneToOne,
 } from 'typeorm';
 import { User } from 'src/users/users.entity';
-import { isNotEmpty } from 'class-validator';
 
 @Entity()
 export class Chat {
