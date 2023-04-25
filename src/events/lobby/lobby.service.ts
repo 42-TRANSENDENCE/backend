@@ -151,8 +151,8 @@ export class LobbyService {
   }
 
   accept(server: Server, client: Socket, invitation: InvitationDto) {
-    const p1 = invitation.from;
-    const p2 = invitation.to;
+    const p1: PongClient = this.clientService.get(invitation.from.id);
+    const p2: PongClient = this.clientService.get(invitation.to.id);
 
     if (
       p1.status !== ClientStatus.ONLINE ||
