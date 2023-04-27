@@ -4,7 +4,6 @@ import {
   Param,
   Post,
   Body,
-  Res,
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
@@ -22,11 +21,8 @@ import { ChannelsService } from './channels.service';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
-import { Response } from 'express';
 import { User } from 'src/users/users.entity';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
-import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
-import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
 import { CreateDmDto } from './dto/create-dm.dto';
 
 @ApiTags('CHAT')
