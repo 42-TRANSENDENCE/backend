@@ -287,6 +287,7 @@ export class ChannelsService {
           channelId: isDuplicate.id,
           type: MemberType.MEMBER,
         });
+        this.channelsGateway.emitInMember(user.id, isDuplicate.id);
         await this.channelMemberRepository.save(channelMember);
         // 나한테나, 상대방한테만 emit해야한다..
         // this.channelsGateway.emitInMember(user.id, isDuplicate.id);
@@ -309,6 +310,7 @@ export class ChannelsService {
       channelId: channelReturned.id,
       type: MemberType.MEMBER,
     });
+    this.channelsGateway.emitInMember(user.id, channelReturned.id);
     await this.channelMemberRepository.save(channelMember);
 
     const channelMember2 = this.channelMemberRepository.create({
@@ -316,9 +318,10 @@ export class ChannelsService {
       channelId: channelReturned.id,
       type: MemberType.MEMBER,
     });
+    this.channelsGateway.emitInMember(receiver.id, channelReturned.id);
     await this.channelMemberRepository.save(channelMember2);
 
-    this.channelsGateway.emitInMember(user.id, channel.id);
+    // this.channelsGateway.emitInMember(user.id, channel.id);
     this.channelsGateway.EmitChannelDmInfo(channelReturned);
     return { channelId: channelReturned.id };
   }
