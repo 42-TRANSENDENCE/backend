@@ -24,6 +24,7 @@ import { FriendsService } from './friends/friends.service';
 import { UserResponse } from './dto/user.response.dto';
 import { Achievement, Title } from 'src/achievement/achievement.entity';
 import { ChannelsService } from 'src/channels/channels.service';
+
 @Injectable()
 export class UsersService {
   private logger: Logger = new Logger(UsersService.name);
