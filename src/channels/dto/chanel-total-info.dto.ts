@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ChannelStatus } from '../entity/channels.entity';
 import { Channel } from '../entity/channels.entity';
-import { ChannelMember, MemberType } from '../entity/channelmember.entity';
+import { MemberType } from '../entity/channelmember.entity';
 import { HowMany } from '../events.chats.gateway';
 import { ChannelMemberDto } from './channel-member.dto';
 
@@ -41,7 +41,5 @@ export class ChannelTotalIfoDto {
     this.howmany = howmany;
     this.myType = myType;
     this.blockedArr = blockedArr;
-    // this.nickname = channel.owner.nickname;
-    // this.owner = channel.owner.id;
   }
 }
