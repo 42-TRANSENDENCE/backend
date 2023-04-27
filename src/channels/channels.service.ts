@@ -97,6 +97,7 @@ export class ChannelsService {
 
   async getChannels() {
     const statuses = [ChannelStatus.PUBLIC, ChannelStatus.PROTECTED];
+    // const channels =
     const channels = await this.channelsRepository
       .createQueryBuilder('channel')
       .leftJoinAndSelect('channel.owner', 'owner')
@@ -131,7 +132,7 @@ export class ChannelsService {
       };
       // this.logger.debug(JSON.stringify(howmany))
       const blockedArray = await this.getBlockedArray(user);
-      this.logger.log(`this is blockedArray : ${JSON.stringify(blockedArray)}`);
+      // this.logger.log(`TEST : ${user.id} this is blockedArray : ${JSON.stringify(blockedArray)}`);
       const total = await this.getOneChannelTotalInfoDto(
         channel,
         channelMembers,
@@ -144,7 +145,7 @@ export class ChannelsService {
     } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
   }
 
-  async getBlockedArray(user: User) {
+  async getBlockedArray(user: User): Promise<number[]> {
     const blockships = await this.friendsService.getAllDoBlocks(user);
     const blockedArray = blockships.map((blockship) => blockship.id);
     return blockedArray;
@@ -247,7 +248,11 @@ export class ChannelsService {
     });
     await this.channelMemberRepository.save(channelMember);
   }
-
+  async emitBlockShip(user: User) {
+    const socket = await this.getSocketList(user.id);
+    this.logger.log(`this is socket : ${socket}`);
+    // this.channelsGateway.emitBlockShip(socket);
+  }
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
   // TODO: A가 B에게 DM 보내면 방 1 생성, B가 A에게 DM 보내면 방 2 생성 되면 안됨!
   // 한채팅방에 2명이 있는지 확인 해야함.
@@ -386,6 +391,7 @@ export class ChannelsService {
       channelId: channel.id,
     });
     if (!channelMember) throw new NotFoundException('CHANNEL MEMBER NOT FOUND');
+    this.channelsGateway.emitOutMember(user.id, +channel.id);
     await this.channelMemberRepository.delete({
       userId: user.id,
       channelId: channel.id,
@@ -550,10 +556,12 @@ export class ChannelsService {
       this.logger.debug(curChannel.status === ChannelStatus.PRIVATE);
       if (curChannel.status === ChannelStatus.PRIVATE) {
         if (curChannel.members.length === 1) {
+          this.channelsGateway.emitOutMember(userId, +channelId);
           await this.channelMemberRepository.delete({ channelId: +channelId });
           this.channelsGateway.EmitDeletChannelInfo(curChannel);
           await this.channelsRepository.delete({ id: +channelId });
         } else {
+          this.channelsGateway.emitOutMember(userId, +channelId);
           await this.channelMemberRepository.delete({
             userId: userId,
             channelId: +channelId,
@@ -561,6 +569,7 @@ export class ChannelsService {
         }
       } else if (+curChannel.owner.id === +userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
+        this.channelsGateway.emitOutMember(userId, +channelId);
         await this.channelMemberRepository.delete({ channelId: +channelId });
         this.channelsGateway.EmitDeletChannelInfo(curChannel);
         await this.channelsRepository.delete({ id: +channelId });
@@ -575,11 +584,11 @@ export class ChannelsService {
         if (!curChannelMembers)
           throw new NotFoundException('Member in this Channel does not exist!');
         else {
+          this.channelsGateway.emitOutMember(userId, +channelId);
           await this.channelMemberRepository.delete({
             userId: userId,
             channelId: +channelId,
           });
-          // this.channelsGateway.emitOutMember(userId, +channelId);
         }
       }
     } catch (error) {
@@ -626,7 +635,7 @@ export class ChannelsService {
       // this.logger.log(JSON.stringify(cm));
       this.channelBanMemberRepository.save(cm);
     }
-    this.channelsGateway.emitOutMember(userId, channelId);
+    this.channelsGateway.emitOutMember(userId, +channelId);
     // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
     // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
   }
