@@ -348,6 +348,7 @@ export class ChannelsService {
           type: MemberType.MEMBER,
         });
         await this.channelMemberRepository.save(cm1);
+        this.channelsGateway.emitInMember(curchannel.reciveId, curchannel.id);
       } else {
         if (!(await this.usersService.getUser(curchannel.owner.id)))
           throw new NotFoundException('USER NOT FOUND');
@@ -371,6 +372,7 @@ export class ChannelsService {
           type: MemberType.MEMBER,
         });
         await this.channelMemberRepository.save(cm2);
+        this.channelsGateway.emitInMember(curchannel.owner.id, curchannel.id);
       }
     }
     // this.channelsGateway.emitInMember(user.id, channel.id); reciveId: 99963, userId: 86806, curchannel.owner.id: 86806
