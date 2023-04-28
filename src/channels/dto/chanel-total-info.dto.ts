@@ -24,15 +24,15 @@ export class ChannelTotalIfoDto {
   @ApiProperty()
   myType: MemberType;
 
-  @ApiProperty()
-  blockedArr: number[];
+  // @ApiProperty()
+  // blockedArr: number[];
 
   constructor(
     channel: Channel,
     channelMembers: ChannelMemberDto[],
     howmany: HowMany,
     myType: MemberType,
-    blockedArr: number[],
+    // blockedArr: number[],
   ) {
     this.id = channel.id;
     this.title = channel.title;
@@ -40,6 +40,6 @@ export class ChannelTotalIfoDto {
     this.channelStatus = channel.status;
     this.howmany = howmany;
     this.myType = myType;
-    this.blockedArr = blockedArr;
+    // this.blockedArr = blockedArr;
   }
 }
