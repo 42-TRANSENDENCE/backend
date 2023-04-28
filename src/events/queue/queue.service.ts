@@ -15,9 +15,9 @@ export class QueueService {
   private specialGameQueue: string[] = [];
 
   constructor(
-    private readonly playerService: ClientService,
+    private readonly clientService: ClientService,
     private readonly gameService: GameService,
-  ) {}
+  ) { }
 
   joinQueue(server: Server, client: Socket, data: QueueDto) {
     const queue =
@@ -55,8 +55,8 @@ export class QueueService {
 
   // ! Match Making System
   private matchMaking(server: Server, queue: string[], mode: GameMode) {
-    const pongClient1: PongClient = this.playerService.get(queue.shift());
-    const pongClient2: PongClient = this.playerService.get(queue.shift());
+    const pongClient1: PongClient = this.clientService.get(queue.shift());
+    const pongClient2: PongClient = this.clientService.get(queue.shift());
 
     const roomId = `game_${uuidv4()}`;
     pongClient1.room = roomId;
@@ -64,6 +64,8 @@ export class QueueService {
     pongClient2.room = roomId;
     pongClient2.status = ClientStatus.INGAME;
 
+    this.clientService.notify(server, pongClient1, pongClient1.status);
+    this.clientService.notify(server, pongClient2, pongClient2.status);
     const matchInfo: MatchDto = {
       p1: pongClient1,
       p2: pongClient2,
