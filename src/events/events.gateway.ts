@@ -23,9 +23,6 @@ import { SpectateDto } from './dto/spectate.dto';
 import { QueueDto } from './dto/queue.dto';
 import { FriendsStatusDto } from './dto/friends-status.dto';
 
-export interface UserWithStaus extends User {
-  status: ClientStatus;
-}
 
 @WebSocketGateway()
 export class EventGateway
