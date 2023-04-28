@@ -248,11 +248,26 @@ export class ChannelsService {
     });
     await this.channelMemberRepository.save(channelMember);
   }
-  async emitBlockShip(user: User) {
-    const socket = await this.getSocketList(user.id);
-    this.logger.log(`this is socket : ${socket}`);
-    // this.channelsGateway.emitBlockShip(socket);
-  }
+  // async emitBlockShip(user: User) {
+  //   const socketId = await this.getSocketList(user.id);
+  //   let ls;
+  //   const socketIde = this.channelsGateway.getUserSocketMap(user.id);
+  //   this.logger.log(`this is socket : ${JSON.stringify(socketIde)}`);
+  //   // for (ls of socketId) {
+  //   //   this.logger.log(`this is socket : ${ls}`);
+  //   // }
+  //   // this.logger.log(`this is socket : ${socketId}`);
+  //   // this.channelsGateway.emitBlockShip(socketId);
+  // }
+  // async emitUnBlockShip(userId: number) {
+  //   const socketId = await this.getSocketList(userId);
+  //   let ls;
+  //   for (ls of socketId) {
+  //     this.logger.log(`this is socket : ${ls}`);
+  //   }
+  //   this.logger.log(`this is socket when unblock : ${socketId}`);
+  //   // this.channelsGateway.emitUnBlockShip(socketId);
+  // }
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
   // TODO: A가 B에게 DM 보내면 방 1 생성, B가 A에게 DM 보내면 방 2 생성 되면 안됨!
   // 한채팅방에 2명이 있는지 확인 해야함.
@@ -396,12 +411,12 @@ export class ChannelsService {
       channelId: channel.id,
     });
     if (!channelMember) throw new NotFoundException('CHANNEL MEMBER NOT FOUND');
-    this.channelsGateway.emitOutMember(user.id, +channel.id);
+    // this.channelsGateway.emitOutMember(user.id, +channel.id);
     await this.channelMemberRepository.delete({
       userId: user.id,
       channelId: channel.id,
     });
-    // this.channelsGateway.EmitBlockChannelOutSelf(channel, socket);
+    this.channelsGateway.EmitBlockChannelOutSelf(channel, socket);
   }
 
   async userEnterPrivateChannel(
@@ -561,12 +576,12 @@ export class ChannelsService {
       this.logger.debug(curChannel.status === ChannelStatus.PRIVATE);
       if (curChannel.status === ChannelStatus.PRIVATE) {
         if (curChannel.members.length === 1) {
-          this.channelsGateway.emitOutMember(userId, +channelId);
+          // this.channelsGateway.emitOutMember(userId, +channelId);
           await this.channelMemberRepository.delete({ channelId: +channelId });
           this.channelsGateway.EmitDeletChannelInfo(curChannel);
           await this.channelsRepository.delete({ id: +channelId });
         } else {
-          this.channelsGateway.emitOutMember(userId, +channelId);
+          // this.channelsGateway.emitOutMember(userId, +channelId);
           await this.channelMemberRepository.delete({
             userId: userId,
             channelId: +channelId,
@@ -574,7 +589,7 @@ export class ChannelsService {
         }
       } else if (+curChannel.owner.id === +userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
-        this.channelsGateway.emitOutMember(userId, +channelId);
+        // this.channelsGateway.emitOutMember(userId, +channelId);
         await this.channelMemberRepository.delete({ channelId: +channelId });
         this.channelsGateway.EmitDeletChannelInfo(curChannel);
         await this.channelsRepository.delete({ id: +channelId });
@@ -589,7 +604,7 @@ export class ChannelsService {
         if (!curChannelMembers)
           throw new NotFoundException('Member in this Channel does not exist!');
         else {
-          this.channelsGateway.emitOutMember(userId, +channelId);
+          // this.channelsGateway.emitOutMember(userId, +channelId);
           await this.channelMemberRepository.delete({
             userId: userId,
             channelId: +channelId,
@@ -640,6 +655,7 @@ export class ChannelsService {
       // this.logger.log(JSON.stringify(cm));
       this.channelBanMemberRepository.save(cm);
     }
+    this.userExitChannel(channelId.toString(), userId);
     this.channelsGateway.emitOutMember(userId, +channelId);
     // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
     // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
@@ -666,7 +682,8 @@ export class ChannelsService {
       });
       this.channelBanMemberRepository.save(cm);
     }
-    this.channelsGateway.emitOutMember(userId, channelId);
+    this.userExitChannel(channelId.toString(), userId);
+    // this.channelsGateway.emitOutMember(userId, channelId);
     // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
     // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
   }
@@ -765,6 +782,7 @@ export class ChannelsService {
       const user: User = await this.authService.getUserFromAuthenticationToken(
         authenticationToken,
       );
+      this.logger.log(`channel Service in user: ${JSON.stringify(user.id)}`);
       return user;
     } catch (err) {
       return null;
@@ -772,7 +790,8 @@ export class ChannelsService {
   }
 
   async mappingUserToSocketId(userId: number, socketId: string): Promise<void> {
-    const key = `userTosocket:${userId}`;
+    const key = `user:${userId}:socket`;
+    this.logger.log(`mapping check key : ${key}`);
     const mappingList = (await this.cacheManager.get<string[]>(key)) || [];
     this.logger.log(`check before value  mappingList : ${mappingList}`);
     // if (!mappingList.includes(socketId)) {
@@ -780,11 +799,11 @@ export class ChannelsService {
     mappingList.push(socketId);
     await this.cacheManager.set(key, mappingList);
     // }
-    this.logger.log(`check mappingList : ${mappingList}`);
+    this.logger.log(`key : ${key} check mappingList : ${mappingList}`);
   }
 
   async connectAlredyJoinedChannel(user: User, socket: Socket) {
-    this.logger.log(user.id);
+    // this.logger.log(user.id);
     const myChannels = await this.getMyChannels(user);
     // this.logger.debug(JSON.stringify(await this.getMyChannels(user)));
     const channelIds: number[] = [];
@@ -795,9 +814,12 @@ export class ChannelsService {
     // this.logger.log(channelIds, socketId)
     this.channelsGateway.connectAlreadyChnnels(channelIds, socket);
   }
+
   async getSocketList(userId: number): Promise<string[]> {
-    const key = `userTosocket:${userId}`;
+    const key = `user:${userId}:socket`;
+    this.logger.log(`check key ~ : ${key}`);
     const socketlist = (await this.cacheManager.get<string[]>(key)) || [];
+    this.logger.debug(`socketlist: ${socketlist}`);
     return socketlist;
   }
 
