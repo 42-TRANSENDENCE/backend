@@ -655,8 +655,8 @@ export class ChannelsService {
       // this.logger.log(JSON.stringify(cm));
       this.channelBanMemberRepository.save(cm);
     }
-    this.channelsGateway.emitOutMember(userId, +channelId);
     this.userExitChannel(channelId.toString(), userId);
+    this.channelsGateway.emitOutMember(userId, +channelId);
     // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
     // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
   }
@@ -682,8 +682,8 @@ export class ChannelsService {
       });
       this.channelBanMemberRepository.save(cm);
     }
-    this.channelsGateway.emitOutMember(userId, +channelId);
     this.userExitChannel(channelId.toString(), userId);
+    this.channelsGateway.emitOutMember(userId, +channelId);
     // this.channelsGateway.emitOutMember(userId, channelId);
     // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
     // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
