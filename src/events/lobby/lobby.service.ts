@@ -20,7 +20,7 @@ export class LobbyService {
     private readonly clientService: ClientService,
     private readonly friendsService: FriendsService,
     private readonly gameService: GameService,
-  ) {}
+  ) { }
 
   invite(server: Server, client: Socket, matchInfo: CreateFriendlyMatchDto) {
     const player: PongClient | null = this.clientService.get(client.id);
@@ -179,6 +179,8 @@ export class LobbyService {
     server.to(p2.id).emit('match_maked', matchInfo);
     p1.status = ClientStatus.INGAME;
     p2.status = ClientStatus.INGAME;
+    this.clientService.notify(server, p1, p1.status);
+    this.clientService.notify(server, p2, p2.status);
   }
 
   spectate(server: Server, client: Socket, playerId: number) {

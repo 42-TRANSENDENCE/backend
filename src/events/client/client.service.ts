@@ -3,13 +3,17 @@ import { Server, Socket } from 'socket.io';
 import { AuthService } from 'src/auth/auth.service';
 import { User } from 'src/users/users.entity';
 import { ChangeStatusDto, PongClient, ClientStatus } from './client.interface';
+import { FriendsService } from 'src/users/friends/friends.service';
 import { parse } from 'cookie';
 
 @Injectable()
 export class ClientService {
   private clients: Set<PongClient> = new Set();
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly friendsService: FriendsService
+  ) { }
 
   add(pongClient: PongClient): boolean {
     if (this.getByUserId(pongClient.user.id)) {
@@ -65,7 +69,7 @@ export class ClientService {
     user: User,
     friends: User[],
     status: ClientStatus,
-  ) : void {
+  ): void {
     friends.forEach((friend) => {
       const pongClient = this.getByUserId(friend.id);
       if (pongClient) {
@@ -78,5 +82,15 @@ export class ClientService {
           .emit('change_status', changeStatusDto);
       }
     });
+  }
+
+  async notify(server: Server, pongClient: PongClient, status: ClientStatus) {
+    const friends = await this.friendsService.getAllFriends(pongClient.user);
+    this.notifyToFriends(
+      server,
+      pongClient.user,
+      friends,
+      status,
+    );
   }
 }

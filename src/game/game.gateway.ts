@@ -16,13 +16,12 @@ import { GamePlayDto, ReadyDto } from './game.interface';
 
 @WebSocketGateway({ namespace: '/game' })
 export class GameGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger: Logger = new Logger(GameGateway.name);
 
   @WebSocketServer() server: Namespace;
 
-  constructor(private readonly gameService: GameService) {}
+  constructor(private readonly gameService: GameService) { }
 
   afterInit() {
     this.logger.log(`Game Gateway created`);
