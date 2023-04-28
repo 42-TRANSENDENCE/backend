@@ -179,6 +179,8 @@ export class LobbyService {
     server.to(p2.id).emit('match_maked', matchInfo);
     p1.status = ClientStatus.INGAME;
     p2.status = ClientStatus.INGAME;
+    this.clientService.notify(server, p1, p1.status);
+    this.clientService.notify(server, p2, p2.status);
   }
 
   spectate(server: Server, client: Socket, playerId: number) {
