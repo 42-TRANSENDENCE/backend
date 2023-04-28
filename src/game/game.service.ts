@@ -93,6 +93,9 @@ export class GameService {
       const index = game.spectators.indexOf(readyInfo.userId);
 
       if (index !== -1) {
+        this.logger.debug("spectate start");
+        this.logger.debug(`관전자 전체 socket id : ${readyInfo.userId}`);
+        this.logger.debug(`관전자 게임 socket id : ${gameClient.id}`);
         game.spectators[index] = gameClient.id;
         gameClient.join(roomId);
       } else {
@@ -109,6 +112,7 @@ export class GameService {
       gameClient.emit('update_score', game.data.score);
       if (isPlayer) {
         this.__game_start(server, game);
+        this.__update_userstate(game, ClientStatus.INGAME);
       }
     }
   }
@@ -174,18 +178,25 @@ export class GameService {
   private findGameBySocketId(id: string): string | null {
     const values = this.games.values();
     for (const value of values) {
-      if (value.players.p1?.id === id || value.players.p2?.id === id) {
+      if (value.players.p1?.id === id || value.players.p2?.id === id)
         return value.gameId;
-      }
+      if (value.spectators.includes(id))
+        return value.gameId;
     }
+    return null;
   }
 
   quitGame(server: Namespace, client: Socket): void {
-    const gameId = this.findGameBySocketId(client.id);
+    const gameId: string = this.findGameBySocketId(client.id);
     if (!gameId) {
+      this.logger.error("gameid not found");
       return;
     }
-    const game = this.games.get(gameId);
+    const game: Game = this.games.get(gameId);
+    if (!game) {
+      this.logger.error("game not found");
+      return;
+    }
 
     if (game.players.p1.id === client.id) {
       game.data.score.p1 = -1;
@@ -198,6 +209,7 @@ export class GameService {
         game.spectators.splice(index, 1);
         client.leave(game.gameId);
       }
+      return;
     }
 
     server.to(game.gameId).emit('update_score', game.data.score);
@@ -235,10 +247,7 @@ export class GameService {
       }
 
       server.in(game.gameId).socketsLeave(game.gameId);
-      const Player1 = this.clientService.getByUserId(game.users.p1.id);
-      if (Player1) Player1.status = ClientStatus.ONLINE;
-      const Player2 = this.clientService.getByUserId(game.users.p2.id);
-      if (Player2) Player2.status = ClientStatus.ONLINE;
+      this.__update_userstate(game, ClientStatus.ONLINE);
       this.games.delete(game.gameId);
     }
   }
@@ -423,6 +432,19 @@ export class GameService {
       gameData.ballVel.y += 0.2;
     } else if (yPos < TABLE_TOP * 0.2) {
       gameData.ballVel.y -= 0.2;
+    }
+  }
+
+  private __update_userstate(game: Game, status: ClientStatus) {
+    const Player1 = this.clientService.getByUserId(game.users.p1.id);
+    if (Player1) {
+      Player1.status = status;
+      // this.clientService.notify(this.eventGateway.server, Player1, Player1.status);
+    }
+    const Player2 = this.clientService.getByUserId(game.users.p2.id);
+    if (Player2) {
+      Player2.status = status;
+      // this.clientService.notify(this.eventGateway.server, Player2, Player2.status);
     }
   }
 }
