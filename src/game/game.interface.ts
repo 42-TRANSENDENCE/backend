@@ -28,7 +28,7 @@ export interface Game {
   isReady: { p1: boolean; p2: boolean };
   players: { p1: Socket | null; p2: Socket | null };
   users: { p1: User; p2: User };
-  spectators: Array<PongClient>;
+  spectators: Array<string>;
   data: GameData;
   startTime: Date;
   endTime?: Date;
