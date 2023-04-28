@@ -150,7 +150,7 @@ export class FriendsService {
       user,
       otherUser,
     });
-    this.ChannelsService.leaveDmbySelf(user, otherUser, socket);
+    this.ChannelsService.leaveDmbySelf(user, otherUser);
     this.logger.log(`${user.id} blocked ${otherUser.id}`);
     // this.ChannelsService.emitBlockShip(user, otherUser);
     return this.BlocksRepository.save(blockship);

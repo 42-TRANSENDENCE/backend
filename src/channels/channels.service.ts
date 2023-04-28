@@ -44,9 +44,6 @@ export class ChannelsService {
     @InjectRepository(ChannelBanMember)
     private channelBanMemberRepository: Repository<ChannelBanMember>,
 
-    @InjectRepository(Blockship) // Inject Blockship entity
-    private blockshipRepository: Repository<Blockship>,
-
     @Inject(forwardRef(() => FriendsService))
     private readonly friendsService: FriendsService,
 
@@ -130,17 +127,12 @@ export class ChannelsService {
         ),
         joinMembers: (await this.getChannelMembers(channelId)).length,
       };
-      // this.logger.debug(JSON.stringify(howmany))
-      // const blockedArray = await this.getBlockedArray(user);
-      // this.logger.log(`TEST : ${user.id} this is blockedArray : ${JSON.stringify(blockedArray)}`);
       const total = await this.getOneChannelTotalInfoDto(
         channel,
         channelMembers,
         howmany,
         whoami.type || null,
-        // blockedArray,
       );
-      // this.logger.log(JSON.stringify(total));
       return total;
     } else throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
   }
@@ -273,6 +265,7 @@ export class ChannelsService {
   //   this.logger.log(`this is socket when unblock2 : ${socketId2}`);
   //   // this.channelsGateway.emitUnBlockShip(socketId);
   // }
+
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
   // TODO: A가 B에게 DM 보내면 방 1 생성, B가 A에게 DM 보내면 방 2 생성 되면 안됨!
   // 한채팅방에 2명이 있는지 확인 해야함.
@@ -298,9 +291,6 @@ export class ChannelsService {
         channelId: isDuplicate.id,
         userId: user.id,
       });
-      // const excurChannel = await this.channelsRepository.findOneBy({
-      //   id: isDuplicate.id,
-      // });
       if (!isMember) {
         const channelMember = this.channelMemberRepository.create({
           userId: user.id,
@@ -397,7 +387,7 @@ export class ChannelsService {
     }
     // this.channelsGateway.emitInMember(user.id, channel.id); reciveId: 99963, userId: 86806, curchannel.owner.id: 86806
   }
-  async leaveDmbySelf(user: User, otherUser: User, socket: Socket) {
+  async leaveDmbySelf(user: User, otherUser: User) {
     // 닉네임 정렬해서 값찾기 ~ 똑같은거 찾아서 지우기
     const sortedNicknames = [user.nickname, otherUser.nickname].sort();
     const title = sortedNicknames[0] + sortedNicknames[1];
@@ -421,7 +411,7 @@ export class ChannelsService {
       userId: user.id,
       channelId: channel.id,
     });
-    this.channelsGateway.EmitBlockChannelOutSelf(channel, socket);
+    this.channelsGateway.EmitBlockChannelOutSelf(channel);
   }
 
   async userEnterPrivateChannel(
@@ -564,9 +554,6 @@ export class ChannelsService {
 
   // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
   async userExitChannel(channelId: string, userId: number) {
-    // 이러면 내가 무슨 user 인지 알수 있나 .. ?
-    // channelId  가 채널의 id 이겠지 ?
-    // 채팅방 오너가 나가면 채팅방 삭제.
     try {
       // const curChannel = await this.findByIdWithOwner(+channelId);
       const curChannel = await this.findByIdwithOwnerMember(+channelId);
@@ -594,7 +581,7 @@ export class ChannelsService {
         }
       } else if (+curChannel.owner.id === +userId) {
         // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
-        // this.channelsGateway.emitOutMember(userId, +channelId);
+        this.channelsGateway.emitOutMember(userId, +channelId);
         await this.channelMemberRepository.delete({ channelId: +channelId });
         this.channelsGateway.EmitDeletChannelInfo(curChannel);
         await this.channelsRepository.delete({ id: +channelId });
@@ -609,7 +596,7 @@ export class ChannelsService {
         if (!curChannelMembers)
           throw new NotFoundException('Member in this Channel does not exist!');
         else {
-          // this.channelsGateway.emitOutMember(userId, +channelId);
+          this.channelsGateway.emitOutMember(userId, +channelId);
           await this.channelMemberRepository.delete({
             userId: userId,
             channelId: +channelId,
@@ -661,7 +648,7 @@ export class ChannelsService {
       this.channelBanMemberRepository.save(cm);
     }
     this.userExitChannel(channelId.toString(), userId);
-    this.channelsGateway.emitOutMember(userId, +channelId);
+    // this.channelsGateway.emitOutMember(userId, +channelId);
     // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
     // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
   }
@@ -689,7 +676,7 @@ export class ChannelsService {
     }
     // this.channelsGateway.exitWithSocketLeave(channelId, userId);
     this.userExitChannel(channelId.toString(), userId);
-    this.channelsGateway.emitOutMember(userId, +channelId);
+    // this.channelsGateway.emitOutMember(userId, +channelId);
     // this.channelsGateway.emitOutMember(userId, channelId);
     // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
     // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
