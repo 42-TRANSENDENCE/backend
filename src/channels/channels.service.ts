@@ -19,7 +19,7 @@ import { ChannelsGateway, HowMany } from './events.chats.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
-import { Namespace, Socket } from 'socket.io';
+import { Socket } from 'socket.io';
 import { ChannelBanMember } from './entity/channelbanmember.entity';
 
 import { Cache } from 'cache-manager';
@@ -29,7 +29,6 @@ import { CreateDmDto } from './dto/create-dm.dto';
 
 import { parse } from 'cookie';
 import { AuthService } from 'src/auth/auth.service';
-import { Blockship } from 'src/users/friends/blockship.entity';
 import { FriendsService } from 'src/users/friends/friends.service';
 import { ChannelTotalIfoDto } from './dto/chanel-total-info.dto';
 import { UsersService } from 'src/users/users.service';
@@ -94,7 +93,6 @@ export class ChannelsService {
 
   async getChannels() {
     const statuses = [ChannelStatus.PUBLIC, ChannelStatus.PROTECTED];
-    // const channels =
     const channels = await this.channelsRepository
       .createQueryBuilder('channel')
       .leftJoinAndSelect('channel.owner', 'owner')
@@ -102,8 +100,6 @@ export class ChannelsService {
         statuses,
       })
       .getMany();
-    //여기엔 유저 닉네임만 넣어주면 됨 .
-    // const user
     const channelDtos = channels.map((channel) => new ChannelIfoDto(channel));
     return channelDtos;
   }
@@ -113,14 +109,12 @@ export class ChannelsService {
     const channel = await this.findById(channelId);
     if (channel) {
       const channelMembers = await this.getChannelMembersDto(channelId);
-      // 이놈도 DTO로 ?
       const whoami = await this.channelMemberRepository.findOne({
         where: { channelId: channelId, userId: user.id },
       });
       // 밴된 멤버가 안에 있을경우 에러남.
       if (!whoami)
         throw new NotFoundException('CHECK MemberId ID IF IT IS EXIST');
-      // 여기에 title이랑 몇명 있는지 추가 (멤버 수 , 소켓 연결수 )
       const howmany: HowMany = {
         joinSockets: this.channelsGateway.getClientsInRoom(
           channelId.toString(),
@@ -148,15 +142,8 @@ export class ChannelsService {
     channelMembers: ChannelMemberDto[],
     howmany: HowMany,
     myType?: MemberType,
-    // blockedArray?: number[],
   ) {
-    return new ChannelTotalIfoDto(
-      channel,
-      channelMembers,
-      howmany,
-      myType,
-      // blockedArray,
-    );
+    return new ChannelTotalIfoDto(channel, channelMembers, howmany, myType);
   }
 
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
@@ -166,7 +153,6 @@ export class ChannelsService {
     });
     if (members.length === 0)
       throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
-    // return members;
     return members;
   }
 
@@ -212,7 +198,6 @@ export class ChannelsService {
 
   // 똑같은 title 이 중복 되는거 예외처리
   async createChannel(title: string, password: string, user: User) {
-    // 이거 환경변수로 관리
     const isDuplicate = await this.channelsRepository.findOneBy({
       title,
     });
@@ -232,7 +217,6 @@ export class ChannelsService {
       channel.password = hashedPassword;
     }
     const channelReturned = await this.channelsRepository.save(channel);
-    // this.logger.log(JSON.stringify(channelReturned))
     this.channelsGateway.EmitChannelInfo(channelReturned);
     const channelMember = this.channelMemberRepository.create({
       userId: user.id,
@@ -241,13 +225,8 @@ export class ChannelsService {
     });
     await this.channelMemberRepository.save(channelMember);
   }
-  
 
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
-  // TODO: A가 B에게 DM 보내면 방 1 생성, B가 A에게 DM 보내면 방 2 생성 되면 안됨!
-  // 한채팅방에 2명이 있는지 확인 해야함.
-  // 그리고 두명 이상 못들어가게 막아야함.
-  // 나가는경우 어떻게 처리 할지 생각
   async createDMChannel(user: User, receiver: CreateDmDto) {
     this.logger.log(
       `this is isBlocked : ${await this.friendsService.isBlocked(
@@ -256,7 +235,7 @@ export class ChannelsService {
       )}`,
     );
     if (await this.friendsService.isBlocked(user.id, receiver.id))
-      throw new NotAcceptableException('YOU ARE BLOCK THIS USER'); // statuscode 중복
+      throw new NotAcceptableException('YOU ARE BLOCK THIS USER');
     const sortedNicknames = [user.nickname, receiver.nickname].sort();
     const title = sortedNicknames[0] + sortedNicknames[1];
     const isDuplicate = await this.channelsRepository.findOneBy({
@@ -362,7 +341,6 @@ export class ChannelsService {
         this.channelsGateway.emitInMember(curchannel.owner.id, curchannel.id);
       }
     }
-    // this.channelsGateway.emitInMember(user.id, channel.id); reciveId: 99963, userId: 86806, curchannel.owner.id: 86806
   }
   async leaveDmbySelf(user: User, otherUser: User) {
     // 닉네임 정렬해서 값찾기 ~ 똑같은거 찾아서 지우기
@@ -398,12 +376,10 @@ export class ChannelsService {
     curChannel: Channel,
   ): Promise<returnStatusMessage> {
     if (password) {
-      // this.logger.log(`channel password : ${curChannel.password}`);
       const inputPasswordMatches = await bcrypt.compare(
         password,
         curChannel.password,
       );
-      // this.logger.log(inputPasswordMatches);
       if (!inputPasswordMatches) {
         throw new ForbiddenException('INVALID PASSWORD');
       } else {
@@ -413,7 +389,7 @@ export class ChannelsService {
         if (isInUser) throw new BadRequestException('Already in the channel');
         if (!isInUser) {
           const cm = this.channelMemberRepository.create({
-            userId: user.id, // user.id
+            userId: user.id,
             channelId: channelId,
             type: MemberType.MEMBER,
           });
@@ -421,8 +397,6 @@ export class ChannelsService {
           this.channelsGateway.emitInMember(user.id, channelId);
         }
         return { message: 'Enter Channel in successfully', status: 200 };
-        // channel.owner = User.getbyid()~ 해서 나중에 merge 하고 연결 해주자
-        // socket random 으로 만들어서
       }
     } else {
       // 비번방인데 비밀번호 입력 안 했을때
@@ -457,7 +431,6 @@ export class ChannelsService {
     const curChannel = await this.channelsRepository.findOneBy({
       id: channelId,
     });
-    // this.logger.log(await this.isBanned(channelId, user.id));
     if (curChannel.status === ChannelStatus.PRIVATE)
       throw new NotAcceptableException('WRONG ACCESS');
     if (await this.isBanned(channelId, user.id))
@@ -499,8 +472,6 @@ export class ChannelsService {
     return false;
   }
 
-  // 내가 이 채팅방에 owner 권한이 있는지
-  // 없으면  cut 있으면  admin 권한을  toUserid 에게 준다.
   async ownerGiveAdmin(channelId: number, toUserId: number, user: User) {
     const curChannel = await this.channelsRepository.findOne({
       where: { id: channelId },
@@ -529,13 +500,10 @@ export class ChannelsService {
     }
   }
 
-  // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔 해야 하나??
+  // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔
   async userExitChannel(channelId: string, userId: number) {
     try {
-      // const curChannel = await this.findByIdWithOwner(+channelId);
       const curChannel = await this.findByIdwithOwnerMember(+channelId);
-      // 근데 만약 그 채널에 없는 사람이 leave-room 이벤트 보내는 경우도 생각.
-      // this.logger.log(`curChannel : ${JSON.stringify(curChannel)}`);
       if (!curChannel) {
         throw new NotFoundException('CHANNEL DOSE NOT EXIST');
       }
@@ -545,19 +513,16 @@ export class ChannelsService {
       this.logger.debug(curChannel.status === ChannelStatus.PRIVATE);
       if (curChannel.status === ChannelStatus.PRIVATE) {
         if (curChannel.members.length === 1) {
-          // this.channelsGateway.emitOutMember(userId, +channelId);
           await this.channelMemberRepository.delete({ channelId: +channelId });
           this.channelsGateway.EmitDeletChannelInfo(curChannel);
           await this.channelsRepository.delete({ id: +channelId });
         } else {
-          // this.channelsGateway.emitOutMember(userId, +channelId);
           await this.channelMemberRepository.delete({
             userId: userId,
             channelId: +channelId,
           });
         }
       } else if (+curChannel.owner.id === +userId) {
-        // 멤버 먼저 삭제 하고  방자체를 삭제 ? 아님 그냥 방삭제
         this.channelsGateway.emitOutMember(userId, +channelId);
         await this.channelMemberRepository.delete({ channelId: +channelId });
         this.channelsGateway.EmitDeletChannelInfo(curChannel);
@@ -567,9 +532,8 @@ export class ChannelsService {
         //TODO:채널 안의 멤버 가 존재 하는지 안 하는지 쿼리
         const curChannelMembers = await this.channelMemberRepository
           .createQueryBuilder('channel_member')
-          .where('channel_member.userId = :userId', { userId: userId }) // 1 -> user.id
+          .where('channel_member.userId = :userId', { userId: userId })
           .getOne();
-        // const curChannelMembers = await this.findById(+channelId)
         if (!curChannelMembers)
           throw new NotFoundException('Member in this Channel does not exist!');
         else {
@@ -598,15 +562,6 @@ export class ChannelsService {
     this.logger.log(await this.isOwnerinChannel(channelId, user.id));
     if (!this.isOwnerinChannel(channelId, user.id))
       throw new MethodNotAllowedException('YOU HAVE NO PERMISSION');
-    // const isInUser = await this.channelBanMemberRepository
-    //   .createQueryBuilder('channel_ban_member')
-    //   .where('channel_ban_member.userId = :userId', {
-    //     userId: userId,
-    //     channelId: channelId,
-    //   }) // 1 -> user.id
-    //   // .leftJoinAndSelect('channel_ban_member.user', 'user')
-    //   .getOne();
-    // 내가 owner 인지 확인! 아니면 admin 인지 확인
     const isInUser = await this.channelBanMemberRepository.findOne({
       where: { userId: userId, channelId: channelId },
     });
@@ -615,22 +570,16 @@ export class ChannelsService {
     );
     if (isInUser) throw new MethodNotAllowedException('ALREADY BANNED');
     if (!isInUser) {
-      // this.channelsGateway.emitOutMember(userId, channelId);
       const cm = await this.channelBanMemberRepository.create({
-        userId: userId, // user.id
+        userId: userId,
         channelId: channelId,
         expiresAt: new Date('9999-12-31T23:59:59.999Z'),
       });
-      // this.logger.log(JSON.stringify(cm));
       this.channelBanMemberRepository.save(cm);
     }
     this.userExitChannel(channelId.toString(), userId);
-    // this.channelsGateway.emitOutMember(userId, +channelId);
-    // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
-    // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
   }
 
-  // Kick Post 요청 : 일단 얘는 10 초 kick  이다 . Banlist에 10 초로 넣어 놓자
   async postKickInChannel(channelId: number, userId: number, user: User) {
     const isInUser = await this.channelBanMemberRepository
       .createQueryBuilder('channel_ban_member')
@@ -653,10 +602,6 @@ export class ChannelsService {
     }
     // this.channelsGateway.exitWithSocketLeave(channelId, userId);
     this.userExitChannel(channelId.toString(), userId);
-    // this.channelsGateway.emitOutMember(userId, +channelId);
-    // this.channelsGateway.emitOutMember(userId, channelId);
-    // kick event emit  해 줘야 한다 . 그전에 방에서 제거 해야겠지? 근데 내가 kick event emit하면
-    // 프론트에서 leave-room 이벤트 나한테 주면 되긴함.
   }
 
   async isBanned(channelId: number, userId: number): Promise<boolean> {
@@ -702,7 +647,7 @@ export class ChannelsService {
 
     if (!mutelist.includes(userId)) {
       mutelist.push(userId);
-      await this.cacheManager.set(key, mutelist, 50000); // 임시
+      await this.cacheManager.set(key, mutelist, ttl);
     }
     this.logger.log(`check mutelist : ${mutelist}`);
     this.channelsGateway.emitMuteMember(userId, channelId);
@@ -780,15 +725,11 @@ export class ChannelsService {
   }
 
   async connectAlredyJoinedChannel(user: User, socket: Socket) {
-    // this.logger.log(user.id);
     const myChannels = await this.getMyChannels(user);
-    // this.logger.debug(JSON.stringify(await this.getMyChannels(user)));
     const channelIds: number[] = [];
     for (const channel of myChannels) {
-      this.logger.log(channel.id);
       channelIds.push(channel.id);
     }
-    // this.logger.log(channelIds, socketId)
     this.channelsGateway.connectAlreadyChnnels(channelIds, socket);
   }
 

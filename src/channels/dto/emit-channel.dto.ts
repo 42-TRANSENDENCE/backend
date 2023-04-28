@@ -1,6 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { ChannelMember, MemberType } from '../entity/channelmember.entity';
 import { ChannelStatus } from '../entity/channels.entity';
 
 export class EmitChannelInfoDto {

@@ -65,7 +65,7 @@ export class ClientService {
     user: User,
     friends: User[],
     status: ClientStatus,
-  ) : void {
+  ): void {
     friends.forEach((friend) => {
       const pongClient = this.getByUserId(friend.id);
       if (pongClient) {

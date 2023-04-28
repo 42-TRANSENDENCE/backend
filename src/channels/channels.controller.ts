@@ -75,8 +75,6 @@ export class ChannelsController {
     @GetUser() user: User,
   ) {
     const result = await this.channelsService.getChannelInfo(channelId, user);
-    // banMember 도 추가
-    // private 인지 알러면 채팅방 에 쿼리로 접근해서 알아와야 하는데.
     return result;
   }
   @ApiOperation({ summary: '채팅방 멤버 조회' })
@@ -103,7 +101,7 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌' })
-  @Post(':channelid/admin/:userid') // body 엔 아무것도 안 옴
+  @Post(':channelid/admin/:userid')
   @HttpCode(200)
   @UseGuards(JwtTwoFactorGuard)
   async ownerGiveAdmin(
@@ -114,7 +112,6 @@ export class ChannelsController {
     return this.channelsService.ownerGiveAdmin(channelId, toUserId, user);
   }
 
-  //TODO: 권한 설정으로 깔끔하게 처리 해야함.
   @ApiOperation({ summary: 'Ban 요청' })
   @Post(':channelid/ban/:userId')
   @HttpCode(200)
@@ -137,7 +134,6 @@ export class ChannelsController {
     @GetUser() user: User,
   ) {
     return this.channelsService.postKickInChannel(channelId, userId, user);
-    // return this.channelsService.addToKicklist(channelId, userId, 3000);
   }
 
   @ApiOperation({ summary: 'mute 요청' })
@@ -147,9 +143,9 @@ export class ChannelsController {
   async postMuteInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
-    @GetUser() user: User,
+    // @GetUser() user: User,
   ) {
-    return this.channelsService.addToMutelist(channelId, userId, 3000);
+    return this.channelsService.addToMutelist(channelId, userId, 50000);
   }
 
   @ApiOperation({ summary: '채널 비밀번호 변경' })
