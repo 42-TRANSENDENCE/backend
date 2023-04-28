@@ -23,7 +23,7 @@ export class ClientService {
     this.clients.delete(pongClient);
   }
 
-  get(id: string): PongClient {
+  get(id: string): PongClient | null {
     const values = this.clients.values();
     for (const pongClient of values) {
       if (pongClient.id === id) {
@@ -33,7 +33,7 @@ export class ClientService {
     return null;
   }
 
-  getByUserId(id: number): PongClient {
+  getByUserId(id: number): PongClient | null {
     const values = this.clients.values();
     for (const pongClient of values) {
       if (pongClient.user.id === id) {
@@ -47,7 +47,7 @@ export class ClientService {
     return this.clients.size;
   }
 
-  async getUserFromClient(client: Socket): Promise<User> {
+  async getUserFromClient(client: Socket): Promise<User> | null {
     try {
       const cookie = client.handshake.headers.cookie;
       const { Authentication: authenticationToken } = parse(cookie);
@@ -65,7 +65,7 @@ export class ClientService {
     user: User,
     friends: User[],
     status: ClientStatus,
-  ) {
+  ) : void {
     friends.forEach((friend) => {
       const pongClient = this.getByUserId(friend.id);
       if (pongClient) {

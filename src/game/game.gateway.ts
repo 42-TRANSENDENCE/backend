@@ -39,14 +39,6 @@ export class GameGateway
 
   /** GAME */
 
-  @SubscribeMessage('watch')
-  handleWatchEvent(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() userId: number,
-  ) {
-    this.gameService.watch(client, userId);
-  }
-
   @SubscribeMessage('ready')
   handleReadyEvent(
     @ConnectedSocket() client: Socket,

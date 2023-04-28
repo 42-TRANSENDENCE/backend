@@ -70,7 +70,6 @@ export class QueueService {
       roomId,
       mode,
     };
-    // server.to(roomId).emit('match_maked', matchInfo);
     server.to(pongClient1.id).emit('match_maked', matchInfo);
     server.to(pongClient2.id).emit('match_maked', matchInfo);
 
