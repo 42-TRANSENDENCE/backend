@@ -10,7 +10,6 @@ import { ChatsModule } from './channels/chats/chats.module';
 import { ChannelsModule } from './channels/channels.module';
 import { DatabaseModule } from './database/database.module';
 import { GameModule } from './game/game.module';
-import { EventsModules } from './channels/events.module';
 import { EventsModule } from './events/events.module';
 import { AchievementModule } from './achievement/achievement.module';
 
@@ -41,7 +40,6 @@ import { AchievementModule } from './achievement/achievement.module';
     UsersModule,
     ChatsModule,
     ChannelsModule,
-    EventsModules,
     EventsModule,
     GameModule,
     CacheModule.register(),
