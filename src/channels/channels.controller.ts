@@ -38,12 +38,7 @@ export class ChannelsController {
   async getChannels() {
     return this.channelsService.getChannels();
   }
-  @ApiOperation({ summary: 'Block 리스트 조회' })
-  @Get('blocklist')
-  @UseGuards(JwtTwoFactorGuard)
-  async getBlockList(@GetUser() user: User) {
-    return this.channelsService.getBlockedArray(user);
-  }
+
   @ApiOperation({ summary: '채팅방 만들기' })
   @ApiOkResponse({ description: '만들기 완료' })
   @ApiBadRequestResponse({ description: '이미 존재하는 채널 이름' })

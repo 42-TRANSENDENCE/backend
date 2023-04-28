@@ -66,6 +66,13 @@ export class FriendsController {
     );
   }
 
+  @ApiOperation({ summary: 'Block 리스트 조회' })
+  @Get('blocklist')
+  @UseGuards(JwtTwoFactorGuard)
+  async getBlockList(@GetUser() user) {
+    return this.friendsService.getBlockedArray(user);
+  }
+
   @Post('request/:id')
   @ApiOperation({
     summary: '친구 요청',

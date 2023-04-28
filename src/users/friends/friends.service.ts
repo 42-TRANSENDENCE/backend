@@ -24,6 +24,7 @@ import { Title } from 'src/achievement/achievement.entity';
 import { Blockship } from './blockship.entity';
 import { ChannelsService } from 'src/channels/channels.service';
 import { Socket } from 'socket.io';
+
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
 export class FriendsService {
@@ -149,8 +150,9 @@ export class FriendsService {
       user,
       otherUser,
     });
-    //
     this.ChannelsService.leaveDmbySelf(user, otherUser, socket);
+    this.logger.log(`${user.id} blocked ${otherUser.id}`);
+    // this.ChannelsService.emitBlockShip(user, otherUser);
     return this.BlocksRepository.save(blockship);
   }
 
@@ -222,6 +224,7 @@ export class FriendsService {
     if (!blockship) {
       throw new NotFoundException(friendshipNotFoundErr);
     }
+    // this.ChannelsService.emitUnBlockShip(user.id, id);
     return this.BlocksRepository.remove(blockship);
   }
 
@@ -234,5 +237,12 @@ export class FriendsService {
       return true;
     }
     return false;
+  }
+
+  async getBlockedArray(user: User): Promise<number[]> {
+    const blockships = await this.getAllDoBlocks(user);
+    const blockedArray = blockships.map((blockship) => blockship.id);
+    this.logger.log(`TEST : ${user.id} this is blockedArray : ${blockedArray}`);
+    return blockedArray;
   }
 }
