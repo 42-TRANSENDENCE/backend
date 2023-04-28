@@ -12,7 +12,7 @@ import {
 } from '@nestjs/websockets';
 
 import { Chat } from './chats/chats.entity';
-import { Server, Socket, Namespace } from 'socket.io';
+import { Socket, Namespace } from 'socket.io';
 import { ChannelsService } from 'src/channels/channels.service';
 import { leaveDto } from './dto/leave.dto';
 import { EmitChannelInfoDto } from './dto/emit-channel.dto';
@@ -50,8 +50,8 @@ export class ChannelsGateway
     const user: User = await this.channelsService.getUserFromSocket(socket);
     try {
       this.logger.debug(`handle connections  user: ${JSON.stringify(user.id)}`);
+      // if (!user) throw new NotFoundException('유저가 없습니다.');
     } catch (error) {}
-    // if (!user) throw new NotFoundException('유저가 없습니다.');
     if (user) {
       this.logger.log(`${user.nickname} : ${socket.id}`);
       this.channelsService.mappingUserToSocketId(user.id, socket.id);
@@ -59,7 +59,14 @@ export class ChannelsGateway
     }
   }
 
-  handleDisconnect(@ConnectedSocket() socket: Socket) {
+  async handleDisconnect(@ConnectedSocket() socket: Socket) {
+    const user = await this.channelsService.getUserFromSocket(socket);
+    try {
+      // if (!user) throw new WsException('유저가 없습니다.');
+      const userId = user.id;
+      this.logger.log(`${user.id}소켓 캐시 삭제 합니다.`);
+      this.channelsService.deletesocketCache(userId);
+    } catch (error) {}
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
     // socket.disconnect();
   }
@@ -166,12 +173,6 @@ export class ChannelsGateway
     const emitmember = new emitMemberDto(userId, channelId);
     this.nsp.to(channelId.toString()).emit('blockMember', emitmember);
   }
-  // async emitBlockShip(socketId: string[]) {
-  //   // const test = await this.channelsService.getSocketList(user.id);
-    
-  //   // this.logger.debug(JSON.stringify(test));
-  // }
-  // async emitUnBlockShip(userId: number, channelId: number) {}
   async emitMuteMember(userId: number, channelId: number) {
     const emitmember = new emitMemberDto(userId, channelId);
     this.nsp.to(channelId.toString()).emit('muteMember', emitmember);

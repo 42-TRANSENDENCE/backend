@@ -241,30 +241,7 @@ export class ChannelsService {
     });
     await this.channelMemberRepository.save(channelMember);
   }
-  // async emitBlockShip(user: User, otherUser: User) {
-  //   const socketId = await this.getSocketList(user.id);
-  //   const socketId2 = await this.getSocketList(otherUser.id);
-  //   // let ls;
-  //   // const socketIde = this.channelsGateway.getUserSocketMap(user.id);
-  //   this.logger.log(`this is socket : ${JSON.stringify(socketId)}`);
-  //   this.logger.log(`this is socket2 : ${JSON.stringify(socketId2)}`);
-  //   // for (ls of socketId) {
-  //   //   this.logger.log(`this is socket : ${ls}`);
-  //   // }
-  //   // this.logger.log(`this is socket : ${socketId}`);
-  //   // this.channelsGateway.emitBlockShip(socketId);
-  // }
-  // async emitUnBlockShip(userId: number, id: number) {
-  //   const socketId = await this.getSocketList(userId);
-  //   const socketId2 = await this.getSocketList(id);
-  //   // let ls;
-  //   // for (ls of socketId) {
-  //   //   this.logger.log(`this is socket : ${ls}`);
-  //   // }
-  //   this.logger.log(`this is socket when unblock : ${socketId}`);
-  //   this.logger.log(`this is socket when unblock2 : ${socketId2}`);
-  //   // this.channelsGateway.emitUnBlockShip(socketId);
-  // }
+  
 
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
   // TODO: A가 B에게 DM 보내면 방 1 생성, B가 A에게 DM 보내면 방 2 생성 되면 안됨!
@@ -788,17 +765,17 @@ export class ChannelsService {
     userId: number,
     socketId: string,
   ): Promise<void> {
-    const key = `user:${userId.toString()}:socket`;
-    this.logger.log(`mapping check key : ${key}, socketId : ${socketId}`);
-    const mappingList = (await this.cacheManager.get<string[]>(key)) || [];
+    const key = `user:${userId}:socket`;
+    // this.logger.log(`mapping check key : ${key}, socketId : ${socketId}`);
+    const mappingList = (await this.cacheManager.get<string>(key)) || [];
     this.logger.log(`check before value  mappingList : ${mappingList}`);
     // if (!mappingList.includes(socketId)) {
-    mappingList.splice(0);
-    mappingList.push(socketId);
-    await this.cacheManager.set(key, mappingList);
+    // mappingList.splice(0);
+    // mappingList.push(socketId);
+    await this.cacheManager.set(key, socketId);
     // }
-    this.logger.log(`key : ${key} check mappingList : ${mappingList}`);
-    const checkmappingList = (await this.cacheManager.get<string[]>(key)) || [];
+    // this.logger.log(`key : ${key} check mappingList : ${mappingList}`);
+    const checkmappingList = (await this.cacheManager.get<string>(key)) || [];
     this.logger.log(`check after value  mappingList : ${checkmappingList}`);
   }
 
@@ -819,11 +796,15 @@ export class ChannelsService {
     const key = `user:${userId}:socket`;
     this.logger.log(`check key ~ : ${key}, userId : ${userId}`);
     // const mappingList = (await this.cacheManager.get<string[]>(key)) || [];
-    const socketlist = (await this.cacheManager.get<string[]>(key)) || [];
+    const socketlist = (await this.cacheManager.get<string>(key)) || null;
     this.logger.debug(`socketlist: ${socketlist}`);
-    return socketlist[0];
+    return socketlist;
   }
 
+  async deletesocketCache(userId: number): Promise<void> {
+    const key = `user:${userId}:socket`;
+    await this.cacheManager.del(key);
+  }
   async exitAlljoinedChannel(user: User): Promise<void> {
     const joinChannel = await this.getMyChannels(user);
     for (const channel of joinChannel) {
