@@ -3,6 +3,7 @@ import { FriendsService } from 'src/users/friends/friends.service';
 import { GameService } from '../../game/game.service';
 import { ClientService } from '../client/client.service';
 import { LobbyService } from './lobby.service';
+import { AppModule } from 'src/app.module';
 
 describe('LobbyService', () => {
   let lobbyService: LobbyService;

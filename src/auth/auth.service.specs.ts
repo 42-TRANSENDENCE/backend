@@ -5,18 +5,21 @@ import { UsersService } from 'src/users/users.service';
 import { mockedConfigService } from 'src/utils/mocks/config.service';
 import { mockedJwtService } from 'src/utils/mocks/jwt.service';
 import { AuthService } from './auth.service';
+import { AppModule } from 'src/app.module';
+import { AuthModule } from './auth.module';
+import { UsersModule } from 'src/users/users.module';
 
 describe('AuthService', () => {
   let authService: AuthService;
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AuthService, ConfigService, JwtService, UsersService],
+      imports:[AppModule,UsersModule, AuthModule],
+      providers: [AuthService, JwtService, ConfigService, UsersService],
     })
-      .overrideProvider(ConfigService)
-      .useValue(mockedConfigService)
       .overrideProvider(JwtService)
       .useValue(mockedJwtService)
+      .overrideProvider(ConfigService)
+      .useValue(mockedConfigService)
       .overrideProvider(UsersService)
       .useValue({})
       .compile();

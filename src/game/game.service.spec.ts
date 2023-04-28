@@ -3,7 +3,6 @@ import { FriendsService } from 'src/users/friends/friends.service';
 import { GameService } from './game.service';
 import { HistoryService } from './history/history.service';
 import { ClientService } from '../events/client/client.service';
-
 describe('GameService', () => {
   let gameService: GameService;
 

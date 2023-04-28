@@ -19,12 +19,15 @@ export class UserSearchDto {
   isFriend: boolean;
 
   @ApiProperty()
+  isBlocked: boolean;
+
+  @ApiProperty()
   win: number;
 
   @ApiProperty()
   lose: number;
 
-  constructor(user: User, isFriend: boolean) {
+  constructor(user: User, isFriend: boolean, isBlocked: boolean) {
     this.id = user.id;
     this.nickname = user.nickname;
     this.avatar = user.avatar;
@@ -34,5 +37,6 @@ export class UserSearchDto {
     this.isFriend = isFriend;
     this.win = user.wins.length;
     this.lose = user.loses.length;
+    this.isBlocked = isBlocked;
   }
 }

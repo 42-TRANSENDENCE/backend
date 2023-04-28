@@ -6,9 +6,17 @@ import { QueueService } from './queue/queue.service';
 import { UsersModule } from 'src/users/users.module';
 import { GameModule } from 'src/game/game.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { ChannelsModule } from 'src/channels/channels.module';
+import { EventChatModule } from 'src/channels/events.module';
 
 @Module({
-  imports: [UsersModule, forwardRef(() => GameModule), AuthModule],
+  imports: [
+    UsersModule,
+    forwardRef(() => GameModule),
+    AuthModule,
+    ChannelsModule,
+    // forwardRef(() => EventChatModule),
+  ],
   providers: [EventGateway, LobbyService, ClientService, QueueService],
   exports: [ClientService],
 })

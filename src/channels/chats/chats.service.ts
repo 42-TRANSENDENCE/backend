@@ -2,21 +2,22 @@ import {
   forwardRef,
   Inject,
   Injectable,
-  UnauthorizedException,
   CACHE_MANAGER,
   Logger,
   NotFoundException,
+  NotAcceptableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Chat } from './chats.entity';
 import { User } from 'src/users/users.entity';
 import { ChannelsGateway } from 'src/channels/events.chats.gateway';
-import { Channel } from 'src/channels/channels.entity';
+import { Channel } from 'src/channels/entity/channels.entity';
 import { ChannelsService } from 'src/channels/channels.service';
 import { Cache } from 'cache-manager';
-import { ChannelMember } from '../channelmember.entity';
-// import { ChatResponseDto } from './dto/chats-response.dto';
+import { ChannelMember } from '../entity/channelmember.entity';
+import { ChatResponseDto } from './dto/chats-response.dto';
+import { FriendsService } from 'src/users/friends/friends.service';
 
 @Injectable()
 export class ChatsService {
@@ -28,6 +29,9 @@ export class ChatsService {
     @InjectRepository(Channel)
     private channelsRepository: Repository<Channel>,
 
+    @Inject(forwardRef(() => FriendsService))
+    private readonly friendsService: FriendsService,
+
     @Inject(forwardRef(() => ChannelsService))
     private readonly channelsService: ChannelsService,
 
@@ -36,71 +40,65 @@ export class ChatsService {
   ) {}
   private logger = new Logger(ChatsService.name);
 
-  async getChats(channelId: number, myId: number) {
-    return this.chatsRepository.find({ where: { channelId: channelId } });
+  async getChatsDto(channelId: number, user: User): Promise<ChatResponseDto[]> {
+    const chatWithSender = await this.chatsRepository.find({
+      where: { channelId: channelId },
+      relations: { sender: true },
+      order: { createdAt: 'ASC' },
+    });
+    const doBlocks = await this.friendsService.getAllDoBlocks(user);
+    this.logger.debug(`get all block ${doBlocks}`);
+    const memberDtos = chatWithSender
+      .filter(
+        (chat) =>
+          !doBlocks.find((blockedUser) => blockedUser.id === chat.sender.id),
+      )
+      .map((sender) => {
+        if (sender && sender.sender) {
+          return new ChatResponseDto(sender);
+        }
+      });
+    return memberDtos.filter((dto) => dto !== undefined);
   }
-  // async getChats(id: number, user): Promise<ChatResponseDto> {
-  //   // const user = await this.userRepository.findOne({
-  //   //   where: { id },
-  //   //   relations: { achievements: true, wins: true, loses: true },
-  //   // });
-  //   // if (!user) {
-  //   //   throw new NotFoundException(userNotFoundErr);
-  //   // }
-  //   const chat = await this.chatsRepository.findOne({
-  //     where: { id },
-  //     relations: { sender: true },
-  //   });
-  //   return new ChatResponseDto(user, chat);
-  // }
+  async getChats(channelId: number, user: User) {
+    if (await this.channelsService.isBanned(channelId, user.id))
+      throw new NotAcceptableException('YOU ARE BANNED');
+    return await this.getChatsDto(channelId, user);
+  }
   //TODO: 채팅창 연결해서 User.id랑 연결해서 테스트 , 인자들 정리, entity 도 정리
-  async isMutted(roomId: number, userId: number): Promise<boolean> {
-    const mutelist = await this.channelsService.getMutelist(roomId);
+  async isMutted(channelId: number, userId: number): Promise<boolean> {
+    const mutelist = await this.channelsService.getMutelist(channelId);
     this.logger.log(`this is mutelist  :  ${mutelist} , ${mutelist.length}`);
     for (const Id of mutelist) {
       if (+Id === userId) {
-        // this.logger.log(` id : ${Id}`);
         return true;
       }
     }
     return false;
   }
-  async sendChatToChannel(roomId: number, chat: string, user: User) {
-    if (await this.isMutted(roomId, user.id))
-      throw new UnauthorizedException('YOU ARE MUTED');
+  async sendChatToChannel(channelId: number, chat: string, user: User) {
+    if (await this.isMutted(channelId, user.id))
+      throw new NotAcceptableException('YOU ARE MUTED');
 
     const channelMember = await this.channelMembersRepository.find({
-      where: { channelId: roomId, userId: user.id },
+      where: { channelId: channelId, userId: user.id },
     });
-
     if (channelMember.length === 0)
       throw new NotFoundException('YOU ARE NOT A MEMBER');
 
     const chats = this.chatsRepository.create({
-      senderUserId: user.id,
       sender: user,
-      channelId: roomId,
+      channelId: channelId,
       content: chat,
     });
-    // this.logger.log(chats.sender.id);
     await this.chatsRepository.save(chats);
-    // this.logger.log(JSON.stringify(chats.sender.id));
-    // const test = await this.chatsRepository
-    //   .createQueryBuilder('chat')
-    //   .leftJoinAndSelect('chat.sender', 'sender')
-    //   .where('chat.id = :id', { id: chats.id })
-    //   .getOne();
-    // this.logger.log(test.sender.id);
-    const testChat = await this.chatsRepository.findOne({
-      where: { id: chats.id },
-      relations: {
-        sender: true,
-      },
-    });
-    // this.logger.log(`${testChat.content}`);
-    // this.logger.log(`${testChat.sender.id}`);
+    //private 일때만 확인하게 하기
+    if (await this.channelsService.isPrivate(channelId))
+      await this.channelsService.reJoinOtherUserOnlyDm(channelId, user);
+
     this.channelsGateway.sendEmitMessage(chats).catch((error) => {
       console.error('Failed to send message:', error);
     });
+    this.channelsGateway.sendNewEmitMessage(chats);
   }
 }

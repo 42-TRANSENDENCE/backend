@@ -4,12 +4,12 @@ import {
   Param,
   Post,
   Body,
-  Res,
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
   ParseIntPipe,
   HttpCode,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -21,11 +21,9 @@ import { ChannelsService } from './channels.service';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { EnterChannelDto } from './dto/enter-channel.dto';
-import { Response } from 'express';
 import { User } from 'src/users/users.entity';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
-import { JwtAuthGuard } from 'src/common/guard/jwt-auth.guard';
-import { JwtRefreshAuthGuard } from 'src/common/guard/jwt-refresh-auth.guard';
+import { CreateDmDto } from './dto/create-dm.dto';
 
 @ApiTags('CHAT')
 @Controller('channels')
@@ -38,7 +36,6 @@ export class ChannelsController {
   @UseGuards(JwtTwoFactorGuard)
   @Get()
   async getChannels() {
-    // return this.channelsService.getMyChannels(u)
     return this.channelsService.getChannels();
   }
 
@@ -47,18 +44,17 @@ export class ChannelsController {
   @ApiBadRequestResponse({ description: '이미 존재하는 채널 이름' })
   @Post()
   @UseGuards(JwtTwoFactorGuard)
-  async createChannels(@Body() body: CreateChannelDto, @GetUser() user: User) {
-    return this.channelsService.createChannels(
-      body.title,
-      body.password,
-      user.id,
-    );
+  async createChannel(@Body() body: CreateChannelDto, @GetUser() user: User) {
+    return this.channelsService.createChannel(body.title, body.password, user);
   }
 
   @ApiOperation({ summary: 'DM방 만들기' })
   @Post('dm')
   @UseGuards(JwtTwoFactorGuard)
-  async createDMChannels(@GetUser() user: User, @Body() reciveUser: User) {
+  async createDMChannels(
+    @GetUser() user: User,
+    @Body() reciveUser: CreateDmDto,
+  ) {
     return this.channelsService.createDMChannel(user, reciveUser);
   }
 
@@ -66,7 +62,6 @@ export class ChannelsController {
   @Get('mychannels')
   @UseGuards(JwtTwoFactorGuard)
   async getMyChannels(@GetUser() user) {
-    // return this.channelsService.getMyChannels(user);
     return this.channelsService.getMyChannels(user);
   }
 
@@ -75,29 +70,19 @@ export class ChannelsController {
   })
   @UseGuards(JwtTwoFactorGuard)
   @Get(':channelId')
-  // @Param('id', ParseIntPipe) id: number
-  // async getCahnnelInfo(@Param('channelId') channelId: number) {
-  async getChannelInfo(@Param('channelId', ParseIntPipe) channelId: number) {
-    const result = await this.channelsService.getChannelInfo(channelId);
-    // banMember 도 추가
-    // private 인지 알러면 채팅방 에 쿼리로 접근해서 알아와야 하는데.
+  async getChannelInfo(
+    @Param('channelId', ParseIntPipe) channelId: number,
+    @GetUser() user: User,
+  ) {
+    const result = await this.channelsService.getChannelInfo(channelId, user);
     return result;
   }
   @ApiOperation({ summary: '채팅방 멤버 조회' })
   @UseGuards(JwtTwoFactorGuard)
   @Get(':channelId/members')
   async getChannelMembers(@Param('channelId', ParseIntPipe) channelId: number) {
-    return await this.channelsService.getChannelMembers(channelId);
+    return await this.channelsService.getChannelMembersDto(channelId);
   }
-
-  // @ApiOperation({ summary: '채팅방 멤버 조회1111111' })
-  // @UseGuards(JwtTwoFactorGuard)
-  // @Get(':channelId/memberss')
-  // async getChannelMembersDto(
-  //   @Param('channelId', ParseIntPipe) channelId: number,
-  // ) {
-  //   return await this.channelsService.getChannelMembersDto(channelId);
-  // }
 
   @ApiOperation({ summary: '채팅방 최초 입장' })
   @Post(':channelId')
@@ -116,7 +101,9 @@ export class ChannelsController {
   }
 
   @ApiOperation({ summary: '채팅방 owner 가 admin 권한을 줌' })
-  @Post(':channelid/admin/:userid') // body 엔 아무것도 안 옴
+  @Post(':channelid/admin/:userid')
+  @HttpCode(200)
+  @UseGuards(JwtTwoFactorGuard)
   async ownerGiveAdmin(
     @Param('channelid') channelId: number,
     @Param('userid') toUserId: number,
@@ -125,9 +112,10 @@ export class ChannelsController {
     return this.channelsService.ownerGiveAdmin(channelId, toUserId, user);
   }
 
-  //TODO: 권한 설정으로 깔끔하게 처리 해야함.
   @ApiOperation({ summary: 'Ban 요청' })
   @Post(':channelid/ban/:userId')
+  @HttpCode(200)
+  @UseGuards(JwtTwoFactorGuard)
   async postBanInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
@@ -138,22 +126,36 @@ export class ChannelsController {
 
   @ApiOperation({ summary: 'Kick 요청' })
   @Post(':channelid/kick/:userId')
+  @HttpCode(200)
+  @UseGuards(JwtTwoFactorGuard)
   async postKickInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
     @GetUser() user: User,
   ) {
-    // return this.channelsService.postKickInChannel(channelId, userId, user)
-    return this.channelsService.addToKicklist(channelId, userId, 3000);
+    return this.channelsService.postKickInChannel(channelId, userId, user);
   }
 
   @ApiOperation({ summary: 'mute 요청' })
   @Post(':channelid/mute/:userId')
+  @HttpCode(200)
+  @UseGuards(JwtTwoFactorGuard)
   async postMuteInChannel(
     @Param('channelid') channelId: number,
     @Param('userId') userId: number,
-    @GetUser() user: User,
+    // @GetUser() user: User,
   ) {
-    return this.channelsService.addToMutelist(channelId, userId, 3000);
+    return this.channelsService.addToMutelist(channelId, userId, 50000);
+  }
+
+  @ApiOperation({ summary: '채널 비밀번호 변경' })
+  @Patch(':channelid')
+  @UseGuards(JwtTwoFactorGuard)
+  async patchChannelPassword(
+    @Param('channelid') channelId: number,
+    @GetUser() user: User,
+    @Body('password') password: string,
+  ) {
+    return this.channelsService.patchChannelPassword(channelId, user, password);
   }
 }

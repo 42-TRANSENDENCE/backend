@@ -1,22 +1,18 @@
 import { Exclude } from 'class-transformer';
-import { ChannelMember } from 'src/channels/channelmember.entity';
-import { ChannelBanMember } from 'src/channels/channelbanmember.entity';
+import { ChannelMember } from 'src/channels/entity/channelmember.entity';
+import { ChannelBanMember } from 'src/channels/entity/channelbanmember.entity';
 import {
   Column,
   Entity,
   PrimaryColumn,
-  ManyToOne,
   ManyToMany,
   JoinTable,
   OneToMany,
-  JoinColumn,
-  OneToOne,
 } from 'typeorm';
 import { GameHistory } from 'src/game/history/history.entity';
 import { Friendship } from 'src/users/friends/friendship.entity';
 import { Achievement } from 'src/achievement/achievement.entity';
-import { Chat } from 'src/channels/chats/chats.entity';
-
+import { Blockship } from 'src/users/friends/blockship.entity';
 export enum UserStatus {
   ONLINE = 'ONLINE',
   OFFLINE = 'OFFLINE',
@@ -54,6 +50,8 @@ export class User {
   achievements: Achievement[];
 
   friends: Friendship[];
+
+  blocks: Blockship[];
 
   @OneToMany(() => GameHistory, (gamehistory) => gamehistory.winner)
   wins: GameHistory[];

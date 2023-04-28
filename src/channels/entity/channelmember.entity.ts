@@ -1,16 +1,5 @@
 import { User } from 'src/users/users.entity';
-import {
-  CreateDateColumn,
-  Entity,
-  UpdateDateColumn,
-  Column,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  OneToOne,
-  JoinColumn,
-  PrimaryColumn,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { Channel } from './channels.entity';
 
 export enum MemberType {
@@ -35,7 +24,8 @@ export class ChannelMember {
   user: User;
 
   @ManyToOne(() => Channel, (channelMember) => channelMember.members, {
-    onDelete: 'SET NULL',
+    onDelete: 'CASCADE', // SET NULL
   })
+  @JoinColumn({ name: 'channelId' })
   channel: Channel;
 }

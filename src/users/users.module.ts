@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,12 +10,14 @@ import { Friendship } from './friends/friendship.entity';
 import { FriendsRepository } from './friends/friends.repository';
 import { Achievement } from 'src/achievement/achievement.entity';
 import { AchievementModule } from 'src/achievement/achievement.module';
-
+import { Blockship } from './friends/blockship.entity';
+import { ChannelsModule } from 'src/channels/channels.module';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Friendship, Achievement]),
+    TypeOrmModule.forFeature([User, Friendship, Achievement, Blockship]),
     HttpModule,
     AchievementModule,
+    forwardRef(() => ChannelsModule),
   ],
   providers: [UsersService, FriendsService, FriendsRepository],
   controllers: [UsersController, FriendsController],

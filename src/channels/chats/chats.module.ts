@@ -4,17 +4,19 @@ import { ChatsController } from './chats.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
 import { Chat } from 'src/channels/chats/chats.entity';
-import { EventsModules } from '../events.module';
-import { Channel } from 'src/channels/channels.entity';
+import { Channel } from 'src/channels/entity/channels.entity';
 import { ChannelsModule } from 'src/channels/channels.module';
-import { ChannelMember } from '../channelmember.entity';
+import { ChannelMember } from '../entity/channelmember.entity';
+import { UsersModule } from 'src/users/users.module';
+import { EventChatModule } from '../events.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Chat, User, Channel, ChannelMember]),
-    EventsModules,
+    EventChatModule,
     forwardRef(() => ChannelsModule),
     CacheModule.register(),
+    forwardRef(() => UsersModule),
   ],
   providers: [ChatsService],
   controllers: [ChatsController],

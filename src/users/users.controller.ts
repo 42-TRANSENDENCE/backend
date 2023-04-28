@@ -89,7 +89,7 @@ export class UsersController {
   @UseGuards(JwtTwoFactorGuard)
   @ApiOperation({ summary: '사용자 삭제', description: '회원 탈퇴' })
   deleteUser(@GetUser() user) {
-    return this.userService.deleteUser(user.id);
+    return this.userService.deleteUser(user);
   }
 
   @Patch('nickname')

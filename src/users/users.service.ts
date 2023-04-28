@@ -1,9 +1,11 @@
 import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosError } from 'axios';
@@ -21,6 +23,7 @@ import { UserSearchDto } from './dto/user.search.response.dto';
 import { FriendsService } from './friends/friends.service';
 import { UserResponse } from './dto/user.response.dto';
 import { Achievement, Title } from 'src/achievement/achievement.entity';
+import { ChannelsService } from 'src/channels/channels.service';
 
 @Injectable()
 export class UsersService {
@@ -32,6 +35,8 @@ export class UsersService {
     @InjectRepository(Achievement)
     private readonly achievementRepository: Repository<Achievement>,
     private readonly friendsService: FriendsService,
+    @Inject(forwardRef(() => ChannelsService))
+    private ChannelsService: ChannelsService,
   ) {}
 
   async getUser(id: number): Promise<UserResponse> {
@@ -57,6 +62,7 @@ export class UsersService {
     const response = new UserSearchDto(
       found,
       await this.friendsService.isFriend(user.id, found.id),
+      await this.friendsService.isBlocked(user.id, found.id),
     );
     return response;
   }
@@ -76,13 +82,14 @@ export class UsersService {
     return data;
   }
 
-  async deleteUser(id: number) {
-    const deleteResult = await this.userRepository.delete({ id });
+  async deleteUser(user: User) {
+    await this.ChannelsService.exitAlljoinedChannel(user);
+    const deleteResult = await this.userRepository.delete(user.id);
     if (!deleteResult.affected) {
-      this.logger.error(`user : ${id} delete user failed`);
+      this.logger.error(`user : ${user.id} delete user failed`);
       throw new NotFoundException(userNotFoundErr);
     }
-    this.logger.log(`user: ${id} withdraw`);
+    this.logger.log(`user: ${user.id} withdraw`);
     return;
   }
 

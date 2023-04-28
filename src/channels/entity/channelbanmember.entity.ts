@@ -44,7 +44,7 @@ export class ChannelBanMember {
     () => Channel,
     (channelBanMember) => channelBanMember.bannedMembers,
     {
-      onDelete: 'SET NULL',
+      onDelete: 'CASCADE',
     },
   )
   channel: Channel;

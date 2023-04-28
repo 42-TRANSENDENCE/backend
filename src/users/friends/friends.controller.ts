@@ -21,6 +21,8 @@ import { FriendsService } from './friends.service';
 import { FriendResponseDto } from './dto/friend.response.dto';
 import { GetUser } from 'src/common/decorator/user.decorator';
 import { JwtTwoFactorGuard } from 'src/common/guard/jwt-two-factor.guard';
+import { ConnectedSocket } from '@nestjs/websockets';
+import { Socket } from 'socket.io';
 
 @Controller('users/friends')
 @UseGuards(JwtTwoFactorGuard)
@@ -62,6 +64,13 @@ export class FriendsController {
     return (await this.friendsService.getReceivedFriendships(user)).map(
       (receivedRequest) => new FriendResponseDto(receivedRequest),
     );
+  }
+
+  @ApiOperation({ summary: 'Block 리스트 조회' })
+  @Get('blocklist')
+  @UseGuards(JwtTwoFactorGuard)
+  async getBlockList(@GetUser() user) {
+    return this.friendsService.getBlockedArray(user);
   }
 
   @Post('request/:id')
@@ -113,5 +122,29 @@ export class FriendsController {
   @ApiNotFoundResponse({ description: '친구 관계 정보 없음' })
   deleteFriend(@GetUser() user, @Param('id') id: number) {
     return this.friendsService.deleteFriendship(user, id);
+  }
+
+  @Post('request/block/:id')
+  @ApiOperation({
+    summary: '친구 block 요청',
+    description: '다른 사용자에게 친구 block 요청',
+  })
+  @ApiNotFoundResponse({ description: '사용자 정보 없음' })
+  requestBlockship(
+    @GetUser() user,
+    @Param('id') id: number,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    return this.friendsService.requestBlockship(user, id, socket);
+  }
+
+  @Delete('block/:id')
+  @ApiOperation({
+    summary: '친구 block 삭제',
+    description: '친구 block 삭제 (이미 친구 block 관계)',
+  })
+  @ApiNotFoundResponse({ description: '친구 관계 정보 없음' })
+  deleteBlocked(@GetUser() user, @Param('id') id: number) {
+    return this.friendsService.deleteBlockship(user, id);
   }
 }

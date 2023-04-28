@@ -1,21 +1,16 @@
-import { Channel } from '../channels.entity';
+import { Channel } from '../entity/channels.entity';
 import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
   Entity,
-  Index,
   ManyToOne,
   JoinColumn,
   PrimaryColumn,
-  OneToOne,
 } from 'typeorm';
 import { User } from 'src/users/users.entity';
-import { isNotEmpty } from 'class-validator';
 
-// @Index('userId', ['senderId'], {})
-// @Index('channelId', ['channelId'], {})
 @Entity()
 export class Chat {
   @PrimaryGeneratedColumn()
@@ -36,17 +31,14 @@ export class Chat {
   @PrimaryColumn()
   channelId: number;
 
-  @Column({ nullable: true })
-  senderUserId: number;
-
   @ManyToOne(() => User, (user) => user.id, {
-    onDelete: 'SET NULL',
+    onDelete: 'CASCADE', // SET NULL
   })
   @JoinColumn({ name: 'senderId' })
   sender: User;
 
   @ManyToOne(() => Channel, (channel) => channel.chats, {
-    onDelete: 'SET NULL',
+    onDelete: 'CASCADE',
   })
   channel: Channel;
 }
