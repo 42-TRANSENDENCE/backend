@@ -43,7 +43,7 @@ export class GameService {
     private readonly historyService: HistoryService,
     private readonly clientService: ClientService,
     private readonly friendsService: FriendsService,
-  ) {}
+  ) { }
 
   init(matchInfo: MatchDto, type: GameType): void {
     const game: Game = {
@@ -91,8 +91,10 @@ export class GameService {
       gameClient.join(roomId);
     } else {
       isPlayer = false;
-      const Stranger: PongClient = this.clientService.getByUserId(user.id);
-      if (game.spectators.includes(Stranger) === true) {
+      const index = game.spectators.indexOf(readyInfo.userId);
+
+      if (index !== -1) {
+        game.spectators[index] = gameClient.id;
         gameClient.join(roomId);
       } else {
         return;
@@ -123,7 +125,7 @@ export class GameService {
   }
 
   addSpectator(gameId: string, spectator: PongClient) {
-    this.games.get(gameId)?.spectators.push(spectator);
+    this.games.get(gameId)?.spectators.push(spectator.id);
   }
 
   handleKeyPressed(client: Socket, gameInfo: GamePlayDto): void {
@@ -191,12 +193,10 @@ export class GameService {
     } else if (game.players.p2.id === client.id) {
       game.data.score.p2 = -1;
     } else {
-      const Stranger: PongClient | null = this.clientService.get(client.id);
-      if (game.spectators.includes(Stranger) === true) {
-        const index: number = game.spectators.indexOf(Stranger);
-        if (index > -1) {
-          game.spectators.splice(index, 1);
-        }
+      // const Stranger: PongClient | null = this.clientService.get(client.id);
+      const index: number = game.spectators.indexOf(client.id);
+      if (index > -1) {
+        game.spectators.splice(index, 1);
         client.leave(game.gameId);
       }
     }
