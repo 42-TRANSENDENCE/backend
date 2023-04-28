@@ -20,7 +20,7 @@ export class LobbyService {
     private readonly clientService: ClientService,
     private readonly friendsService: FriendsService,
     private readonly gameService: GameService,
-  ) {}
+  ) { }
 
   invite(server: Server, client: Socket, matchInfo: CreateFriendlyMatchDto) {
     const player: PongClient | null = this.clientService.get(client.id);

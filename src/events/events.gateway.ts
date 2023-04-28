@@ -29,8 +29,7 @@ export interface UserWithStaus extends User {
 
 @WebSocketGateway()
 export class EventGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private logger = new Logger(EventGateway.name);
 
   @WebSocketServer()
@@ -41,7 +40,7 @@ export class EventGateway
     private readonly friendsService: FriendsService,
     private readonly lobbyService: LobbyService,
     private readonly queueService: QueueService,
-  ) {}
+  ) { }
 
   afterInit() {
     this.logger.log(`${EventGateway.name} created`);

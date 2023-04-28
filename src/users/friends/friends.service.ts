@@ -30,7 +30,7 @@ export class FriendsService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly achievementService: AchievementService,
-  ) {}
+  ) { }
 
   async getAllFriends(user: User): Promise<User[]> {
     const friendships = await this.friendsRepository.findApproved(user.id);
@@ -151,4 +151,7 @@ export class FriendsService {
     }
     return false;
   }
+
 }
+
+
