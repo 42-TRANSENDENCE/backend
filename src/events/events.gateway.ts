@@ -54,7 +54,7 @@ export class EventGateway
       client.disconnect(true);
       return;
     }
-    this.notify(pongClient, ClientStatus.ONLINE);
+    this.clientService.notify(this.server, pongClient, ClientStatus.ONLINE);
     this.logger.log(`${user.nickname} connected. client id : ${client.id}`);
   }
 
@@ -64,18 +64,8 @@ export class EventGateway
       this.logger.log(`${pongClient.user.nickname} disconnected.`);
       this.queueService.leaveQueue(client);
       this.clientService.delete(pongClient);
-      this.notify(pongClient, ClientStatus.OFFLINE);
+      this.clientService.notify(this.server, pongClient, ClientStatus.OFFLINE);
     }
-  }
-
-  async notify(pongClient: PongClient, status: ClientStatus) {
-    const friends = await this.friendsService.getAllFriends(pongClient.user);
-    this.clientService.notifyToFriends(
-      this.server,
-      pongClient.user,
-      friends,
-      status,
-    );
   }
 
   @SubscribeMessage('friends_status')
@@ -153,7 +143,7 @@ export class EventGateway
   ) {
     const pongClient = this.clientService.get(client.id);
     pongClient.status = status;
-    this.notify(pongClient, status);
+    this.clientService.notify(this.server, pongClient, status);
   }
 
   @SubscribeMessage('getinvitaionlist')
