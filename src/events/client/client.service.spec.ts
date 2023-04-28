@@ -3,6 +3,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { User } from 'src/users/users.entity';
 import { PongClient, ClientStatus } from './client.interface';
 import { ClientService } from './client.service';
+import { ChannelsService } from 'src/channels/channels.service';
 
 const mockedAuthService = {
   getUserFromAuthenticationToken: jest.fn(),
@@ -16,6 +17,7 @@ describe('ClientService', () => {
       providers: [
         ClientService,
         { provide: AuthService, useValue: mockedAuthService },
+        { provide: ChannelsService, useValue: {} },
       ],
     }).compile();
 

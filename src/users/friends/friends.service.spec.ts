@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, forwardRef } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from '../users.entity';
@@ -9,6 +9,7 @@ import { requestNotFoundErr } from './friends.constants';
 import { FriendsRepository } from './friends.repository';
 import { AchievementService } from 'src/achievement/achievement.service';
 import { Blockship } from './blockship.entity';
+import { ChannelsService } from 'src/channels/channels.service';
 
 describe('FriendsService', () => {
   function createRandomUser(): User {
@@ -57,6 +58,10 @@ describe('FriendsService', () => {
         {
           provide: FriendsRepository,
           useValue: mockedFriendshipRepository,
+        },
+        {
+          provide: ChannelsService,
+          useValue: {},
         },
         { provide: getRepositoryToken(User), useValue: mockedUserRepository },
         {
