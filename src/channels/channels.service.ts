@@ -19,7 +19,7 @@ import { ChannelsGateway, HowMany } from './events.chats.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
-import { Socket } from 'socket.io';
+import { Namespace, Socket } from 'socket.io';
 import { ChannelBanMember } from './entity/channelbanmember.entity';
 
 import { Cache } from 'cache-manager';
@@ -131,14 +131,14 @@ export class ChannelsService {
         joinMembers: (await this.getChannelMembers(channelId)).length,
       };
       // this.logger.debug(JSON.stringify(howmany))
-      const blockedArray = await this.getBlockedArray(user);
+      // const blockedArray = await this.getBlockedArray(user);
       // this.logger.log(`TEST : ${user.id} this is blockedArray : ${JSON.stringify(blockedArray)}`);
       const total = await this.getOneChannelTotalInfoDto(
         channel,
         channelMembers,
         howmany,
         whoami.type || null,
-        blockedArray,
+        // blockedArray,
       );
       // this.logger.log(JSON.stringify(total));
       return total;
@@ -148,6 +148,7 @@ export class ChannelsService {
   async getBlockedArray(user: User): Promise<number[]> {
     const blockships = await this.friendsService.getAllDoBlocks(user);
     const blockedArray = blockships.map((blockship) => blockship.id);
+    this.logger.log(`TEST : ${user.id} this is blockedArray : ${blockedArray}`);
     return blockedArray;
   }
   async getOneChannelTotalInfoDto(
@@ -155,14 +156,14 @@ export class ChannelsService {
     channelMembers: ChannelMemberDto[],
     howmany: HowMany,
     myType?: MemberType,
-    blockedArray?: number[],
+    // blockedArray?: number[],
   ) {
     return new ChannelTotalIfoDto(
       channel,
       channelMembers,
       howmany,
       myType,
-      blockedArray,
+      // blockedArray,
     );
   }
 
@@ -248,24 +249,28 @@ export class ChannelsService {
     });
     await this.channelMemberRepository.save(channelMember);
   }
-  // async emitBlockShip(user: User) {
+  // async emitBlockShip(user: User, otherUser: User) {
   //   const socketId = await this.getSocketList(user.id);
-  //   let ls;
-  //   const socketIde = this.channelsGateway.getUserSocketMap(user.id);
-  //   this.logger.log(`this is socket : ${JSON.stringify(socketIde)}`);
+  //   const socketId2 = await this.getSocketList(otherUser.id);
+  //   // let ls;
+  //   // const socketIde = this.channelsGateway.getUserSocketMap(user.id);
+  //   this.logger.log(`this is socket : ${JSON.stringify(socketId)}`);
+  //   this.logger.log(`this is socket2 : ${JSON.stringify(socketId2)}`);
   //   // for (ls of socketId) {
   //   //   this.logger.log(`this is socket : ${ls}`);
   //   // }
   //   // this.logger.log(`this is socket : ${socketId}`);
   //   // this.channelsGateway.emitBlockShip(socketId);
   // }
-  // async emitUnBlockShip(userId: number) {
+  // async emitUnBlockShip(userId: number, id: number) {
   //   const socketId = await this.getSocketList(userId);
-  //   let ls;
-  //   for (ls of socketId) {
-  //     this.logger.log(`this is socket : ${ls}`);
-  //   }
+  //   const socketId2 = await this.getSocketList(id);
+  //   // let ls;
+  //   // for (ls of socketId) {
+  //   //   this.logger.log(`this is socket : ${ls}`);
+  //   // }
   //   this.logger.log(`this is socket when unblock : ${socketId}`);
+  //   this.logger.log(`this is socket when unblock2 : ${socketId2}`);
   //   // this.channelsGateway.emitUnBlockShip(socketId);
   // }
   // DM을 이미 만들었으면 똑같은 요청 오면 join만 하게.
@@ -682,6 +687,7 @@ export class ChannelsService {
       });
       this.channelBanMemberRepository.save(cm);
     }
+    // this.channelsGateway.exitWithSocketLeave(channelId, userId);
     this.userExitChannel(channelId.toString(), userId);
     this.channelsGateway.emitOutMember(userId, +channelId);
     // this.channelsGateway.emitOutMember(userId, channelId);
@@ -790,9 +796,13 @@ export class ChannelsService {
     }
   }
 
-  async mappingUserToSocketId(userId: number, socketId: string): Promise<void> {
-    const key = `user:${userId}:socket`;
-    this.logger.log(`mapping check key : ${key}`);
+  async mappingUserToSocketId(
+    // nsp: Namespace,
+    userId: number,
+    socketId: string,
+  ): Promise<void> {
+    const key = `user:${userId.toString()}:socket`;
+    this.logger.log(`mapping check key : ${key}, socketId : ${socketId}`);
     const mappingList = (await this.cacheManager.get<string[]>(key)) || [];
     this.logger.log(`check before value  mappingList : ${mappingList}`);
     // if (!mappingList.includes(socketId)) {
@@ -801,6 +811,8 @@ export class ChannelsService {
     await this.cacheManager.set(key, mappingList);
     // }
     this.logger.log(`key : ${key} check mappingList : ${mappingList}`);
+    const checkmappingList = (await this.cacheManager.get<string[]>(key)) || [];
+    this.logger.log(`check after value  mappingList : ${checkmappingList}`);
   }
 
   async connectAlredyJoinedChannel(user: User, socket: Socket) {
@@ -816,12 +828,13 @@ export class ChannelsService {
     this.channelsGateway.connectAlreadyChnnels(channelIds, socket);
   }
 
-  async getSocketList(userId: number): Promise<string[]> {
+  async getSocketList(userId: number): Promise<string> {
     const key = `user:${userId}:socket`;
-    this.logger.log(`check key ~ : ${key}`);
+    this.logger.log(`check key ~ : ${key}, userId : ${userId}`);
+    // const mappingList = (await this.cacheManager.get<string[]>(key)) || [];
     const socketlist = (await this.cacheManager.get<string[]>(key)) || [];
     this.logger.debug(`socketlist: ${socketlist}`);
-    return socketlist;
+    return socketlist[0];
   }
 
   async exitAlljoinedChannel(user: User): Promise<void> {
