@@ -12,8 +12,8 @@ export class ClientService {
 
   constructor(
     private readonly authService: AuthService,
-    private readonly friendsService: FriendsService
-  ) { }
+    private readonly friendsService: FriendsService,
+  ) {}
 
   add(pongClient: PongClient): boolean {
     if (this.getByUserId(pongClient.user.id)) {
@@ -30,7 +30,7 @@ export class ClientService {
   get(id: string): PongClient | null {
     const values = this.clients.values();
     for (const pongClient of values) {
-      if (pongClient.id === id) {
+      if (pongClient.socket.id === id) {
         return pongClient;
       }
     }
@@ -78,7 +78,7 @@ export class ClientService {
           status,
         };
         server.sockets.sockets
-          .get(pongClient.id)
+          .get(pongClient.socket.id)
           .emit('change_status', changeStatusDto);
       }
     });
@@ -86,11 +86,6 @@ export class ClientService {
 
   async notify(server: Server, pongClient: PongClient, status: ClientStatus) {
     const friends = await this.friendsService.getAllFriends(pongClient.user);
-    this.notifyToFriends(
-      server,
-      pongClient.user,
-      friends,
-      status,
-    );
+    this.notifyToFriends(server, pongClient.user, friends, status);
   }
 }

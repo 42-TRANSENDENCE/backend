@@ -17,7 +17,7 @@ export class QueueService {
   constructor(
     private readonly clientService: ClientService,
     private readonly gameService: GameService,
-  ) { }
+  ) {}
 
   joinQueue(server: Server, client: Socket, data: QueueDto) {
     const queue =
@@ -60,20 +60,16 @@ export class QueueService {
 
     const roomId = `game_${uuidv4()}`;
     pongClient1.room = roomId;
-    pongClient1.status = ClientStatus.INGAME;
     pongClient2.room = roomId;
-    pongClient2.status = ClientStatus.INGAME;
 
-    this.clientService.notify(server, pongClient1, pongClient1.status);
-    this.clientService.notify(server, pongClient2, pongClient2.status);
     const matchInfo: MatchDto = {
       p1: pongClient1,
       p2: pongClient2,
       roomId,
       mode,
     };
-    server.to(pongClient1.id).emit('match_maked', matchInfo);
-    server.to(pongClient2.id).emit('match_maked', matchInfo);
+    pongClient1.socket.emit('match_maked', { roomId, mode });
+    pongClient2.socket.emit('match_maked', { roomId, mode });
 
     this.logger.log(
       `match maked : ${pongClient1.user.nickname} vs ${pongClient2.user.nickname}`,

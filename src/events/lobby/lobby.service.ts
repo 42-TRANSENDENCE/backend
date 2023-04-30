@@ -20,7 +20,7 @@ export class LobbyService {
     private readonly clientService: ClientService,
     private readonly friendsService: FriendsService,
     private readonly gameService: GameService,
-  ) { }
+  ) {}
 
   invite(server: Server, client: Socket, matchInfo: CreateFriendlyMatchDto) {
     const player: PongClient | null = this.clientService.get(client.id);
@@ -54,24 +54,23 @@ export class LobbyService {
       } else {
         this.invitations.set(matchInfo.to, [invitation]);
       }
-      this.sendAllInvitations(server, otherPlayer.id);
+      this.sendAllInvitations(server, otherPlayer.socket);
     }
   }
 
-  sendAllInvitations(server: Server, clientSocketId: string) {
-    const targetClient: PongClient | null =
-      this.clientService.get(clientSocketId);
+  sendAllInvitations(server: Server, clientSocket: Socket) {
+    const targetClient: PongClient | null = this.clientService.get(
+      clientSocket.id,
+    );
+
     if (targetClient != null) {
       const targetInvitationList: InvitationDto[] | undefined =
         this.invitations.get(targetClient.user.id);
-      if (targetInvitationList)
-        server.sockets.sockets
-          .get(clientSocketId)
-          .emit('updateInviteList', targetInvitationList);
-      else
-        server.sockets.sockets
-          .get(clientSocketId)
-          .emit('updateInviteList', null);
+      if (targetInvitationList) {
+        clientSocket.emit('updateInviteList', targetInvitationList);
+      } else {
+        clientSocket.emit('updateInviteList', null);
+      }
     }
   }
 
@@ -86,19 +85,19 @@ export class LobbyService {
 
     for (let i = invitationsList.length - 1; i >= 0; i--) {
       const singleInvitation: InvitationDto = invitationsList[i];
-      if (singleInvitation.from.id === client.id) {
+      if (singleInvitation.from.socket.id === client.id) {
         invitationsList.splice(i, 1);
         const inviterClient: PongClient | null = this.clientService.getByUserId(
           singleInvitation.from.user.id,
         );
         if (inviterClient != null) {
-          server.to(inviterClient.id).emit('invitationCanceled');
+          inviterClient.socket.emit('invitationCanceled');
         }
       }
     }
 
     const inviteeSocketId: string | undefined =
-      this.clientService.getByUserId(inviteeId)?.id;
+      this.clientService.getByUserId(inviteeId)?.socket.id;
     if (inviteeSocketId === undefined) return;
     if (invitationsList.length === 0) {
       this.invitations.delete(inviteeId);
@@ -127,20 +126,20 @@ export class LobbyService {
     for (let i = invitationsList.length - 1; i >= 0; i--) {
       const singleInvitation: InvitationDto = invitationsList[i];
 
-      if (singleInvitation.to.id === client.id) {
+      if (singleInvitation.to.socket.id === client.id) {
         invitationsList.splice(i, 1);
         const inviterClient: PongClient | null = this.clientService.getByUserId(
           singleInvitation.from.user.id,
         );
         if (inviterClient != null) {
-          server.to(inviterClient.id).emit('invitationCanceled');
+          server.to(inviterClient.socket.id).emit('invitationCanceled');
         }
       }
     }
 
     const inviteeSocketId: string | undefined = this.clientService.getByUserId(
       invitation.to.user.id,
-    )?.id;
+    )?.socket.id;
     if (inviteeSocketId === undefined) return;
     if (invitationsList.length === 0) {
       this.invitations.delete(invitation.to.user.id);
@@ -151,8 +150,10 @@ export class LobbyService {
   }
 
   accept(server: Server, client: Socket, invitation: InvitationDto) {
-    const p1: PongClient = this.clientService.get(invitation.from.id);
-    const p2: PongClient = this.clientService.get(invitation.to.id);
+    const p1: PongClient = this.clientService.get(invitation.from.socket.id);
+    const p2: PongClient = this.clientService.get(invitation.to.socket.id);
+    const roomId = invitation.roomId;
+    const mode = invitation.mode;
 
     if (
       p1.status !== ClientStatus.ONLINE ||
@@ -162,25 +163,21 @@ export class LobbyService {
       throw new WsException('상대방이 게임을 할 수 없는 상태입니다.');
     }
 
-    p1.room = invitation.roomId;
-    p2.room = invitation.roomId;
+    p1.room = roomId;
+    p2.room = roomId;
 
     const matchInfo: MatchDto = {
       p1,
       p2,
-      roomId: invitation.roomId,
-      mode: invitation.mode,
+      roomId,
+      mode,
     };
 
     this.logger.log(`1v1 matched : ${p1.user.nickname} vs ${p2.user.nickname}`);
     this.logger.log(`game_room ID : ${invitation.roomId}`);
     this.gameService.init(matchInfo, GameType.PRACTICE);
-    server.to(p1.id).emit('accepted', matchInfo);
-    server.to(p2.id).emit('match_maked', matchInfo);
-    p1.status = ClientStatus.INGAME;
-    p2.status = ClientStatus.INGAME;
-    this.clientService.notify(server, p1, p1.status);
-    this.clientService.notify(server, p2, p2.status);
+    server.to(p1.socket.id).emit('accepted', { roomId, mode });
+    server.to(p2.socket.id).emit('match_maked', { roomId, mode });
   }
 
   spectate(server: Server, client: Socket, playerId: number) {

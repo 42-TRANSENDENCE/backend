@@ -23,10 +23,10 @@ import { SpectateDto } from './dto/spectate.dto';
 import { QueueDto } from './dto/queue.dto';
 import { FriendsStatusDto } from './dto/friends-status.dto';
 
-
 @WebSocketGateway()
 export class EventGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   private logger = new Logger(EventGateway.name);
 
   @WebSocketServer()
@@ -37,7 +37,7 @@ export class EventGateway
     private readonly friendsService: FriendsService,
     private readonly lobbyService: LobbyService,
     private readonly queueService: QueueService,
-  ) { }
+  ) {}
 
   afterInit() {
     this.logger.log(`${EventGateway.name} created`);
@@ -148,7 +148,7 @@ export class EventGateway
 
   @SubscribeMessage('getinvitaionlist')
   handleGetInviteListEvent(@ConnectedSocket() client: Socket): void {
-    this.lobbyService.sendAllInvitations(this.server, client.id);
+    this.lobbyService.sendAllInvitations(this.server, client);
   }
 
   @SubscribeMessage('cancleInvitation')

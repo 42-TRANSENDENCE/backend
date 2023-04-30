@@ -41,8 +41,8 @@ export class GameService {
   constructor(
     private readonly historyService: HistoryService,
     private readonly clientService: ClientService,
-    // private readonly eventGateway: EventGateway,
-  ) { }
+  ) // private readonly eventGateway: EventGateway,
+  {}
 
   init(matchInfo: MatchDto, type: GameType): void {
     const game: Game = {
@@ -93,7 +93,7 @@ export class GameService {
       const index = game.spectators.indexOf(readyInfo.userId);
 
       if (index !== -1) {
-        this.logger.debug("spectate start");
+        this.logger.debug('spectate start');
         this.logger.debug(`관전자 전체 socket id : ${readyInfo.userId}`);
         this.logger.debug(`관전자 게임 socket id : ${gameClient.id}`);
         game.spectators[index] = gameClient.id;
@@ -128,7 +128,7 @@ export class GameService {
   }
 
   addSpectator(gameId: string, spectator: PongClient) {
-    this.games.get(gameId)?.spectators.push(spectator.id);
+    this.games.get(gameId)?.spectators.push(spectator.socket.id);
   }
 
   handleKeyPressed(client: Socket, gameInfo: GamePlayDto): void {
@@ -180,8 +180,7 @@ export class GameService {
     for (const value of values) {
       if (value.players.p1?.id === id || value.players.p2?.id === id)
         return value.gameId;
-      if (value.spectators.includes(id))
-        return value.gameId;
+      if (value.spectators.includes(id)) return value.gameId;
     }
     return null;
   }
@@ -189,12 +188,12 @@ export class GameService {
   quitGame(server: Namespace, client: Socket): void {
     const gameId: string = this.findGameBySocketId(client.id);
     if (!gameId) {
-      this.logger.error("gameid not found");
+      this.logger.error('gameid not found');
       return;
     }
     const game: Game = this.games.get(gameId);
     if (!game) {
-      this.logger.error("game not found");
+      this.logger.error('game not found');
       return;
     }
 
