@@ -72,7 +72,7 @@ export class ClientService {
           userId: user.id,
           status,
         };
-        pongClient.socket.emit('change_status', { changeStatusDto });
+        pongClient.socket.emit('change_status', changeStatusDto);
       }
     });
   }
