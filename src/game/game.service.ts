@@ -40,9 +40,8 @@ export class GameService {
 
   constructor(
     private readonly historyService: HistoryService,
-    private readonly clientService: ClientService,
-  ) // private readonly eventGateway: EventGateway,
-  {}
+    private readonly clientService: ClientService, // private readonly eventGateway: EventGateway,
+  ) {}
 
   init(matchInfo: MatchDto, type: GameType): void {
     const game: Game = {
@@ -112,7 +111,6 @@ export class GameService {
       gameClient.emit('update_score', game.data.score);
       if (isPlayer) {
         this.__game_start(server, game);
-        this.__update_userstate(game, ClientStatus.INGAME);
       }
     }
   }
@@ -225,6 +223,7 @@ export class GameService {
   /* method */
 
   private __game_start(server: Namespace, game: Game): void {
+    this.__update_userstate(game, ClientStatus.INGAME);
     this.logger.log(`${game.gameId} game starts`);
     game.intervalId = setInterval(() => {
       this.__single_game_frame(server, game);
@@ -438,12 +437,12 @@ export class GameService {
     const Player1 = this.clientService.getByUserId(game.users.p1.id);
     if (Player1) {
       Player1.status = status;
-      // this.clientService.notify(this.eventGateway.server, Player1, Player1.status);
+      this.clientService.notify(Player1, Player1.status);
     }
     const Player2 = this.clientService.getByUserId(game.users.p2.id);
     if (Player2) {
       Player2.status = status;
-      // this.clientService.notify(this.eventGateway.server, Player2, Player2.status);
+      this.clientService.notify(Player2, Player2.status);
     }
   }
 }

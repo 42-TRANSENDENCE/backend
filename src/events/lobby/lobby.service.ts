@@ -43,8 +43,8 @@ export class LobbyService {
       const roomId = `game_${uuidv4()}`;
 
       const invitation: InvitationDto = {
-        from: player,
-        to: otherPlayer,
+        from: player.user,
+        to: otherPlayer.user,
         mode: matchInfo.mode,
         roomId,
       };
@@ -85,11 +85,12 @@ export class LobbyService {
 
     for (let i = invitationsList.length - 1; i >= 0; i--) {
       const singleInvitation: InvitationDto = invitationsList[i];
-      if (singleInvitation.from.socket.id === client.id) {
+
+      const inviterClient = this.clientService.getByUserId(
+        singleInvitation.from.id,
+      );
+      if (inviterClient.socket.id === client.id) {
         invitationsList.splice(i, 1);
-        const inviterClient: PongClient | null = this.clientService.getByUserId(
-          singleInvitation.from.user.id,
-        );
         if (inviterClient != null) {
           inviterClient.socket.emit('invitationCanceled');
         }
@@ -107,16 +108,13 @@ export class LobbyService {
     }
   }
 
-  // cancelAllInvitations(server : Server, client : Socket) {
-  // }
-
   refuse(server: Server, client: Socket, invitation: InvitationDto) {
     this.logger.log(
-      `invitation refused. invitation : ${invitation.from.user.nickname}->${invitation.to.user.nickname}`,
+      `invitation refused. invitation : ${invitation.from.nickname}->${invitation.to.nickname}`,
     );
 
     const invitationsList: InvitationDto[] | undefined = this.invitations.get(
-      invitation.to.user.id,
+      invitation.to.id,
     );
     if (invitationsList === undefined) {
       this.logger.log('No matching list');
@@ -126,11 +124,12 @@ export class LobbyService {
     for (let i = invitationsList.length - 1; i >= 0; i--) {
       const singleInvitation: InvitationDto = invitationsList[i];
 
-      if (singleInvitation.to.socket.id === client.id) {
+      const inviterClient = this.clientService.getByUserId(
+        singleInvitation.from.id,
+      );
+
+      if (inviterClient.socket.id === client.id) {
         invitationsList.splice(i, 1);
-        const inviterClient: PongClient | null = this.clientService.getByUserId(
-          singleInvitation.from.user.id,
-        );
         if (inviterClient != null) {
           server.to(inviterClient.socket.id).emit('invitationCanceled');
         }
@@ -138,11 +137,11 @@ export class LobbyService {
     }
 
     const inviteeSocketId: string | undefined = this.clientService.getByUserId(
-      invitation.to.user.id,
+      invitation.to.id,
     )?.socket.id;
     if (inviteeSocketId === undefined) return;
     if (invitationsList.length === 0) {
-      this.invitations.delete(invitation.to.user.id);
+      this.invitations.delete(invitation.to.id);
       server.to(inviteeSocketId).emit('updateInviteList', null);
     } else {
       server.to(inviteeSocketId).emit('updateInviteList', invitationsList);
@@ -150,8 +149,8 @@ export class LobbyService {
   }
 
   accept(server: Server, client: Socket, invitation: InvitationDto) {
-    const p1: PongClient = this.clientService.get(invitation.from.socket.id);
-    const p2: PongClient = this.clientService.get(invitation.to.socket.id);
+    const p1: PongClient = this.clientService.getByUserId(invitation.from.id);
+    const p2: PongClient = this.clientService.getByUserId(invitation.to.id);
     const roomId = invitation.roomId;
     const mode = invitation.mode;
 

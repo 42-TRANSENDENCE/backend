@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PongClient } from '../client/client.interface';
 import { GameMode } from 'src/game/game.interface';
+import { User } from 'src/users/users.entity';
 
 export class InvitationDto {
   @ApiProperty()
-  from: PongClient;
+  from: User;
 
   @ApiProperty()
-  to: PongClient;
+  to: User;
 
   @ApiProperty()
   mode: GameMode;

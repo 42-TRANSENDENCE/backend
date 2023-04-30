@@ -54,7 +54,7 @@ export class EventGateway
       client.disconnect(true);
       return;
     }
-    this.clientService.notify(this.server, pongClient, ClientStatus.ONLINE);
+    this.clientService.notify(pongClient, ClientStatus.ONLINE);
     this.logger.log(`${user.nickname} connected. client id : ${client.id}`);
   }
 
@@ -64,7 +64,7 @@ export class EventGateway
       this.logger.log(`${pongClient.user.nickname} disconnected.`);
       this.queueService.leaveQueue(client);
       this.clientService.delete(pongClient);
-      this.clientService.notify(this.server, pongClient, ClientStatus.OFFLINE);
+      this.clientService.notify(pongClient, ClientStatus.OFFLINE);
     }
   }
 
@@ -143,7 +143,7 @@ export class EventGateway
   ) {
     const pongClient = this.clientService.get(client.id);
     pongClient.status = status;
-    this.clientService.notify(this.server, pongClient, status);
+    this.clientService.notify(pongClient, status);
   }
 
   @SubscribeMessage('getinvitaionlist')
