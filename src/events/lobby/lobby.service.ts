@@ -31,9 +31,13 @@ export class LobbyService {
     this.logger.log(
       `초대 이벤트 발생. from ${player.user.nickname} to ${otherPlayer.user.nickname}`,
     );
-
+    if (player.status !== ClientStatus.ONLINE) {
+      client.emit('invite_error', '초대를 보낼 수 없습니다.');
+      return;
+    }
     if (!otherPlayer || otherPlayer.status !== ClientStatus.ONLINE) {
-      throw new WsException('현재 게임 초대를 받을 수 없습니다.');
+      client.emit('invite_error', '상대방이 초대를 받을 수 없습니다..');
+      return;
     } else {
       if (!this.friendsService.isFriend(player.user.id, otherPlayer.user.id)) {
         throw new WsException(
@@ -153,12 +157,13 @@ export class LobbyService {
     const roomId = invitation.roomId;
     const mode = invitation.mode;
 
-    if (
-      p1.status !== ClientStatus.ONLINE ||
-      p2.status !== ClientStatus.ONLINE
-    ) {
-      // server.to(invitation.roomId).socketsLeave(invitation.roomId);
-      throw new WsException('상대방이 게임을 할 수 없는 상태입니다.');
+    if (p1.status !== ClientStatus.ONLINE) {
+      client.emit('accept_error', '상대방이 게임을 할 수 없는 상태입니다.');
+      return;
+    }
+    if (p2.status !== ClientStatus.ONLINE) {
+      client.emit('accept_error', '당신은 게임을 할 수 없는 상태입니다.');
+      return;
     }
 
     p1.room = roomId;
@@ -182,7 +187,6 @@ export class LobbyService {
     this.logger.log(`관전 시도 이벤트 발생 to , ${playerId}`);
     const roomId: string | null | undefined =
       this.gameService.canWatch(playerId);
-    console.log('canWatch ret : ', roomId);
     if (roomId === undefined)
       client.emit('spectate', { roomId: null, msg: '잘못 된 관전 시도' });
     else if (roomId === null)
