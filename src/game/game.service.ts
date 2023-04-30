@@ -40,7 +40,7 @@ export class GameService {
 
   constructor(
     private readonly historyService: HistoryService,
-    private readonly clientService: ClientService, // private readonly eventGateway: EventGateway,
+    private readonly clientService: ClientService,
   ) {}
 
   init(matchInfo: MatchDto, type: GameType): void {

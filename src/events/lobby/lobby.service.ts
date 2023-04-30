@@ -86,25 +86,23 @@ export class LobbyService {
     for (let i = invitationsList.length - 1; i >= 0; i--) {
       const singleInvitation: InvitationDto = invitationsList[i];
 
-      const inviterClient = this.clientService.getByUserId(
+      const inviterClientSocket: Socket | null = this.clientService.getByUserId(
         singleInvitation.from.id,
-      );
-      if (inviterClient.socket.id === client.id) {
+      ).socket;
+      if (inviterClientSocket && inviterClientSocket.id === client.id) {
         invitationsList.splice(i, 1);
-        if (inviterClient != null) {
-          inviterClient.socket.emit('invitationCanceled');
-        }
+        inviterClientSocket.emit('invitationCanceled');
       }
     }
 
-    const inviteeSocketId: string | undefined =
-      this.clientService.getByUserId(inviteeId)?.socket.id;
-    if (inviteeSocketId === undefined) return;
+    const inviteeClientSocket: Socket =
+      this.clientService.getByUserId(inviteeId).socket;
+    if (inviteeClientSocket.id === undefined) return;
     if (invitationsList.length === 0) {
       this.invitations.delete(inviteeId);
-      server.to(inviteeSocketId).emit('updateInviteList', null);
+      inviteeClientSocket.emit('updateInviteList', null);
     } else {
-      server.to(inviteeSocketId).emit('updateInviteList', invitationsList);
+      inviteeClientSocket.emit('updateInviteList', invitationsList);
     }
   }
 
@@ -124,27 +122,28 @@ export class LobbyService {
     for (let i = invitationsList.length - 1; i >= 0; i--) {
       const singleInvitation: InvitationDto = invitationsList[i];
 
-      const inviterClient = this.clientService.getByUserId(
+      const inviterClientSocket: Socket | null = this.clientService.getByUserId(
         singleInvitation.from.id,
-      );
+      ).socket;
 
-      if (inviterClient.socket.id === client.id) {
+      if (inviterClientSocket && inviterClientSocket.id === client.id) {
         invitationsList.splice(i, 1);
-        if (inviterClient != null) {
-          server.to(inviterClient.socket.id).emit('invitationCanceled');
-        }
+        inviterClientSocket.emit('invitationCanceled');
       }
     }
 
-    const inviteeSocketId: string | undefined = this.clientService.getByUserId(
+    const inviteeClientSocket: Socket | null = this.clientService.getByUserId(
       invitation.to.id,
-    )?.socket.id;
-    if (inviteeSocketId === undefined) return;
+    ).socket;
+
+    if (inviteeClientSocket === null) {
+      return;
+    }
     if (invitationsList.length === 0) {
       this.invitations.delete(invitation.to.id);
-      server.to(inviteeSocketId).emit('updateInviteList', null);
+      inviteeClientSocket.emit('updateInviteList', null);
     } else {
-      server.to(inviteeSocketId).emit('updateInviteList', invitationsList);
+      inviteeClientSocket.emit('updateInviteList', invitationsList);
     }
   }
 
@@ -175,8 +174,8 @@ export class LobbyService {
     this.logger.log(`1v1 matched : ${p1.user.nickname} vs ${p2.user.nickname}`);
     this.logger.log(`game_room ID : ${invitation.roomId}`);
     this.gameService.init(matchInfo, GameType.PRACTICE);
-    server.to(p1.socket.id).emit('accepted', { roomId, mode });
-    server.to(p2.socket.id).emit('match_maked', { roomId, mode });
+    p1.socket.emit('accepted', { roomId, mode });
+    p2.socket.emit('match_maked', { roomId, mode });
   }
 
   spectate(server: Server, client: Socket, playerId: number) {
