@@ -46,12 +46,12 @@ export class EventGateway
   async handleConnection(@ConnectedSocket() client: Socket) {
     const user = await this.clientService.getUserFromClient(client);
     if (!user) {
-      client.disconnect(true);
+      // client.disconnect(true);
       return;
     }
     const pongClient = new PongClient(client, user);
     if (!this.clientService.add(pongClient)) {
-      client.disconnect(true);
+      // client.disconnect(true);
       return;
     }
     this.clientService.notify(pongClient, ClientStatus.ONLINE);
@@ -65,6 +65,25 @@ export class EventGateway
       this.queueService.leaveQueue(client);
       this.clientService.delete(pongClient);
       this.clientService.notify(pongClient, ClientStatus.OFFLINE);
+    }
+  }
+
+  @SubscribeMessage('login_check')
+  async handleSocketCheck(@ConnectedSocket() client: Socket) {
+    this.logger.log('socket check occurs');
+    const user: User | null = await this.clientService.getUserFromClient(
+      client,
+    );
+    if (user === null) return;
+    const pongClient: PongClient | null = this.clientService.getByUserId(
+      user.id,
+    );
+    if (pongClient === null) return;
+    this.logger.debug(`${pongClient.socket.id}, ${client.id}`);
+    if (pongClient.socket.id !== client.id) {
+      this.logger.log('socker_error emit');
+      client.emit('socket_error');
+      client.disconnect(true);
     }
   }
 
