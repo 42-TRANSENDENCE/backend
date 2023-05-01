@@ -83,7 +83,7 @@ export class UsersService {
   }
 
   async deleteUser(user: User) {
-    await this.ChannelsService.exitAlljoinedChannel(user);
+    await this.clearChannelWithUser(user);
     const deleteResult = await this.userRepository.delete(user.id);
     if (!deleteResult.affected) {
       this.logger.error(`user : ${user.id} delete user failed`);
@@ -91,6 +91,12 @@ export class UsersService {
     }
     this.logger.log(`user: ${user.id} withdraw`);
     return;
+  }
+
+  async clearChannelWithUser(user: User) {
+    await this.friendsService.deleteAllBlocks(user);
+    await this.ChannelsService.deleteBanMember(user);
+    await this.ChannelsService.exitAlljoinedChannel(user);
   }
 
   async modifyNickname(user: User, nickname: string): Promise<User> {
