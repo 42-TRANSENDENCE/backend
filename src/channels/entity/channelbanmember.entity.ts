@@ -5,15 +5,10 @@ import {
   UpdateDateColumn,
   Column,
   ManyToOne,
-  OneToMany,
-  PrimaryColumnCannotBeNullableError,
-  PrimaryGeneratedColumn,
-  JoinColumn,
-  OneToOne,
   PrimaryColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { Channel } from './channels.entity';
-import { ChannelMember } from './channelmember.entity';
 
 @Entity({ name: 'channel_banmember' })
 export class ChannelBanMember {
@@ -48,4 +43,7 @@ export class ChannelBanMember {
     },
   )
   channel: Channel;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

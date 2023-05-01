@@ -746,7 +746,7 @@ export class ChannelsService {
     const key = `user:${userId}:socket`;
     await this.cacheManager.del(key);
   }
-  
+
   async exitAlljoinedChannel(user: User): Promise<void> {
     const joinChannel = await this.getMyChannels(user);
     for (const channel of joinChannel) {
