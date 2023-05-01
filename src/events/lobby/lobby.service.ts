@@ -10,6 +10,7 @@ import { ClientService } from '../client/client.service';
 import { CreateFriendlyMatchDto } from '../dto/create-friendly-match.dto';
 import { InvitationDto } from '../dto/invitation.dto';
 import { MatchDto } from '../dto/match.dto';
+import { QueueService } from '../queue/queue.service';
 
 @Injectable()
 export class LobbyService {
@@ -20,7 +21,8 @@ export class LobbyService {
     private readonly clientService: ClientService,
     private readonly friendsService: FriendsService,
     private readonly gameService: GameService,
-  ) { }
+    private readonly queueService: QueueService,
+  ) {}
 
   invite(server: Server, client: Socket, matchInfo: CreateFriendlyMatchDto) {
     const player: PongClient | null = this.clientService.get(client.id);
@@ -31,47 +33,53 @@ export class LobbyService {
     this.logger.log(
       `초대 이벤트 발생. from ${player.user.nickname} to ${otherPlayer.user.nickname}`,
     );
-
-    if (!otherPlayer || otherPlayer.status !== ClientStatus.ONLINE) {
-      throw new WsException('현재 게임 초대를 받을 수 없습니다.');
-    } else {
-      if (!this.friendsService.isFriend(player.user.id, otherPlayer.user.id)) {
-        throw new WsException(
-          '친구가 아닌 상대에게 게임 초대를 보낼 수 없습니다.',
-        );
-      }
-      const roomId = `game_${uuidv4()}`;
-
-      const invitation: InvitationDto = {
-        from: player,
-        to: otherPlayer,
-        mode: matchInfo.mode,
-        roomId,
-      };
-
-      if (this.invitations.has(matchInfo.to)) {
-        this.invitations.get(matchInfo.to).push(invitation);
-      } else {
-        this.invitations.set(matchInfo.to, [invitation]);
-      }
-      this.sendAllInvitations(server, otherPlayer.id);
+    if (player.status !== ClientStatus.ONLINE) {
+      client.emit('invite_error', '초대를 보낼 수 없습니다.');
+      return;
     }
+    if (!otherPlayer || otherPlayer.status !== ClientStatus.ONLINE) {
+      client.emit('invite_error', '상대방이 초대를 받을 수 없습니다.');
+      return;
+    }
+    if (this.queueService.isInQueue(client.id)) {
+      client.emit('invite_error', '이미 큐에 참여중입니다.');
+      return;
+    }
+    if (!this.friendsService.isFriend(player.user.id, otherPlayer.user.id)) {
+      throw new WsException(
+        '친구가 아닌 상대에게 게임 초대를 보낼 수 없습니다.',
+      );
+    }
+    const roomId = `game_${uuidv4()}`;
+
+    const invitation: InvitationDto = {
+      from: player.user,
+      to: otherPlayer.user,
+      mode: matchInfo.mode,
+      roomId,
+    };
+
+    if (this.invitations.has(matchInfo.to)) {
+      this.invitations.get(matchInfo.to).push(invitation);
+    } else {
+      this.invitations.set(matchInfo.to, [invitation]);
+    }
+    this.sendAllInvitations(server, otherPlayer.socket);
   }
 
-  sendAllInvitations(server: Server, clientSocketId: string) {
-    const targetClient: PongClient | null =
-      this.clientService.get(clientSocketId);
+  sendAllInvitations(server: Server, clientSocket: Socket) {
+    const targetClient: PongClient | null = this.clientService.get(
+      clientSocket.id,
+    );
+
     if (targetClient != null) {
       const targetInvitationList: InvitationDto[] | undefined =
         this.invitations.get(targetClient.user.id);
-      if (targetInvitationList)
-        server.sockets.sockets
-          .get(clientSocketId)
-          .emit('updateInviteList', targetInvitationList);
-      else
-        server.sockets.sockets
-          .get(clientSocketId)
-          .emit('updateInviteList', null);
+      if (targetInvitationList) {
+        clientSocket.emit('updateInviteList', targetInvitationList);
+      } else {
+        clientSocket.emit('updateInviteList', null);
+      }
     }
   }
 
@@ -86,38 +94,34 @@ export class LobbyService {
 
     for (let i = invitationsList.length - 1; i >= 0; i--) {
       const singleInvitation: InvitationDto = invitationsList[i];
-      if (singleInvitation.from.id === client.id) {
+
+      const inviterClientSocket: Socket | null = this.clientService.getByUserId(
+        singleInvitation.from.id,
+      ).socket;
+      if (inviterClientSocket && inviterClientSocket.id === client.id) {
         invitationsList.splice(i, 1);
-        const inviterClient: PongClient | null = this.clientService.getByUserId(
-          singleInvitation.from.user.id,
-        );
-        if (inviterClient != null) {
-          server.to(inviterClient.id).emit('invitationCanceled');
-        }
+        inviterClientSocket.emit('invitationCanceled');
       }
     }
 
-    const inviteeSocketId: string | undefined =
-      this.clientService.getByUserId(inviteeId)?.id;
-    if (inviteeSocketId === undefined) return;
+    const inviteeClientSocket: Socket =
+      this.clientService.getByUserId(inviteeId).socket;
+    if (inviteeClientSocket.id === undefined) return;
     if (invitationsList.length === 0) {
       this.invitations.delete(inviteeId);
-      server.to(inviteeSocketId).emit('updateInviteList', null);
+      inviteeClientSocket.emit('updateInviteList', null);
     } else {
-      server.to(inviteeSocketId).emit('updateInviteList', invitationsList);
+      inviteeClientSocket.emit('updateInviteList', invitationsList);
     }
   }
 
-  // cancelAllInvitations(server : Server, client : Socket) {
-  // }
-
   refuse(server: Server, client: Socket, invitation: InvitationDto) {
     this.logger.log(
-      `invitation refused. invitation : ${invitation.from.user.nickname}->${invitation.to.user.nickname}`,
+      `invitation refused. invitation : ${invitation.from.nickname}->${invitation.to.nickname}`,
     );
 
     const invitationsList: InvitationDto[] | undefined = this.invitations.get(
-      invitation.to.user.id,
+      invitation.to.id,
     );
     if (invitationsList === undefined) {
       this.logger.log('No matching list');
@@ -127,67 +131,67 @@ export class LobbyService {
     for (let i = invitationsList.length - 1; i >= 0; i--) {
       const singleInvitation: InvitationDto = invitationsList[i];
 
-      if (singleInvitation.to.id === client.id) {
+      const inviterClientSocket: Socket | null = this.clientService.getByUserId(
+        singleInvitation.from.id,
+      ).socket;
+
+      if (inviterClientSocket && inviterClientSocket.id === client.id) {
         invitationsList.splice(i, 1);
-        const inviterClient: PongClient | null = this.clientService.getByUserId(
-          singleInvitation.from.user.id,
-        );
-        if (inviterClient != null) {
-          server.to(inviterClient.id).emit('invitationCanceled');
-        }
+        inviterClientSocket.emit('invitationCanceled');
       }
     }
 
-    const inviteeSocketId: string | undefined = this.clientService.getByUserId(
-      invitation.to.user.id,
-    )?.id;
-    if (inviteeSocketId === undefined) return;
+    const inviteeClientSocket: Socket | null = this.clientService.getByUserId(
+      invitation.to.id,
+    ).socket;
+
+    if (inviteeClientSocket === null) {
+      return;
+    }
     if (invitationsList.length === 0) {
-      this.invitations.delete(invitation.to.user.id);
-      server.to(inviteeSocketId).emit('updateInviteList', null);
+      this.invitations.delete(invitation.to.id);
+      inviteeClientSocket.emit('updateInviteList', null);
     } else {
-      server.to(inviteeSocketId).emit('updateInviteList', invitationsList);
+      inviteeClientSocket.emit('updateInviteList', invitationsList);
     }
   }
 
   accept(server: Server, client: Socket, invitation: InvitationDto) {
-    const p1: PongClient = this.clientService.get(invitation.from.id);
-    const p2: PongClient = this.clientService.get(invitation.to.id);
+    const p1: PongClient = this.clientService.getByUserId(invitation.from.id);
+    const p2: PongClient = this.clientService.getByUserId(invitation.to.id);
+    const roomId = invitation.roomId;
+    const mode = invitation.mode;
 
-    if (
-      p1.status !== ClientStatus.ONLINE ||
-      p2.status !== ClientStatus.ONLINE
-    ) {
-      // server.to(invitation.roomId).socketsLeave(invitation.roomId);
-      throw new WsException('상대방이 게임을 할 수 없는 상태입니다.');
+    if (p1.status !== ClientStatus.ONLINE) {
+      client.emit('accept_error', '상대방이 게임을 할 수 없는 상태입니다.');
+      return;
+    }
+    if (p2.status !== ClientStatus.ONLINE) {
+      client.emit('accept_error', '당신은 게임을 할 수 없는 상태입니다.');
+      return;
     }
 
-    p1.room = invitation.roomId;
-    p2.room = invitation.roomId;
+    p1.room = roomId;
+    p2.room = roomId;
 
     const matchInfo: MatchDto = {
       p1,
       p2,
-      roomId: invitation.roomId,
-      mode: invitation.mode,
+      roomId,
+      mode,
     };
 
     this.logger.log(`1v1 matched : ${p1.user.nickname} vs ${p2.user.nickname}`);
     this.logger.log(`game_room ID : ${invitation.roomId}`);
     this.gameService.init(matchInfo, GameType.PRACTICE);
-    server.to(p1.id).emit('accepted', matchInfo);
-    server.to(p2.id).emit('match_maked', matchInfo);
-    p1.status = ClientStatus.INGAME;
-    p2.status = ClientStatus.INGAME;
-    this.clientService.notify(server, p1, p1.status);
-    this.clientService.notify(server, p2, p2.status);
+    p1.socket.emit('accepted', { roomId, mode });
+    p2.socket.emit('match_maked', { roomId, mode });
   }
 
   spectate(server: Server, client: Socket, playerId: number) {
     this.logger.log(`관전 시도 이벤트 발생 to , ${playerId}`);
     const roomId: string | null | undefined =
       this.gameService.canWatch(playerId);
-    console.log('canWatch ret : ', roomId);
     if (roomId === undefined)
       client.emit('spectate', { roomId: null, msg: '잘못 된 관전 시도' });
     else if (roomId === null)

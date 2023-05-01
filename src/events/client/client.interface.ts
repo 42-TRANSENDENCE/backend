@@ -4,7 +4,7 @@ import { User } from 'src/users/users.entity';
 
 export class PongClient {
   @ApiProperty()
-  id: string;
+  socket: Socket;
 
   @ApiProperty()
   user: User;
@@ -16,7 +16,7 @@ export class PongClient {
   status: ClientStatus;
 
   constructor(client: Socket, user: User) {
-    this.id = client.id;
+    this.socket = client;
     this.user = user;
     this.status = ClientStatus.ONLINE;
   }
