@@ -8,6 +8,7 @@ import {
   ManyToOne,
   JoinColumn,
   Unique,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ChannelMember } from './channelmember.entity';
 import { ChannelBanMember } from './channelbanmember.entity';
@@ -30,8 +31,8 @@ export class Channel {
   @Column('varchar', { length: 30, default: 'default' })
   title: string;
 
-  @ManyToOne(() => User) // Add this relation
-  @JoinColumn({ name: 'owner' }) // Specify the column name for the owner relationship
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'owner' })
   owner: User;
 
   @Column('varchar', { length: 1000, nullable: true })
@@ -61,4 +62,7 @@ export class Channel {
 
   @OneToMany(() => Chat, (chats) => chats.channelId)
   chats: Chat[];
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

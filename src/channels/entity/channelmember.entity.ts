@@ -1,5 +1,12 @@
 import { User } from 'src/users/users.entity';
-import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  PrimaryColumn,
+  DeleteDateColumn,
+} from 'typeorm';
 import { Channel } from './channels.entity';
 
 export enum MemberType {
@@ -20,7 +27,7 @@ export class ChannelMember {
   type: MemberType;
 
   @ManyToOne(() => User, (user) => user.channelMembers, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' }) // Add this line
+  @JoinColumn({ name: 'userId' })
   user: User;
 
   @ManyToOne(() => Channel, (channelMember) => channelMember.members, {
@@ -28,4 +35,7 @@ export class ChannelMember {
   })
   @JoinColumn({ name: 'channelId' })
   channel: Channel;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

@@ -40,7 +40,7 @@ export class FriendsService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly achievementService: AchievementService,
-  ) { }
+  ) {}
 
   async getAllFriends(user: User): Promise<User[]> {
     const friendships = await this.friendsRepository.findApproved(user.id);
@@ -245,6 +245,15 @@ export class FriendsService {
     this.logger.log(`TEST : ${user.id} this is blockedArray : ${blockedArray}`);
     return blockedArray;
   }
+
+  async deleteAllBlocks(user: User) {
+    const blockships = await this.BlocksRepository.find({
+      where: { userId: user.id },
+    });
+    // const blockA = await this.getAllDoBlocks(user);
+    // const blockB = await this.getAllBlockedBy(user);
+    for (const blockship of blockships) {
+      this.BlocksRepository.delete({ userId: blockship.userId });
+    }
+  }
 }
-
-

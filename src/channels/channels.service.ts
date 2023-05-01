@@ -746,31 +746,48 @@ export class ChannelsService {
     const key = `user:${userId}:socket`;
     await this.cacheManager.del(key);
   }
+
   async exitAlljoinedChannel(user: User): Promise<void> {
     const joinChannel = await this.getMyChannels(user);
     for (const channel of joinChannel) {
       await this.userExitChannel(channel.id.toString(), user.id);
       this.logger.log(`exit channel : ${channel.id}`);
       const remainmember = await this.findByIdwithMember(channel.id);
-      if (
-        channel.status === ChannelStatus.PRIVATE &&
-        remainmember.members.length === 1
-      ) {
-        if (remainmember.members[0].userId === user.id) {
-          const curchannel = await this.channelsRepository.findOneBy({
-            id: channel.id,
-          });
+      // if (!remainmember) throw new NotFoundException('CHANNEL DOSE NOT EXIST');
+      if (channel.status === ChannelStatus.PRIVATE) {
+        if (
+          remainmember?.members.length === 1 ||
+          remainmember?.members.length === 0 ||
+          !remainmember
+        ) {
+          if (remainmember?.members[0].userId === user.id) {
+            const curchannel = await this.channelsRepository.findOneBy({
+              id: channel.id,
+            });
+            await this.channelMemberRepository.delete({
+              userId: curchannel.reciveId,
+              channelId: channel.id,
+            });
+          }
           await this.channelMemberRepository.delete({
-            userId: curchannel.reciveId,
+            userId: user.id,
             channelId: channel.id,
           });
+          await this.channelsRepository.delete(channel.id);
         }
-        await this.channelMemberRepository.delete({
-          userId: user.id,
-          channelId: channel.id,
-        });
-        await this.channelsRepository.delete(channel.id);
       }
+    }
+  }
+
+  async deleteBanMember(user: User) {
+    const banlist = await this.channelBanMemberRepository.find({
+      where: { userId: user.id },
+    });
+    for (const ban of banlist) {
+      await this.channelBanMemberRepository.delete({
+        userId: ban.userId,
+        channelId: ban.channelId,
+      });
     }
   }
 }
