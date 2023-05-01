@@ -73,7 +73,7 @@ export class GameService {
     const game = this.games.get(roomId);
     let isPlayer = true;
 
-    if (!game) {
+    if (!game || !user) {
       throw new WsException('잘못된 게임 준비 요청입니다.');
     }
 

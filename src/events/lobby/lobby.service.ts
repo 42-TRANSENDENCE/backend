@@ -10,6 +10,7 @@ import { ClientService } from '../client/client.service';
 import { CreateFriendlyMatchDto } from '../dto/create-friendly-match.dto';
 import { InvitationDto } from '../dto/invitation.dto';
 import { MatchDto } from '../dto/match.dto';
+import { QueueService } from '../queue/queue.service';
 
 @Injectable()
 export class LobbyService {
@@ -20,6 +21,7 @@ export class LobbyService {
     private readonly clientService: ClientService,
     private readonly friendsService: FriendsService,
     private readonly gameService: GameService,
+    private readonly queueService: QueueService,
   ) {}
 
   invite(server: Server, client: Socket, matchInfo: CreateFriendlyMatchDto) {
@@ -36,30 +38,33 @@ export class LobbyService {
       return;
     }
     if (!otherPlayer || otherPlayer.status !== ClientStatus.ONLINE) {
-      client.emit('invite_error', '상대방이 초대를 받을 수 없습니다..');
+      client.emit('invite_error', '상대방이 초대를 받을 수 없습니다.');
       return;
-    } else {
-      if (!this.friendsService.isFriend(player.user.id, otherPlayer.user.id)) {
-        throw new WsException(
-          '친구가 아닌 상대에게 게임 초대를 보낼 수 없습니다.',
-        );
-      }
-      const roomId = `game_${uuidv4()}`;
-
-      const invitation: InvitationDto = {
-        from: player.user,
-        to: otherPlayer.user,
-        mode: matchInfo.mode,
-        roomId,
-      };
-
-      if (this.invitations.has(matchInfo.to)) {
-        this.invitations.get(matchInfo.to).push(invitation);
-      } else {
-        this.invitations.set(matchInfo.to, [invitation]);
-      }
-      this.sendAllInvitations(server, otherPlayer.socket);
     }
+    if (this.queueService.isInQueue(client.id)) {
+      client.emit('invite_error', '이미 큐에 참여중입니다.');
+      return;
+    }
+    if (!this.friendsService.isFriend(player.user.id, otherPlayer.user.id)) {
+      throw new WsException(
+        '친구가 아닌 상대에게 게임 초대를 보낼 수 없습니다.',
+      );
+    }
+    const roomId = `game_${uuidv4()}`;
+
+    const invitation: InvitationDto = {
+      from: player.user,
+      to: otherPlayer.user,
+      mode: matchInfo.mode,
+      roomId,
+    };
+
+    if (this.invitations.has(matchInfo.to)) {
+      this.invitations.get(matchInfo.to).push(invitation);
+    } else {
+      this.invitations.set(matchInfo.to, [invitation]);
+    }
+    this.sendAllInvitations(server, otherPlayer.socket);
   }
 
   sendAllInvitations(server: Server, clientSocket: Socket) {

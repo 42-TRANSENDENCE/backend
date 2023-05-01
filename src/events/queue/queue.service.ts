@@ -7,6 +7,7 @@ import { GameService } from '../../game/game.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { QueueDto } from '../dto/queue.dto';
 import { MatchDto } from '../dto/match.dto';
+import { Client } from 'socket.io/dist/client';
 
 @Injectable()
 export class QueueService {
@@ -20,11 +21,18 @@ export class QueueService {
   ) {}
 
   joinQueue(server: Server, client: Socket, data: QueueDto) {
+    if (this.clientService.get(client.id).status !== ClientStatus.ONLINE) {
+      client.emit('joinqueue_error', '게임중에는 큐에 참여할 수 없습니다.');
+      return;
+    }
+    if (this.isInQueue(client.id) === true) {
+      client.emit('joinqueue_error', '이미 큐에 참여중입니다.');
+      return;
+    }
     const queue =
       data.mode === GameMode.NORMAL
         ? this.normalGameQueue
         : this.specialGameQueue;
-
     queue.push(client.id);
     this.logger.log(`client: ${client.id} joined to queue`);
     client.emit('joined_to_queue');
@@ -53,6 +61,16 @@ export class QueueService {
     }
   }
 
+  isInQueue(clientId: string): boolean {
+    if (
+      this.normalGameQueue.includes(clientId) ||
+      this.specialGameQueue.includes(clientId)
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
   // ! Match Making System
   private matchMaking(server: Server, queue: string[], mode: GameMode) {
     const pongClient1: PongClient = this.clientService.get(queue.shift());
