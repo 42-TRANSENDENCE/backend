@@ -130,12 +130,8 @@ export class FriendsController {
     description: '다른 사용자에게 친구 block 요청',
   })
   @ApiNotFoundResponse({ description: '사용자 정보 없음' })
-  requestBlockship(
-    @GetUser() user,
-    @Param('id') id: number,
-    @ConnectedSocket() socket: Socket,
-  ) {
-    return this.friendsService.requestBlockship(user, id, socket);
+  requestBlockship(@GetUser() user, @Param('id') id: number) {
+    return this.friendsService.requestBlockship(user, id);
   }
 
   @Delete('block/:id')
