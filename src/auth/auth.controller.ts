@@ -76,7 +76,7 @@ export class AuthController {
       req.res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
       if (!user.isTwoFactorAuthenticationEnabled) {
         this.logger.log(`user: ${user.id} logged in`);
-        return { url: `${redirect_url}/socket` };
+        return { url: `${redirect_url}/home` };
       }
       this.logger.log(`user: ${user.id} 2FA Required`);
       return { url: `${redirect_url}/twofactor` };
