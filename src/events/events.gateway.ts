@@ -45,13 +45,17 @@ export class EventGateway
   }
 
   async handleConnection(@ConnectedSocket() client: Socket) {
+    this.logger.log(`SocketConnection Occurs. ${client.id}`);
+
     const user = await this.clientService.getUserFromClient(client);
     if (!user) {
-      // client.disconnect(true);
+      this.logger.log(`[handleConnection] UserNotFound. Disconnect Socket.`);
+      client.disconnect(true);
       return;
     }
     const pongClient = new PongClient(client, user);
     if (!this.clientService.add(pongClient)) {
+      this.logger.log(`[handleConnection] Client Already Exist`);
       // client.disconnect(true);
       return;
     }
@@ -75,11 +79,18 @@ export class EventGateway
     const user: User | null = await this.clientService.getUserFromClient(
       client,
     );
-    if (user === null) return;
+    if (!user) {
+      this.logger.log(`[handleSocketCheck] UserNotFound. Disconnect Socket.`);
+      client.disconnect(true);
+      return;
+    }
     const pongClient: PongClient | null = this.clientService.getByUserId(
       user.id,
     );
-    if (pongClient === null) return;
+    if (pongClient === null) {
+      this.logger.log(`[handleSocketCheck] ClientNot. Disconnect Socket.`);
+      return;
+    }
     this.logger.debug(`${pongClient.socket.id}, ${client.id}`);
     if (pongClient.socket.id !== client.id) {
       this.logger.log('socker_error emit');
@@ -96,12 +107,10 @@ export class EventGateway
     if (!user) throw new WsException('user not found');
     const friends: User[] = await this.friendsService.getAllFriends(user);
     const friendsWithStatus: FriendsStatusDto[] = [];
-
     friends.forEach((friend) => {
       const pongClient = this.clientService.getByUserId(friend.id);
       friendsWithStatus.push(new FriendsStatusDto(pongClient, friend));
     });
-
     const event = 'friends_status';
     return { event, data: friendsWithStatus };
   }
