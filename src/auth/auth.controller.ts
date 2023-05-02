@@ -72,7 +72,7 @@ export class AuthController {
     const redirect_url = this.configService.get<string>('FRONTEND_URL');
     try {
       const user = await this.usersService.getById(fourtyTwoUserInfo.id);
-      this.usersService.setCurrentRefreshToken(refreshToken, user.id);
+      await this.usersService.setCurrentRefreshToken(refreshToken, user.id);
       req.res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
       if (!user.isTwoFactorAuthenticationEnabled) {
         this.logger.log(`user: ${user.id} logged in`);
@@ -115,7 +115,7 @@ export class AuthController {
     const accessCookie = this.authService.getCookieWithJwtAccessToken(user.id);
     const { refreshToken, refreshCookie } =
       this.authService.getCookieWithJwtRefreshToken(user.id);
-    this.usersService.setCurrentRefreshToken(refreshToken, user.id);
+    await this.usersService.setCurrentRefreshToken(refreshToken, user.id);
     req.res.setHeader('Set-Cookie', [accessCookie, refreshCookie]);
 
     req.session.destroy(() =>

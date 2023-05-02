@@ -13,11 +13,11 @@ export class TwoFactorAuthService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
 
-  register(user: User): speakeasy.GeneratedSecret {
+  async register(user: User): Promise<speakeasy.GeneratedSecret> {
     const secret = speakeasy.generateSecret();
 
     user.twoFactorSecret = secret.ascii;
-    this.userRepository.save(user);
+    await this.userRepository.save(user);
 
     return secret;
   }
@@ -36,15 +36,15 @@ export class TwoFactorAuthService {
     return true;
   }
 
-  turnOnTwoFactorAuthentication(user: User): User {
+  async turnOnTwoFactorAuthentication(user: User): Promise<User> {
     user.isTwoFactorAuthenticationEnabled = true;
-    this.userRepository.save(user);
+    await this.userRepository.save(user);
     return user;
   }
 
-  turnOffTwoFactorAuthentication(user: User): User {
+  async turnOffTwoFactorAuthentication(user: User): Promise<User> {
     user.isTwoFactorAuthenticationEnabled = false;
-    this.userRepository.save(user);
+    await this.userRepository.save(user);
     return user;
   }
 }
