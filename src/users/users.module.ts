@@ -12,6 +12,7 @@ import { Achievement } from 'src/achievement/achievement.entity';
 import { AchievementModule } from 'src/achievement/achievement.module';
 import { Blockship } from './friends/blockship.entity';
 import { ChannelsModule } from 'src/channels/channels.module';
+import { FriendsBlocksRepository } from './friends/friends.blocks.repository';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Friendship, Achievement, Blockship]),
@@ -19,7 +20,12 @@ import { ChannelsModule } from 'src/channels/channels.module';
     AchievementModule,
     forwardRef(() => ChannelsModule),
   ],
-  providers: [UsersService, FriendsService, FriendsRepository],
+  providers: [
+    UsersService,
+    FriendsService,
+    FriendsRepository,
+    FriendsBlocksRepository,
+  ],
   controllers: [UsersController, FriendsController],
   exports: [UsersService, FriendsService],
 })
