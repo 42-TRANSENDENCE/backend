@@ -23,7 +23,7 @@ import { AchievementService } from 'src/achievement/achievement.service';
 import { Title } from 'src/achievement/achievement.entity';
 import { Blockship } from './blockship.entity';
 import { ChannelsService } from 'src/channels/channels.service';
-import { Socket } from 'socket.io';
+import { FriendsBlocksRepository } from './friends.blocks.repository';
 
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -32,8 +32,7 @@ export class FriendsService {
 
   constructor(
     private readonly friendsRepository: FriendsRepository,
-    @InjectRepository(Blockship)
-    private BlocksRepository: Repository<Blockship>,
+    private readonly friendsBlockRepository: FriendsBlocksRepository,
     @Inject(forwardRef(() => ChannelsService))
     private ChannelsService: ChannelsService,
 
@@ -43,6 +42,7 @@ export class FriendsService {
   ) {}
 
   async getAllFriends(user: User): Promise<User[]> {
+    if (!user) throw new NotFoundException(userNotFoundErr);
     const friendships = await this.friendsRepository.findApproved(user.id);
     const friends: User[] = friendships.map((friendship) => {
       if (friendship.user.id === user.id) {
@@ -55,25 +55,21 @@ export class FriendsService {
   }
 
   async getAllDoBlocks(user: User): Promise<User[]> {
-    const blockships = await this.BlocksRepository.find({
-      where: { userId: user.id },
-      relations: { user: true, otherUser: true },
-    });
-    const friends: User[] = blockships.map((blockship) => {
+    const blockships = await this.friendsBlockRepository.findBlockByIdWithUser(
+      user.id,
+    );
+    const blocks: User[] = blockships.map((blockship) => {
       if (blockship.user.id === user.id) {
         return blockship.otherUser;
       }
       return blockship.user;
     });
-    this.logger.debug(`${user.nickname}'s friend: ${friends.length}`);
-    return friends;
+    return blocks;
   }
 
   async getAllBlockedBy(user: User): Promise<User[]> {
-    const blockships = await this.BlocksRepository.find({
-      where: { otherUserId: user.id },
-      relations: { user: true, otherUser: true },
-    });
+    const blockships =
+      await this.friendsBlockRepository.findBlockedByIdWithUser(user.id);
     const blockedBy: User[] = blockships.map((blockship) => {
       if (blockship.user.id === user.id) {
         return blockship.otherUser;
@@ -83,15 +79,18 @@ export class FriendsService {
     this.logger.debug(`${user.nickname} is blocked by: ${blockedBy.length}`);
     return blockedBy;
   }
+
   async isBlocked(userId: number, otherUserId: number) {
-    const isblocked = await this.BlocksRepository.findOne({
-      where: { userId, otherUserId },
-    });
+    const isblocked = await this.friendsBlockRepository.findBlockByIds(
+      userId,
+      otherUserId,
+    );
     if (isblocked) {
       return true;
     }
     return false;
   }
+
   async getPendingRequests(user: User): Promise<User[]> {
     const pendingRequests = await this.friendsRepository.findPendingRequests(
       user.id,
@@ -128,11 +127,7 @@ export class FriendsService {
     return this.friendsRepository.save(friendship);
   }
 
-  async requestBlockship(
-    user: User,
-    id: number,
-    socket: Socket,
-  ): Promise<Blockship> {
+  async requestBlockship(user: User, id: number): Promise<Blockship> {
     if (user.id === id) {
       throw new BadRequestException('본인에게 친구 block 요청은 불가능합니다.');
     }
@@ -140,20 +135,20 @@ export class FriendsService {
     if (!otherUser) {
       throw new NotFoundException(userNotFoundErr);
     }
-    const isExist = await this.BlocksRepository.findOne({
-      where: { userId: user.id, otherUserId: id },
-    });
+    const isExist = await this.friendsBlockRepository.findBlockByIds(
+      user.id,
+      id,
+    );
     if (isExist) {
       throw new BadRequestException('이미 블락한 유저입니다.');
     }
-    const blockship = await this.BlocksRepository.create({
+    const blockship = await this.friendsBlockRepository.create({
       user,
       otherUser,
     });
     this.ChannelsService.leaveDmbySelf(user, otherUser);
     this.logger.log(`${user.id} blocked ${otherUser.id}`);
-    // this.ChannelsService.emitBlockShip(user, otherUser);
-    return this.BlocksRepository.save(blockship);
+    return this.friendsBlockRepository.save(blockship);
   }
 
   async deleteRequest(userId: number, id: number): Promise<Friendship> {
@@ -218,14 +213,14 @@ export class FriendsService {
   }
 
   async deleteBlockship(user: User, id: number): Promise<Blockship> {
-    const blockship = await this.BlocksRepository.findOne({
-      where: { userId: user.id, otherUserId: id },
-    });
+    const blockship = await this.friendsBlockRepository.findBlockByIds(
+      user.id,
+      id,
+    );
     if (!blockship) {
       throw new NotFoundException(friendshipNotFoundErr);
     }
-    // this.ChannelsService.emitUnBlockShip(user.id, id);
-    return this.BlocksRepository.remove(blockship);
+    return this.friendsBlockRepository.remove(blockship);
   }
 
   async isFriend(userId: number, otherUserId: number): Promise<boolean> {
@@ -242,18 +237,13 @@ export class FriendsService {
   async getBlockedArray(user: User): Promise<number[]> {
     const blockships = await this.getAllDoBlocks(user);
     const blockedArray = blockships.map((blockship) => blockship.id);
-    this.logger.log(`TEST : ${user.id} this is blockedArray : ${blockedArray}`);
     return blockedArray;
   }
 
   async deleteAllBlocks(user: User) {
-    const blockships = await this.BlocksRepository.find({
-      where: { userId: user.id },
-    });
-    // const blockA = await this.getAllDoBlocks(user);
-    // const blockB = await this.getAllBlockedBy(user);
+    const blockships = await this.friendsBlockRepository.findBlockById(user.id);
     for (const blockship of blockships) {
-      this.BlocksRepository.delete({ userId: blockship.userId });
+      this.friendsBlockRepository.delete({ userId: blockship.userId });
     }
   }
 }
