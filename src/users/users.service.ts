@@ -37,7 +37,7 @@ export class UsersService {
     private readonly friendsService: FriendsService,
     @Inject(forwardRef(() => ChannelsService))
     private ChannelsService: ChannelsService,
-  ) {}
+  ) { }
 
   async getUser(id: number): Promise<UserResponse> {
     const user = await this.userRepository.findOne({
@@ -127,17 +127,9 @@ export class UsersService {
 
   async setCurrentRefreshToken(refreshToken: string, id: number) {
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-    const updateResult = await this.userRepository.update(
-      { id },
-      { hashedRefreshToken },
-    );
-    if (!updateResult.affected) {
-      this.logger.error(
-        `user update failed refreshToken: ${refreshToken} id: ${id}`,
-      );
-      throw new NotFoundException(userNotFoundErr);
-    }
-    return;
+    const user = await this.userRepository.findOneBy({ id });
+    user.hashedRefreshToken = hashedRefreshToken;
+    return await this.userRepository.save(user);
   }
 
   async getUserIfValidRefreshToken(refreshToken: string, id: number) {

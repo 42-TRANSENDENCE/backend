@@ -41,8 +41,8 @@ export class TwoFactorAuthController {
     description: 'Google Authenticator에 등록할 QR Code 반환',
   })
   @Header('Content-Type', 'image/png')
-  register(@Res() res, @GetUser() user: User) {
-    const secret = this.twoFactorAuthService.register(user);
+  async register(@Res() res, @GetUser() user: User) {
+    const secret = await this.twoFactorAuthService.register(user);
     return QRCode.toFileStream(res, secret.otpauth_url);
   }
 
