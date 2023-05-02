@@ -20,6 +20,7 @@ import { emitMemberDto } from './dto/emit-member.dto';
 import { User } from 'src/users/users.entity';
 import { newChatResponseDto } from './chats/dto/newChats.dto';
 import { ChatResponseDto } from './chats/dto/chats-response.dto';
+import { ClientService } from 'src/events/client/client.service';
 
 export interface HowMany {
   joinSockets: number;
@@ -33,8 +34,11 @@ export class ChannelsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   constructor(
+    // @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    // @Inject(forwardRef(() => ChannelsService))
+    // private readonly clientService: ClientService,
     @Inject(forwardRef(() => ChannelsService))
-    private readonly channelsService: ChannelsService, // @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly channelsService: ChannelsService,
   ) {}
   private userSocketMap = new Map<number, string>();
   private logger = new Logger(ChannelsGateway.name);
@@ -173,6 +177,7 @@ export class ChannelsGateway
     const emitmember = new emitMemberDto(userId, channelId);
     this.nsp.to(channelId.toString()).emit('blockMember', emitmember);
   }
+
   async emitMuteMember(userId: number, channelId: number) {
     const emitmember = new emitMemberDto(userId, channelId);
     this.nsp.to(channelId.toString()).emit('muteMember', emitmember);
