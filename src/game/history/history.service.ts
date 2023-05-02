@@ -46,7 +46,7 @@ export class HistoryService {
     });
 
     const loser = await this.userRepository.findOne({
-      where: { id: gameHistory.winner.id },
+      where: { id: gameHistory.loser.id },
       relations: { achievements: true },
     });
 
