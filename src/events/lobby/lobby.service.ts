@@ -127,7 +127,7 @@ export class LobbyService {
       this.logger.log('No matching list');
       return;
     }
-    this.logger.log('curr invitaion count : ', invitationsList.length);
+    this.logger.log('prev invitaion count : ', invitationsList.length);
     for (let i = invitationsList.length - 1; i >= 0; i--) {
       const singleInvitation: InvitationDto = invitationsList[i];
 
@@ -135,10 +135,19 @@ export class LobbyService {
         singleInvitation.from.id,
       ).socket;
 
-      if (inviterClientSocket && inviterClientSocket.id === client.id) {
-        invitationsList.splice(i, 1);
-        inviterClientSocket.emit('invitationCanceled');
-      }
+      // if (inviterClientSocket === null) {
+      //   this.logger.error(`[refuse] ClientSocket Not Found `);
+      // } else if (inviteeClientSocket.id !== client.id) {
+      //   this.logger.error(
+      //     `[refuse] ClientSocket Doesnot Match ${inviteeClientSocket.id} : ${client.id}`,
+      //   );
+      // } else {
+      //   invitationsList.splice(i, 1);
+      //   inviterClientSocket.emit('invitationCanceled');
+      // }
+      invitationsList.splice(i, 1);
+      inviterClientSocket.emit('invitationCanceled');
+      this.logger.log('curr invitaion count : ', invitationsList.length);
     }
 
     const inviteeClientSocket: Socket | null = this.clientService.getByUserId(
