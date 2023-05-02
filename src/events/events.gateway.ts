@@ -8,6 +8,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
   WsResponse,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
@@ -55,7 +56,7 @@ export class EventGateway
       return;
     }
     this.clientService.notify(pongClient, ClientStatus.ONLINE);
-    this.logger.log(`${user.nickname} connected. client id : ${client.id}`);
+    this.logger.log(`${user.nickname}connected. client id : ${client.id}`);
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket) {
@@ -92,6 +93,7 @@ export class EventGateway
     @ConnectedSocket() client: Socket,
   ): Promise<WsResponse<FriendsStatusDto[]>> {
     const user = await this.clientService.getUserFromClient(client);
+    if (!user) throw new WsException('user not found');
     const friends: User[] = await this.friendsService.getAllFriends(user);
     const friendsWithStatus: FriendsStatusDto[] = [];
 
