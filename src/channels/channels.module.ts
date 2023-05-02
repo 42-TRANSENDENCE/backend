@@ -3,35 +3,33 @@ import { ChannelsService } from './channels.service';
 import { ChannelsController } from './channels.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Channel } from 'src/channels/entity/channels.entity';
-import { User } from 'src/users/users.entity';
 import { ChannelMember } from 'src/channels/entity/channelmember.entity';
 // import { EventsModules } from './events.module';
 import { forwardRef } from '@nestjs/common';
 import { ChannelBanMember } from './entity/channelbanmember.entity';
 import { ChatsModule } from './chats/chats.module';
 import { AuthModule } from 'src/auth/auth.module';
-import { Blockship } from 'src/users/friends/blockship.entity';
 import { UsersModule } from 'src/users/users.module';
-import { FriendsService } from 'src/users/friends/friends.service';
-import { EventsModule } from 'src/events/events.module';
 import { EventChatModule } from './events.module';
+import { ChannelRepository } from './repository/channel.repository';
+import { MemberRepository } from './repository/member.repository';
+import { BanMemberRepository } from './repository/banmember.repository';
 @Module({
   imports: [
     CacheModule.register(),
-    TypeOrmModule.forFeature([
-      Channel,
-      User,
-      ChannelMember,
-      ChannelBanMember,
-      Blockship,
-    ]),
+    TypeOrmModule.forFeature([Channel, ChannelMember, ChannelBanMember]),
     forwardRef(() => ChatsModule),
     forwardRef(() => EventChatModule),
     forwardRef(() => UsersModule),
     forwardRef(() => AuthModule),
   ],
-  providers: [ChannelsService],
+  providers: [
+    ChannelsService,
+    ChannelRepository,
+    MemberRepository,
+    BanMemberRepository,
+  ],
   controllers: [ChannelsController],
-  exports: [ChannelsService],
+  exports: [ChannelsService, MemberRepository, BanMemberRepository],
 })
 export class ChannelsModule {}

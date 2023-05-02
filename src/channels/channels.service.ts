@@ -10,17 +10,14 @@ import {
   ForbiddenException,
   NotAcceptableException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
 import { Channel, ChannelStatus } from './entity/channels.entity';
 import { User } from 'src/users/users.entity';
-import { ChannelMember, MemberType } from './entity/channelmember.entity';
+import { MemberType } from './entity/channelmember.entity';
 import { ChannelsGateway, HowMany } from './events.chats.gateway';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
 import { returnStatusMessage } from './channel.interface';
 import { Socket } from 'socket.io';
-import { ChannelBanMember } from './entity/channelbanmember.entity';
 
 import { Cache } from 'cache-manager';
 import { ChannelMemberDto } from './dto/channel-member.dto';
@@ -32,16 +29,16 @@ import { AuthService } from 'src/auth/auth.service';
 import { FriendsService } from 'src/users/friends/friends.service';
 import { ChannelTotalIfoDto } from './dto/chanel-total-info.dto';
 import { UsersService } from 'src/users/users.service';
+import { ChannelRepository } from './repository/channel.repository';
+import { MemberRepository } from './repository/member.repository';
+import { BanMemberRepository } from './repository/banmember.repository';
 
 @Injectable()
 export class ChannelsService {
   constructor(
-    @InjectRepository(Channel)
-    private channelsRepository: Repository<Channel>,
-    @InjectRepository(ChannelMember)
-    private channelMemberRepository: Repository<ChannelMember>,
-    @InjectRepository(ChannelBanMember)
-    private channelBanMemberRepository: Repository<ChannelBanMember>,
+    private readonly channelsRepository: ChannelRepository,
+    private readonly channelMemberRepository: MemberRepository,
+    private readonly channelBanMemberRepository: BanMemberRepository,
 
     @Inject(forwardRef(() => FriendsService))
     private readonly friendsService: FriendsService,
@@ -59,59 +56,30 @@ export class ChannelsService {
   ) {}
   private logger = new Logger(ChannelsService.name);
 
-  async findByIdWithOwner(id: number) {
-    return this.channelsRepository.findOne({
-      where: { id },
-      relations: ['owner'],
-    });
-  }
-  async findByIdwithOwnerMember(id: number) {
-    return await this.channelsRepository.findOne({
-      where: { id },
-      relations: {
-        members: true,
-        owner: true,
-      },
-    });
-  }
-  async findByIdwithMember(id: number) {
-    return await this.channelsRepository.findOne({
-      where: { id },
-      relations: {
-        members: true,
-      },
-    });
-  }
-  async findById(id: number) {
-    return this.channelsRepository.findOneBy({ id });
-  }
   async findOneChannelMember(channelId: number, userId: number) {
-    return this.channelMemberRepository.findOne({
-      where: { channelId: channelId, userId: userId },
-    });
+    return this.channelMemberRepository.findOneChannelIdUserId(
+      channelId,
+      userId,
+    );
   }
 
   async getChannels() {
-    const statuses = [ChannelStatus.PUBLIC, ChannelStatus.PROTECTED];
-    const channels = await this.channelsRepository
-      .createQueryBuilder('channel')
-      .leftJoinAndSelect('channel.owner', 'owner')
-      .where('channel.status IN (:...statuses)', {
-        statuses,
-      })
-      .getMany();
+    const channels =
+      await this.channelsRepository.findPublicAndProtectedChannels();
     const channelDtos = channels.map((channel) => new ChannelIfoDto(channel));
     return channelDtos;
   }
+
   // 채팅방 하나에 대한 정보 요청 .
   // 멤버 안에 아바타 ,
   async getChannelInfo(channelId: number, user: User) {
-    const channel = await this.findById(channelId);
+    const channel = await this.channelsRepository.findById(channelId);
     if (channel) {
       const channelMembers = await this.getChannelMembersDto(channelId);
-      const whoami = await this.channelMemberRepository.findOne({
-        where: { channelId: channelId, userId: user.id },
-      });
+      const whoami = await this.channelMemberRepository.findOneChannelIdUserId(
+        channelId,
+        user.id,
+      );
       // 밴된 멤버가 안에 있을경우 에러남.
       if (!whoami)
         throw new NotFoundException('CHECK MemberId ID IF IT IS EXIST');
@@ -148,9 +116,9 @@ export class ChannelsService {
 
   // GET 채널 (채팅방) 에 있는 멤버들  Get 하는거.
   async getChannelMembers(channelId: number) {
-    const members = await this.channelMemberRepository.find({
-      where: { channelId: channelId },
-    });
+    const members = await this.channelMemberRepository.findMemberByChannelId(
+      channelId,
+    );
     if (members.length === 0)
       throw new NotFoundException('CHECK CHANNEL ID IF IT IS EXIST');
     return members;
@@ -158,10 +126,10 @@ export class ChannelsService {
 
   // getChannelMembersDto
   async getChannelMembersDto(channelId: number): Promise<ChannelMemberDto[]> {
-    const members = await this.channelMemberRepository.find({
-      where: { channelId: channelId },
-      relations: { user: true },
-    });
+    const members =
+      await this.channelMemberRepository.findMemberByChannelIdWithUser(
+        channelId,
+      );
     const memberDtos = members.map((member) => new ChannelMemberDto(member));
     return memberDtos;
   }
@@ -169,19 +137,14 @@ export class ChannelsService {
   // 나의 채팅목록
   async getMyChannels(user: User) {
     try {
-      const channelMembers = await this.channelMemberRepository.find({
-        where: { userId: user.id },
-      });
+      const channelMembers =
+        await this.channelMemberRepository.findMemberByUserId(user.id);
       const channelIds = channelMembers.map((member) => member.channelId);
       if (channelIds.length === 0) {
         // If the user isn't a member of any channels, return an empty array
         return [];
       }
-      const channels = await this.channelsRepository
-        .createQueryBuilder('channel')
-        .where('channel.id IN (:...channelIds)', { channelIds })
-        .leftJoinAndSelect('channel.owner', 'owner') // Specify the relationship name ('owner' in this case)
-        .getMany();
+      const channels = await this.channelsRepository.findMyChannels(channelIds);
       const channelDtos = channels.map((channel) => {
         if (channel.owner) {
           // Add null check before accessing 'nickname' property
@@ -196,7 +159,6 @@ export class ChannelsService {
     }
   }
 
-  // 똑같은 title 이 중복 되는거 예외처리
   async createChannel(title: string, password: string, user: User) {
     const isDuplicate = await this.channelsRepository.findOneBy({
       title,
@@ -238,15 +200,14 @@ export class ChannelsService {
       throw new NotAcceptableException('YOU ARE BLOCK THIS USER');
     const sortedNicknames = [user.nickname, receiver.nickname].sort();
     const title = sortedNicknames[0] + sortedNicknames[1];
-    const isDuplicate = await this.channelsRepository.findOneBy({
-      title,
-    });
+    const isDuplicate = await this.channelsRepository.findOnebyTitle(title);
     if (isDuplicate) {
       // 멤버 없으면 넣고 있으면 넣지말고
-      const isMember = await this.channelMemberRepository.findOneBy({
-        channelId: isDuplicate.id,
-        userId: user.id,
-      });
+      const isMember =
+        await this.channelMemberRepository.findOneChannelIdUserId(
+          isDuplicate.id,
+          user.id,
+        );
       if (!isMember) {
         const channelMember = this.channelMemberRepository.create({
           userId: user.id,
@@ -255,9 +216,6 @@ export class ChannelsService {
         });
         this.channelsGateway.emitInMember(user.id, isDuplicate.id);
         await this.channelMemberRepository.save(channelMember);
-        // 나한테나, 상대방한테만 emit해야한다..
-        // this.channelsGateway.emitInMember(user.id, isDuplicate.id);
-        // this.channelsGateway.EmitChannelInfo(isDuplicate);
       }
       throw new BadRequestException({
         message: 'YOU ARE AREADY IN DM',
@@ -287,19 +245,18 @@ export class ChannelsService {
     this.channelsGateway.emitInMember(receiver.id, channelReturned.id);
     await this.channelMemberRepository.save(channelMember2);
 
-    // this.channelsGateway.emitInMember(user.id, channel.id);
     this.channelsGateway.EmitChannelDmInfo(channelReturned);
     return { channelId: channelReturned.id };
   }
   async reJoinOtherUserOnlyDm(channelId: number, user: User) {
-    const curchannel = await this.findByIdWithOwner(channelId);
+    const curchannel = await this.channelsRepository.findByIdWithOwner(
+      channelId,
+    );
     if (!curchannel) throw new NotFoundException('CHANNEL NOT FOUND');
-    const channelMember = await this.channelMemberRepository.findOneBy({
-      channelId: curchannel.id,
-    });
+    const channelMember =
+      await this.channelMemberRepository.findMemberByChannelId(curchannel.id);
     if (!channelMember) throw new NotFoundException('CHANNEL MEMBER NOT FOUND');
     const members = await this.getChannelMembers(channelId);
-    // 유저가 존재 하는지 안 하는지 체크해서 존재안 할때 예외처리
     if (members.length === 1) {
       if (!(await this.usersService.getUser(curchannel.reciveId)))
         throw new NotFoundException('USER NOT FOUND');
@@ -346,25 +303,24 @@ export class ChannelsService {
     // 닉네임 정렬해서 값찾기 ~ 똑같은거 찾아서 지우기
     const sortedNicknames = [user.nickname, otherUser.nickname].sort();
     const title = sortedNicknames[0] + sortedNicknames[1];
-    const channel = await this.channelsRepository.findOneBy({
-      title: title,
-    });
+    const channel = await this.channelsRepository.findOnebyTitle(title);
     if (!channel) return;
-    const isAmIIn = await this.channelMemberRepository.findOneBy({
-      channelId: channel.id,
-      userId: user.id,
-    });
-    if (!isAmIIn) return;
-    if (!channel) throw new NotFoundException('CHANNEL NOT FOUND');
-    const channelMember = await this.channelMemberRepository.findOneBy({
-      userId: user.id,
-      channelId: channel.id,
-    });
-    if (!channelMember) throw new NotFoundException('CHANNEL MEMBER NOT FOUND');
+    const channelMember =
+      await this.channelMemberRepository.findOneChannelIdUserId(
+        channel.id,
+        user.id,
+      );
+    if (!channelMember) return;
+    // if (!channel) throw new NotFoundException('CHANNEL NOT FOUND');
+    // const channelMember = await this.channelMemberRepository.findOneBy({
+    //   channelId: channel.id,
+    //   userId: user.id,
+    // });
+    // if (!channelMember) throw new NotFoundException('CHANNEL MEMBER NOT FOUND');
     // this.channelsGateway.emitOutMember(user.id, +channel.id);
     await this.channelMemberRepository.delete({
-      userId: user.id,
       channelId: channel.id,
+      userId: user.id,
     });
     this.channelsGateway.EmitBlockChannelOutSelf(channel);
   }
@@ -383,10 +339,12 @@ export class ChannelsService {
       if (!inputPasswordMatches) {
         throw new ForbiddenException('INVALID PASSWORD');
       } else {
-        const isInUser = await this.channelMemberRepository.findOne({
-          where: { channelId: channelId, userId: user.id },
-        });
-        if (isInUser) throw new BadRequestException('Already in the channel');
+        const isInUser =
+          await this.channelMemberRepository.findOneChannelIdUserId(
+            channelId,
+            user.id,
+          );
+        if (isInUser) throw new BadRequestException('ALREADY IN THE CHANNEL');
         if (!isInUser) {
           const cm = this.channelMemberRepository.create({
             userId: user.id,
@@ -396,7 +354,7 @@ export class ChannelsService {
           this.channelMemberRepository.save(cm);
           this.channelsGateway.emitInMember(user.id, channelId);
         }
-        return { message: 'Enter Channel in successfully', status: 200 };
+        return { message: 'ENTER CHANNEL IN SUCCESSFULLY', status: 200 };
       }
     } else {
       // 비번방인데 비밀번호 입력 안 했을때
@@ -407,10 +365,11 @@ export class ChannelsService {
     channelId: number,
     user: User,
   ): Promise<returnStatusMessage> {
-    const isInUser = await this.channelMemberRepository.findOne({
-      where: { channelId: channelId, userId: user.id },
-    });
-    if (isInUser) throw new BadRequestException('Already in the channel');
+    const isInUser = await this.channelMemberRepository.findOneChannelIdUserId(
+      channelId,
+      user.id,
+    );
+    if (isInUser) throw new BadRequestException('ALREADY IN THE CHANNEL');
     if (!isInUser) {
       const cm = this.channelMemberRepository.create({
         userId: user.id,
@@ -420,7 +379,7 @@ export class ChannelsService {
       this.channelMemberRepository.save(cm);
       this.channelsGateway.emitInMember(user.id, channelId);
     }
-    return { message: 'Enter Channel in successfully', status: 200 };
+    return { message: 'ENTER CHANNEL IN SUCCESSFULLY', status: 200 };
   }
 
   async userEnterChannel(
@@ -428,9 +387,9 @@ export class ChannelsService {
     password: string,
     user: User,
   ): Promise<returnStatusMessage> {
-    const curChannel = await this.channelsRepository.findOneBy({
-      id: channelId,
-    });
+    const curChannel = await this.channelsRepository.findCurChannelById(
+      channelId,
+    );
     if (curChannel.status === ChannelStatus.PRIVATE)
       throw new NotAcceptableException('WRONG ACCESS');
     if (await this.isBanned(channelId, user.id))
@@ -447,39 +406,38 @@ export class ChannelsService {
   }
 
   async isAdmininChannel(channelId: number, userId: number) {
-    const curChannelMember = await this.channelMemberRepository.findOneBy({
-      channelId: channelId,
-      userId: userId,
-    });
+    const curChannelMember =
+      await this.channelMemberRepository.findOneChannelIdUserId(
+        channelId,
+        userId,
+      );
     if (curChannelMember.type === 'ADMIN') return true;
     return false;
   }
 
   async isPrivate(channelId: number) {
-    const curChannel = await this.channelsRepository.findOne({
-      where: { id: channelId },
-    });
+    const curChannel = await this.channelsRepository.findCurChannelById(
+      channelId,
+    );
     if (curChannel.status === ChannelStatus.PRIVATE) return true;
     return false;
   }
 
   async isOwnerinChannel(channelId: number, userId: number) {
-    const curChannelMember = await this.channelMemberRepository.findOneBy({
-      channelId: channelId,
-      userId: userId,
-    });
+    const curChannelMember =
+      await this.channelMemberRepository.findOneChannelIdUserId(
+        channelId,
+        userId,
+      );
     if (curChannelMember.type === 'OWNER') return true;
     return false;
   }
 
   async ownerGiveAdmin(channelId: number, toUserId: number, user: User) {
-    const curChannel = await this.channelsRepository.findOne({
-      where: { id: channelId },
-      relations: {
-        members: true,
-        owner: true,
-      },
-    });
+    const curChannel =
+      await this.channelsRepository.findCurChannelWithMemberWithOwner(
+        channelId,
+      );
     if (!curChannel) throw new NotFoundException(`${channelId} IS NOT EXIST`);
     if (
       user.id === curChannel.owner.id ||
@@ -503,7 +461,9 @@ export class ChannelsService {
   // 소켓으로 'leave-room' event 가 오면 게이트웨이 에서 아래 함수가 호출하게끔
   async userExitChannel(channelId: string, userId: number) {
     try {
-      const curChannel = await this.findByIdwithOwnerMember(+channelId);
+      const curChannel = await this.channelsRepository.findByIdwithOwnerMember(
+        +channelId,
+      );
       if (!curChannel) {
         throw new NotFoundException('CHANNEL DOSE NOT EXIST');
       }
@@ -562,9 +522,11 @@ export class ChannelsService {
     this.logger.log(await this.isOwnerinChannel(channelId, user.id));
     if (!this.isOwnerinChannel(channelId, user.id))
       throw new MethodNotAllowedException('YOU HAVE NO PERMISSION');
-    const isInUser = await this.channelBanMemberRepository.findOne({
-      where: { userId: userId, channelId: channelId },
-    });
+    const isInUser =
+      await this.channelBanMemberRepository.findOneChannelIdUserId(
+        channelId,
+        userId,
+      );
     this.logger.log(
       `in this room banned in user : ${JSON.stringify(isInUser)}`,
     );
@@ -581,15 +543,11 @@ export class ChannelsService {
   }
 
   async postKickInChannel(channelId: number, userId: number, user: User) {
-    const isInUser = await this.channelBanMemberRepository
-      .createQueryBuilder('channel_ban_member')
-      .where('channel_ban_member.userId = :userId', {
-        userId: userId,
-      })
-      .andWhere('channel_ban_member.channelId = :channelId', {
-        channelId: channelId,
-      })
-      .getOne();
+    const isInUser =
+      await this.channelBanMemberRepository.findOneChannelIdUserIdWithQuery(
+        channelId,
+        userId,
+      );
     this.logger.log(`in this room kicked in user : ${isInUser}`);
     if (isInUser) throw new MethodNotAllowedException('ALREADY BANNED');
     if (!isInUser) {
@@ -605,9 +563,10 @@ export class ChannelsService {
   }
 
   async isBanned(channelId: number, userId: number): Promise<boolean> {
-    const ban = await this.channelBanMemberRepository.findOne({
-      where: { channelId: channelId, userId: userId },
-    });
+    const ban = await this.channelBanMemberRepository.findOneChannelIdUserId(
+      channelId,
+      userId,
+    );
     if (ban) {
       this.logger.log(
         `check time : ${Number(ban.expiresAt) - Number(new Date(Date.now()))}`,
@@ -668,10 +627,9 @@ export class ChannelsService {
     }
   }
   async patchChannelPassword(channelId: number, user: User, password: string) {
-    const curChannel = await this.channelsRepository.findOne({
-      where: { id: channelId },
-      relations: ['owner'],
-    });
+    const curChannel = await this.channelsRepository.findByIdWithOwner(
+      channelId,
+    );
     if (+curChannel.owner.id !== +user.id) {
       throw new UnauthorizedException('You are not owner of this channel');
     }
@@ -752,8 +710,9 @@ export class ChannelsService {
     for (const channel of joinChannel) {
       await this.userExitChannel(channel.id.toString(), user.id);
       this.logger.log(`exit channel : ${channel.id}`);
-      const remainmember = await this.findByIdwithMember(channel.id);
-      // if (!remainmember) throw new NotFoundException('CHANNEL DOSE NOT EXIST');
+      const remainmember = await this.channelsRepository.findByIdwithMember(
+        channel.id,
+      );
       if (channel.status === ChannelStatus.PRIVATE) {
         if (
           remainmember?.members.length === 1 ||
@@ -761,9 +720,9 @@ export class ChannelsService {
           !remainmember
         ) {
           if (remainmember?.members[0].userId === user.id) {
-            const curchannel = await this.channelsRepository.findOneBy({
-              id: channel.id,
-            });
+            const curchannel = await this.channelsRepository.findById(
+              channel.id,
+            );
             await this.channelMemberRepository.delete({
               userId: curchannel.reciveId,
               channelId: channel.id,
@@ -780,9 +739,9 @@ export class ChannelsService {
   }
 
   async deleteBanMember(user: User) {
-    const banlist = await this.channelBanMemberRepository.find({
-      where: { userId: user.id },
-    });
+    const banlist = await this.channelBanMemberRepository.findBanMemberByUserId(
+      user.id,
+    );
     for (const ban of banlist) {
       await this.channelBanMemberRepository.delete({
         userId: ban.userId,
