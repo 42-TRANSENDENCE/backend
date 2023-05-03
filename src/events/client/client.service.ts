@@ -81,4 +81,11 @@ export class ClientService {
     const friends = await this.friendsService.getAllFriends(pongClient.user);
     this.notifyToFriends(pongClient.user, friends, status);
   }
+
+  async emitFriendsRequest(server: Server, client: Socket, friendId: number) {
+    const friendClient = this.getByUserId(friendId);
+    if (friendClient.status === ClientStatus.ONLINE) {
+      friendClient.socket.emit('friends_request', client.id);
+    }
+  }
 }
