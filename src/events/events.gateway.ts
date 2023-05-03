@@ -193,7 +193,7 @@ export class EventGateway
   handleSendFriendRequestEvent(
     @ConnectedSocket() client: Socket,
     @MessageBody() friendId: number,
-  ): void {
+  ) {
     this.clientService.emitFriendsRequest(this.server, client, friendId);
   }
 }

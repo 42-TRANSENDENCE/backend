@@ -84,7 +84,6 @@ export class ClientService {
 
   async emitFriendsRequest(server: Server, client: Socket, friendId: number) {
     const friendClient = this.getByUserId(friendId);
-    // 친구가 온라인 일때만 보내야함
     if (friendClient.status === ClientStatus.ONLINE) {
       friendClient.socket.emit('friends_request', client.id);
     }
