@@ -81,4 +81,12 @@ export class ClientService {
     const friends = await this.friendsService.getAllFriends(pongClient.user);
     this.notifyToFriends(pongClient.user, friends, status);
   }
+
+  async emitFriendsRequest(server: Server, client: Socket, friendId: number) {
+    const friendClient = this.getByUserId(friendId);
+    // 친구가 온라인 일때만 보내야함
+    if (friendClient.status === ClientStatus.ONLINE) {
+      friendClient.socket.emit('friends_request', client.id);
+    }
+  }
 }

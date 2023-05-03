@@ -188,4 +188,12 @@ export class EventGateway
   ): void {
     this.lobbyService.cancelInvitation(this.server, client, inviteeId);
   }
+
+  @SubscribeMessage('sendFriendRequest')
+  handleSendFriendRequestEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() friendId: number,
+  ): void {
+    this.clientService.emitFriendsRequest(this.server, client, friendId);
+  }
 }
