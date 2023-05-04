@@ -43,21 +43,24 @@ export class QueueService {
   }
 
   leaveQueue(client: Socket) {
-    let queueSize = this.normalGameQueue.length;
-    this.normalGameQueue = this.normalGameQueue.filter((id) => {
-      id !== client.id;
-    });
-    if (queueSize !== this.normalGameQueue.length) {
-      this.logger.log(`client: ${client.id} left queue`);
-      client.emit('out_of_queue');
-    }
-    queueSize = this.specialGameQueue.length;
-    this.specialGameQueue = this.specialGameQueue.filter((id) => {
-      id !== client.id;
-    });
-    if (queueSize !== this.specialGameQueue.length) {
-      this.logger.log(`client: ${client.id} left queue`);
-      client.emit('out_of_queue');
+    if (this.normalGameQueue.includes(client.id)) {
+      const queueSize = this.normalGameQueue.length;
+      this.normalGameQueue = this.normalGameQueue.filter((id) => {
+        id !== client.id;
+      });
+      if (queueSize !== this.normalGameQueue.length) {
+        this.logger.log(`client: ${client.id} left queue`);
+        client.emit('out_of_queue');
+      }
+    } else if (this.specialGameQueue.includes(client.id)) {
+      const queueSize = this.specialGameQueue.length;
+      this.specialGameQueue = this.specialGameQueue.filter((id) => {
+        id !== client.id;
+      });
+      if (queueSize !== this.specialGameQueue.length) {
+        this.logger.log(`client: ${client.id} left queue`);
+        client.emit('out_of_queue');
+      }
     }
   }
 
